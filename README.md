@@ -21,7 +21,7 @@ code .
 ```bash
 git checkout "tên branch"
 ```
-=======git push origin main
+=======
 
 ## 🚀 Công nghệ
 - **Frontend:** HTML, CSS, Thymeleaf (Spring Boot render), Chart.js  
