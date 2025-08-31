@@ -40,6 +40,5 @@ git checkout "tên branch"
 - **Giao dịch định kỳ (Scheduled):** Tự động thêm giao dịch lặp lại.  
 - **Chi tiêu nhóm:** Chia sẻ chi phí, tính toán công nợ.  
 - **Import/Export:** Nhập file CSV, xuất CSV/PDF báo cáo.
->>>>>>> 4aa3bd68605ed9288dbb1d12c46e9c5801c56040
 
 
