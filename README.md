@@ -41,4 +41,36 @@ git checkout "tên branch"
 - **Chi tiêu nhóm:** Chia sẻ chi phí, tính toán công nợ.  
 - **Import/Export:** Nhập file CSV, xuất CSV/PDF báo cáo.
 
+## 📂 Cấu trúc chính của dự án
+```
+web-expense-tracker/
+├── backend/ # Spring Boot (Java)
+│ ├── src/main/java/com/example/expense/
+│ │ ├── auth/ # Đăng nhập, đăng ký, JWT, OAuth2
+│ │ ├── account/ # Quản lý tài khoản người dùng
+│ │ ├── transaction/ # Quản lý giao dịch (CRUD)
+│ │ ├── budget/ # Quản lý ngân sách
+│ │ ├── debt/ # Quản lý nợ
+│ │ ├── group/ # Chi tiêu nhóm (chia sẻ, phân bổ)
+│ │ ├── scheduler/ # Giao dịch định kỳ, nhắc nhở
+│ │ └── common/ # Utils, exceptions, constants
+│ │
+│ ├── src/main/resources/
+│ │ ├── application.yml # Config Spring Boot + PostgreSQL
+│ │ └── db/migration/ # Flyway scripts (tạo bảng, seed data)
+│ │
+│ └── Dockerfile # Docker build cho backend
+│
+├── frontend/ # HTML/CSS (hoặc thêm JS/React nếu mở rộng)
+│ ├── index.html # Dashboard chính
+│ ├── transactions.html # Quản lý giao dịch
+│ ├── budget.html # Quản lý ngân sách
+│ ├── debt.html # Quản lý nợ
+│ ├── group.html # Quản lý nhóm
+│ ├── login.html # Đăng nhập / đăng ký
+│ └── assets/ # CSS, JS, hình ảnh
+│
+├── docker-compose.yml # Chạy PostgreSQL + backend bằng Docker
+├── README.md # Tài liệu dự án
+```
 
