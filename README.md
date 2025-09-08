@@ -25,7 +25,7 @@ git checkout "tên branch"
 
 ## 🚀 Công nghệ
 - **Frontend:** HTML, CSS, Thymeleaf (Spring Boot render), Chart.js  
-- **Backend:** Java 17, Spring Boot 3 (Spring Web, Spring Security, Spring Data JPA, OAuth2 Client, Validation, Actuator, Mail)  
+- **Backend:** Java 17, Severlet 
 - **Database:** PostgreSQL 16  
 - **Khác:** Docker, Docker Compose, Flyway (migration), Lombok, JUnit 5  
 - **Dev tools:** PgAdmin, MailHog (test email)
