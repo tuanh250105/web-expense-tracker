@@ -7,15 +7,9 @@
     <persistence-unit name="BugetBuddyUnit" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 
-        <class>com.expensemanager.model.Category</class>
-
-
-        <properties>a
+        <properties>
             <!-- Kết nối tới Supabase (PostgreSQL) -->
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
-            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://<HOST>:5432/<DBNAME>"/>
-            <property name="jakarta.persistence.jdbc.user" value="<USERNAME>"/>
-            <property name="jakarta.persistence.jdbc.password" value="<PASSWORD>"/>
 
             <!-- Hibernate tự động tạo/cập nhật bảng -->
             <property name="hibernate.hbm2ddl.auto" value="update"/>
