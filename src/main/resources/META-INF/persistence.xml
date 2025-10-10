@@ -9,12 +9,12 @@
 
         <class>com.expensemanager.model.Transaction</class>
 
-        <properties>a
+        <properties>
             <!-- Kết nối tới Supabase (PostgreSQL) -->
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
-            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://<HOST>:5432/<DBNAME>"/>
-            <property name="jakarta.persistence.jdbc.user" value="<USERNAME>"/>
-            <property name="jakarta.persistence.jdbc.password" value="<PASSWORD>"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://db.bgbaeuehewyxditjnncg.supabase.co:5432/postgres"/>
+            <property name="jakarta.persistence.jdbc.user" value="postgres"/>
+            <property name="jakarta.persistence.jdbc.password" value="web_database@pass"/>
 
             <!-- Hibernate tự động tạo/cập nhật bảng -->
             <property name="hibernate.hbm2ddl.auto" value="update"/>

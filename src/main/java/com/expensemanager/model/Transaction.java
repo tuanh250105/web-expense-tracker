@@ -3,13 +3,14 @@ package com.expensemanager.model;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
-@Table(name = "Transaction")
+@Table(name = "transactions")
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private UUID id;
 
     @ManyToOne
     @JoinColumn(name = "account_id")
@@ -36,7 +37,7 @@ public class Transaction {
 
     }
 
-    public Transaction(int id, Account account, String type, Category category, int amount, String note, LocalDateTime transactionDate, LocalDateTime create_at, LocalDateTime update_at) {
+    public Transaction(UUID id, Account account, String type, Category category, int amount, String note, LocalDateTime transactionDate, LocalDateTime create_at, LocalDateTime update_at) {
         this.id = id;
         this.account = account;
         this.type = type;
@@ -48,7 +49,7 @@ public class Transaction {
         this.update_at = update_at;
     }
 
-    public int getId() {
+    public UUID getId() {
         return id;
     }
 
@@ -84,7 +85,7 @@ public class Transaction {
         return update_at;
     }
 
-    public void setId(int id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -118,5 +119,20 @@ public class Transaction {
 
     public void setUpdate_at(LocalDateTime update_at) {
         this.update_at = update_at;
+    }
+
+    @Override
+    public String toString() {
+        return "Transaction{" +
+                "update_at=" + update_at +
+                ", create_at=" + create_at +
+                ", transactionDate=" + transactionDate +
+                ", note='" + note + '\'' +
+                ", amount=" + amount +
+                ", category=" + category +
+                ", type='" + type + '\'' +
+                ", account=" + account +
+                ", id=" + id +
+                '}';
     }
 }

@@ -58,7 +58,7 @@
             <ul class="transaction-items">
                 <c:forEach var="t" items="${transList}">
                     <li class="transaction-item">
-                        <img src="${t.iconUrl}" alt=""List
+                        <img src="${t.iconUrl}" alt=List">
                         <div class="details">
                             <h3>${t.name}</h3>
                             <p>${t.source}</p>

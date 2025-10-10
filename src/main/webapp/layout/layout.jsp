@@ -44,8 +44,6 @@
     </div>
 </header>
 
-
-
 <nav class="sidebar">
     <ul>
         <li class="active"><a href="#"><i class="fa-solid fa-chart-line"></i> <span>Overallview</span></a></li>
