@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+    <Resource name="jdbc/ExpenseManagerDB"
+              auth="Container"
+              type="javax.sql.DataSource"
+              maxTotal="20"
+              maxIdle="10"
+              maxWaitMillis="-1"
+              username="postgres"
+              password="your_password"
+              driverClassName="org.postgresql.Driver"
+              url="jdbc:postgresql://localhost:5432/expensemanager"/>
+</Context>
