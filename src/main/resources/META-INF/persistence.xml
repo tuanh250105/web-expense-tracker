@@ -4,25 +4,42 @@
              version="3.0"
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
 
-    <persistence-unit name="BugetBuddyUnit" transaction-type="RESOURCE_LOCAL">
+    <persistence-unit name="BudgetBuddyUnit" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 
+        <!-- ===== ENTITY CLASSES (4 models hiện tại của bạn) ===== -->
         <class>com.expensemanager.model.Transaction</class>
+        <class>com.expensemanager.model.RewardSpin</class>
+        <class>com.expensemanager.model.RewardPrize</class>
+        <class>com.expensemanager.model.RewardPoints</class>
 
-        <properties>a
-            <!-- Kết nối tới Supabase (PostgreSQL) -->
+        <properties>
+            <!-- ===== Supabase PostgreSQL Connection ===== -->
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
-            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://<HOST>:5432/<DBNAME>"/>
-            <property name="jakarta.persistence.jdbc.user" value="<USERNAME>"/>
-            <property name="jakarta.persistence.jdbc.password" value="<PASSWORD>"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require"/>
+            <property name="jakarta.persistence.jdbc.user" value="postgres.bgbaeuehewyxditjnncg"/>
+            <property name="jakarta.persistence.jdbc.password" value="web_database@pass"/>
 
-            <!-- Hibernate tự động tạo/cập nhật bảng -->
-            <property name="hibernate.hbm2ddl.auto" value="update"/>
+            <!-- ===== Hibernate Configuration ===== -->
             <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+            <property name="hibernate.hbm2ddl.auto" value="none"/> <!-- ⚠️ Giữ none để không làm thay đổi schema Supabase -->
 
-            <!-- Hiển thị SQL trên console -->
+            <!-- ===== Connection Pool Settings ===== -->
+            <property name="hibernate.connection.pool_size" value="3"/>
+            <property name="hibernate.connection.autocommit" value="false"/>
+            <property name="hibernate.connection.release_mode" value="after_transaction"/>
+
+            <!-- ===== Debugging ===== -->
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.use_sql_comments" value="true"/>
+
+            <!-- ===== JPA/Hibernate Context ===== -->
+            <property name="hibernate.connection.provider_class" value="org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl"/>
+            <property name="hibernate.current_session_context_class" value="thread"/>
+
+            <!-- ===== Timezone ===== -->
+            <property name="hibernate.jdbc.time_zone" value="UTC"/>
         </properties>
     </persistence-unit>
 </persistence>
