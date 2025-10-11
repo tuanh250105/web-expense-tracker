@@ -1,55 +1,63 @@
 package com.expensemanager.model;
 
 import jakarta.persistence.*;
-import java.util.UUID;
+import java.sql.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "categories")
 public class Category {
-
     @Id
-    @GeneratedValue
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
-    @Column(nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "category_type", nullable = false)
-    private String categoryType;
+    @Column(name = "type", nullable = false, length = 20)
+    private String type; // income / expense
 
-    @Column(name = "parent_id")
-    private UUID parentId;
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private Category parent;
 
-    private String icon;
+    @Column(name = "icon_path")
+    private String iconPath;
+
+    @Column(name = "color")
     private String color;
 
+    @Column(name = "created_at")
+    private Date createdAt;
+
+    @OneToMany(mappedBy = "parent")
+    private List<Category> children;
+
+    // Constructors
     public Category() {}
 
-    public Category(UUID id, String name, String categoryType, UUID parentId, String icon, String color) {
-        this.id = id;
-        this.name = name;
-        this.categoryType = categoryType;
-        this.parentId = parentId;
-        this.icon = icon;
-        this.color = color;
-    }
-
     // Getters & Setters
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    public String getCategoryType() { return categoryType; }
-    public void setCategoryType(String categoryType) { this.categoryType = categoryType; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
 
-    public UUID getParentId() { return parentId; }
-    public void setParentId(UUID parentId) { this.parentId = parentId; }
+    public Category getParent() { return parent; }
+    public void setParent(Category parent) { this.parent = parent; }
 
-    public String getIcon() { return icon; }
-    public void setIcon(String icon) { this.icon = icon; }
+    public String getIconPath() { return iconPath; }
+    public void setIconPath(String iconPath) { this.iconPath = iconPath; }
 
     public String getColor() { return color; }
     public void setColor(String color) { this.color = color; }
+
+    public Date getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+
+    public List<Category> getChildren() { return children; }
+    public void setChildren(List<Category> children) { this.children = children; }
 }

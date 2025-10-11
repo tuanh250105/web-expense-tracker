@@ -1,53 +1,36 @@
 package com.expensemanager.service;
 
+import com.expensemanager.dao.CategoryDAO; // Vẫn import lớp CategoryDAO
 import com.expensemanager.model.Category;
-import java.util.*;
 
-/**
- * Service tạm thời sử dụng danh sách giả lập (ArrayList)
- * để test giao diện và logic CRUD của danh mục.
- */
+import java.util.List;
+
 public class CategoryService {
 
-    private static final List<Category> categoryList = new ArrayList<>();
+    private final CategoryDAO categoryDAO;
 
-    static {
-        categoryList.add(new Category(UUID.randomUUID(), "Ăn uống", "expense", null, "fa-solid fa-utensils", "#f28b82"));
-        categoryList.add(new Category(UUID.randomUUID(), "Đi lại", "expense", null, "fa-solid fa-car", "#aecbfa"));
-        categoryList.add(new Category(UUID.randomUUID(), "Lương", "income", null, "fa-solid fa-money-bill", "#ccff90"));
+    public CategoryService() {
+        // Chỉ cần thay đổi dòng này: không còn "Impl" nữa
+        this.categoryDAO = new CategoryDAO();
     }
 
-    // --- Lấy tất cả danh mục ---
-    public List<Category> getAllCategoriesForTest() {
-        return categoryList;
+    public List<Category> getAllCategories() {
+        return categoryDAO.findAll();
     }
 
-    // --- Thêm danh mục mới ---
-    public void addCategoryForTest(Category category) {
-        category.setId(UUID.randomUUID());
-        categoryList.add(category);
+    public void addCategory(Category category) {
+        categoryDAO.save(category);
     }
 
-    // --- Xóa danh mục ---
-    public void deleteCategoryForTest(UUID id) {
-        categoryList.removeIf(c -> c.getId().equals(id));
+    public void deleteCategory(Integer id) {
+        categoryDAO.delete(id);
     }
 
-    // --- Lấy danh mục theo ID ---
-    public Category getCategoryByIdForTest(UUID id) {
-        for (Category c : categoryList) {
-            if (c.getId().equals(id)) return c;
-        }
-        return null;
+    public Category getCategoryById(Integer id) {
+        return categoryDAO.findById(id);
     }
 
-    // --- Cập nhật danh mục ---
-    public void updateCategoryForTest(Category updated) {
-        for (int i = 0; i < categoryList.size(); i++) {
-            if (categoryList.get(i).getId().equals(updated.getId())) {
-                categoryList.set(i, updated);
-                return;
-            }
-        }
+    public void updateCategory(Category updated) {
+        categoryDAO.update(updated);
     }
 }
