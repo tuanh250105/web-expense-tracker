@@ -7,9 +7,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "reward_spins")
 public class RewardSpin {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // BIGSERIAL
-    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "user_id", nullable = false)
@@ -22,14 +22,24 @@ public class RewardSpin {
     private String prizeLabel;
 
     @Column(name = "points_spent")
-    private Integer pointsSpent;
+    private Integer pointsSpent = 0;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", columnDefinition = "timestamp with time zone")
     private OffsetDateTime createdAt;
 
-    // ===== getters/setters =====
+    // ✅ Relationships (optional lazy fetch)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "prize_code", insertable = false, updatable = false)
+    private RewardPrize rewardPrize;
+
+    public RewardSpin() {}
+
+    // ===== Getter/Setter =====
     public Long getId() { return id; }
-    // setter này giúp MockDAO gán id khi chạy in-memory
     public void setId(Long id) { this.id = id; }
 
     public UUID getUserId() { return userId; }
@@ -46,4 +56,10 @@ public class RewardSpin {
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+
+    public RewardPrize getRewardPrize() { return rewardPrize; }
+    public void setRewardPrize(RewardPrize rewardPrize) { this.rewardPrize = rewardPrize; }
 }

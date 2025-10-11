@@ -70,6 +70,6 @@ Code feature riêng → tạo branch:
 git checkout -b feature/login
 **Build WAR để test:**
 mvn clean package
-**Test app trên local Tomcat hoặc bằng Docker** (docker compose up app).
+**com.expensemanager.controller.Test app trên local Tomcat hoặc bằng Docker** (docker compose up app).
 Push branch → tạo Pull Request → Leader review & merge vào dev.
 

@@ -31,5 +31,7 @@
 
 <script>
     window.BB_CTX = "${pageContext.request.contextPath}";
+    // 👇 Dùng userId thực tế trong bảng reward_points
+    window.BB_USER_ID = "67b78d51-4eec-491c-bbf0-30e982def9e0";
 </script>
 <script src="${pageContext.request.contextPath}/assets/js/rewards.js"></script>

@@ -9,159 +9,108 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import java.util.UUID;
 
 @WebServlet(name = "RewardsController", urlPatterns = {"/api/rewards/*"})
 public class RewardsController extends HttpServlet {
 
     private static final Gson GSON = new Gson();
-    private final RewardDAO dao = new RewardDAO(); // ← dùng DB thật
+    private final RewardDAO dao = new RewardDAO();
+    private static final int COST_SPIN = 20;
+    private static final int REWARD_PER_BUDGET = 5;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType("application/json;charset=UTF-8");
-        String path = req.getPathInfo() == null ? "" : req.getPathInfo();
+        String path = Optional.ofNullable(req.getPathInfo()).orElse("/");
+        UUID uid = parseUserId(req);
 
-        try (PrintWriter out = resp.getWriter()) {
-            switch (path) {
-                case "/points" -> { // ?userId=UUID
-                    UUID uid = uuid(req.getParameter("userId"));
-                    int points = dao.getUserScore(uid);
-                    out.print(GSON.toJson(Map.of("userId", uid.toString(), "points", points)));
-                }
-                case "/prizes" -> {
-                    var prizes = dao.getActivePrizes();
-                    out.print(GSON.toJson(prizes));
-                }
-                case "/recent" -> { // ?userId=UUID&limit=10
-                    UUID uid = uuid(req.getParameter("userId"));
-                    int limit = parseInt(req.getParameter("limit"), 10);
-                    out.print(GSON.toJson(dao.recentSpins(uid, limit)));
-                }
-                // -------------------- GET --------------------
-                case "/claimable" -> { // ?userId=UUID
-                    UUID uid = uuid(req.getParameter("userId"));
-                    final int per = 5;
-                    RewardDAO d = new RewardDAO();
-                    int achieved = d.countAchievedBudgets(uid);
-                    int claimed  = d.countBudgetClaims(uid, per);
-                    int remaining = Math.max(achieved - claimed, 0);
-                    out.print(GSON.toJson(Map.of(
-                            "userId", uid.toString(),
-                            "perBudget", per,
-                            "achieved", achieved,
-                            "claimed", claimed,
-                            "remaining", remaining
-                    )));
-                }
-
-// -------------------- POST --------------------
-                case "/claim-one" -> { // ?userId=UUID
-                    UUID uid = uuid(req.getParameter("userId"));
-                    final int per = 5;
-                    int added = dao.claimOneBudgetAward(uid, per); // 0 hoặc 5
-                    int points = dao.getUserScore(uid);
-                    int achieved = dao.countAchievedBudgets(uid);
-                    int claimed  = dao.countBudgetClaims(uid, per);
-                    int remaining = Math.max(achieved - claimed, 0);
-                    out.print(GSON.toJson(Map.of(
-                            "userId", uid.toString(),
-                            "added", added,
-                            "points", points,
-                            "remaining", remaining
-                    )));
-                }
-
-
-                default -> {
-                    resp.setStatus(404);
-                    out.print(GSON.toJson(Map.of("error", "Not found")));
-                }
+        switch (path) {
+            case "/points" -> write(resp, Map.of("points", dao.getUserScore(uid)));
+            case "/recent" -> {
+                int limit = parseInt(req.getParameter("limit"), 5);
+                var list = dao.recentSpins(uid, limit).stream().map(s -> Map.of(
+                        "prizeLabel", s.getPrizeLabel(),
+                        "prizeCode", s.getPrizeCode(),
+                        "pointsSpent", s.getPointsSpent(),
+                        "createdAt", s.getCreatedAt().toString()
+                )).toList();
+                write(resp, list);
             }
-        } catch (IllegalArgumentException e) {
-            resp.setStatus(400);
-            resp.getWriter().print(GSON.toJson(Map.of("error", e.getMessage())));
+            case "/claimable" -> {
+                int achieved = dao.countAchievedBudgets(uid);
+                int claimed = dao.countBudgetClaims(uid, REWARD_PER_BUDGET);
+                write(resp, Map.of("remaining", Math.max(achieved - claimed, 0)));
+            }
+            default -> { // fallback: trả danh sách prize & điểm
+                var prizes = dao.getActivePrizes().stream()
+                        .map(p -> Map.of("code", p.getCode(), "label", p.getLabel()))
+                        .collect(Collectors.toList());
+                write(resp, Map.of("points", dao.getUserScore(uid), "prizes", prizes));
+            }
         }
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType("application/json;charset=UTF-8");
-        String path = req.getPathInfo() == null ? "" : req.getPathInfo();
+        String path = Optional.ofNullable(req.getPathInfo()).orElse("/");
+        UUID uid = parseUserId(req);
 
-        try (PrintWriter out = resp.getWriter()) {
-            switch (path) {
-                case "/calc" -> {
-                    // khi nối business thật có thể thay bằng tính điểm theo Budgets
-                    UUID uid = uuid(req.getParameter("userId"));
-                    int newPoints = dao.addPoints(uid, 5);
-                    out.print(GSON.toJson(Map.of(
-                            "userId", uid.toString(),
-                            "added", 5,
-                            "points", newPoints
-                    )));
-                }
-                case "/spin" -> {
-                    UUID uid = uuid(req.getParameter("userId"));
-                    final int cost = 20;
-
-                    if (!dao.trySpendPoints(uid, cost)) {
-                        resp.setStatus(400);
-                        out.print(GSON.toJson(Map.of("error", "NOT_ENOUGH_POINTS")));
-                        return;
-                    }
-
-                    var prize = pickWeighted(dao.getActivePrizes());
-                    var spin = dao.saveSpin(uid, prize.getCode(), prize.getLabel(), cost);
-
-                    out.print(GSON.toJson(Map.of(
-                            "userId", uid.toString(),
-                            "prizeCode", prize.getCode(),
-                            "prizeLabel", prize.getLabel(),
-                            "spent", cost,
-                            "spinId", spin.getId()
-                    )));
-                }
-                default -> {
-                    resp.setStatus(404);
-                    out.print(GSON.toJson(Map.of("error", "Not found")));
-                }
+        switch (path) {
+            case "/claim-one" -> {
+                int added = dao.claimOneBudgetAward(uid, REWARD_PER_BUDGET);
+                int points = dao.getUserScore(uid);
+                int achieved = dao.countAchievedBudgets(uid);
+                int claimed = dao.countBudgetClaims(uid, REWARD_PER_BUDGET);
+                write(resp, Map.of(
+                        "added", added,
+                        "points", points,
+                        "remaining", Math.max(achieved - claimed, 0)
+                ));
             }
-        } catch (IllegalArgumentException e) {
+            case "/spin" -> handleSpin(uid, resp);
+            default -> resp.sendError(404);
+        }
+    }
+
+    private void handleSpin(UUID uid, HttpServletResponse resp) throws IOException {
+        if (!dao.trySpendPoints(uid, COST_SPIN)) {
             resp.setStatus(400);
-            resp.getWriter().print(GSON.toJson(Map.of("error", e.getMessage())));
+            write(resp, Map.of("error", "not_enough_points"));
+            return;
+        }
+
+        var prizes = dao.getActivePrizes();
+        if (prizes.isEmpty()) {
+            write(resp, Map.of("error", "no_prize"));
+            return;
+        }
+
+        RewardPrize pick = prizes.get(new Random().nextInt(prizes.size()));
+        dao.saveSpin(uid, pick.getCode(), pick.getLabel(), COST_SPIN);
+        write(resp, Map.of(
+                "prizeCode", pick.getCode(),
+                "prizeLabel", pick.getLabel(),
+                "spent", COST_SPIN
+        ));
+    }
+
+    private void write(HttpServletResponse resp, Object obj) throws IOException {
+        try (PrintWriter out = resp.getWriter()) {
+            out.write(GSON.toJson(obj));
         }
     }
 
-    // helpers
-    private static UUID uuid(String s) {
-        if (s == null || s.isBlank()) throw new IllegalArgumentException("Missing userId");
-        return UUID.fromString(s);
+    private UUID parseUserId(HttpServletRequest req) {
+        String u = req.getParameter("userId");
+        try { return UUID.fromString(u); } catch (Exception e) {
+            return UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0"); // fallback user demo
+        }
     }
 
-    private static int parseInt(String s, int def) {
+    private int parseInt(String s, int def) {
         try { return Integer.parseInt(s); } catch (Exception e) { return def; }
-    }
-
-    private static RewardPrize pickWeighted(List<RewardPrize> prizes) {
-        if (prizes == null || prizes.isEmpty()) throw new IllegalArgumentException("No active prizes");
-
-        var active = prizes.stream()
-                .filter(p -> p.getWeight() != null && p.getWeight() > 0)
-                .collect(Collectors.toList());
-
-        if (active.isEmpty()) {
-            return prizes.get(ThreadLocalRandom.current().nextInt(prizes.size()));
-        }
-
-        int total = active.stream().mapToInt(RewardPrize::getWeight).sum();
-        int r = ThreadLocalRandom.current().nextInt(total) + 1;
-        int acc = 0;
-        for (RewardPrize p : active) {
-            acc += p.getWeight();
-            if (r <= acc) return p;
-        }
-        return active.get(active.size() - 1);
     }
 }

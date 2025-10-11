@@ -215,8 +215,22 @@
         animateTo(stopAt, 4000, async () => {
             resultEl.textContent = "🎁 Bạn nhận: " + label;
             showToast(`🎉 ${label}`);
-            await refreshPointsAndHistory();
+
+            // ✅ Thêm lịch sử vào giao diện NGAY (chưa cần backend)
+            const now = new Date().toLocaleString();
+            const li = document.createElement("li");
+            li.textContent = `${now} – ${label}`;
+            historyEl.prepend(li);
+
+            // ✅ Cập nhật điểm (đã trừ)
+            let curPoints = parseInt(pointsEl.textContent) || 0;
+            pointsEl.textContent = Math.max(0, curPoints - 20);
+
+            // 🔧 Đợi 2s rồi refresh lại để sync backend (nếu backend lưu chậm)
+            setTimeout(() => refreshPointsAndHistory(), 2000);
         });
+
+
     });
 
     function animateTo(targetDeg, duration, onDone) {

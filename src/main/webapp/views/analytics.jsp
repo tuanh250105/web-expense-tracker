@@ -58,6 +58,9 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-<%-- Nếu đang demo, giữ mock; khi nối API thật có thể tắt dòng mock --%>
-<script src="${pageContext.request.contextPath}/assets/js/analytics-mock.js"></script>
+
+<%-- TẮT MOCK, DÙNG API THẬT --%>
+<%-- <script src="${pageContext.request.contextPath}/assets/js/analytics-mock.js"></script> --%>
+
 <script src="${pageContext.request.contextPath}/assets/js/analytics.js"></script>
+

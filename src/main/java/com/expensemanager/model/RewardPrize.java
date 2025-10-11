@@ -2,31 +2,38 @@ package com.expensemanager.model;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.Map;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "reward_prizes")
 public class RewardPrize {
+
     @Id
     @Column(name = "code", nullable = false)
     private String code;
 
-    @Column(name = "label", nullable = false)
+    @Column(nullable = false)
     private String label;
 
-    @Column(name = "weight", nullable = false)
+    @Column(nullable = false)
     private Integer weight = 1;
 
-    @Column(name = "active", nullable = false)
+    @Column(nullable = false)
     private Boolean active = true;
 
-    // Đơn giản: lưu JSONB thành String; sau này có thể dùng @JdbcTypeCode(JSON)
-    @Column(name = "meta")
-    private String meta;
+    // ✅ Native Hibernate JSONB mapping
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> meta;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", columnDefinition = "timestamp with time zone")
     private OffsetDateTime createdAt;
 
-    // getters/setters
+    public RewardPrize() {}
+
+    // Getter/Setter
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }
 
@@ -39,8 +46,8 @@ public class RewardPrize {
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
 
-    public String getMeta() { return meta; }
-    public void setMeta(String meta) { this.meta = meta; }
+    public Map<String, Object> getMeta() { return meta; }
+    public void setMeta(Map<String, Object> meta) { this.meta = meta; }
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }

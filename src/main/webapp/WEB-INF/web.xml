@@ -6,5 +6,9 @@
          version="6.0">
 
     <display-name>BudgetBuddy</display-name>
-    <!-- KHÔNG cần thêm servlet nào, vì bạn đã dùng @WebServlet -->
+
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+
 </web-app>

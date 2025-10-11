@@ -2,40 +2,131 @@ package com.expensemanager.controller;
 
 import com.expensemanager.model.Transaction;
 import com.expensemanager.service.AnalyticsService;
+import com.expensemanager.shared.GsonFactory;
 import com.google.gson.Gson;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.time.OffsetDateTime;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.*;
+import java.util.stream.Collectors;
 
-@WebServlet(name = "AnalyticsApiServlet", urlPatterns = {"/api/analytics"})
+@WebServlet(name = "AnalyticsController", urlPatterns = {"/api/analytics"})
 public class AnalyticsController extends HttpServlet {
-    private static final Gson GSON = new Gson();
+    private static final Gson GSON = GsonFactory.create();
     private final AnalyticsService service = new AnalyticsService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        System.out.println("⚡ AnalyticsController: doGet() START");
         resp.setContentType("application/json;charset=UTF-8");
-        String type = param(req, "type", "all");
-        OffsetDateTime from = parse(req.getParameter("from"));
-        OffsetDateTime to   = parse(req.getParameter("to"));
-        List<Transaction> data = service.find(type, from, to);
+        resp.setCharacterEncoding("UTF-8");
 
-        try (PrintWriter out = resp.getWriter()) {
-            out.print(GSON.toJson(data));
+        System.out.println("👉 AnalyticsController triggered");
+
+        String type = param(req, "type", "all");
+        LocalDateTime from = parse(req.getParameter("from"));
+        LocalDateTime to = parse(req.getParameter("to"));
+
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        try {
+            List<Transaction> list = service.find(type, from, to);
+            System.out.println("✅ Query done, size = " + list.size());
+
+            if (list.isEmpty()) {
+                result.put("message", "No data found");
+            } else {
+                // === Tổng hợp dữ liệu ===
+                double income = list.stream()
+                        .filter(t -> "income".equalsIgnoreCase(t.getType()))
+                        .mapToDouble(Transaction::getAmount)
+                        .sum();
+
+                double expense = list.stream()
+                        .filter(t -> "expense".equalsIgnoreCase(t.getType()))
+                        .mapToDouble(Transaction::getAmount)
+                        .sum();
+
+                double balance = income - expense;
+
+                // === Nhóm theo danh mục ===
+                Map<String, Double> grouped = list.stream()
+                        .collect(Collectors.groupingBy(
+                                t -> {
+                                    if (t.getCategory() != null && t.getCategory().getName() != null) {
+                                        return t.getCategory().getName();
+                                    }
+                                    return "Không xác định";
+                                },
+                                Collectors.summingDouble(Transaction::getAmount)
+                        ));
+
+                // === Lấy top danh mục ===
+                List<Map<String, Object>> topCategory = grouped.entrySet().stream()
+                        .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                        .limit(10)
+                        .map(e -> {
+                            Map<String, Object> map = new LinkedHashMap<>();
+                            map.put("categoryName", e.getKey());
+                            map.put("total", e.getValue());
+                            return map;
+                        })
+                        .collect(Collectors.toList());
+
+                // === Dữ liệu gốc (safe DTO) ===
+                List<Map<String, Object>> safeList = list.stream().map(t -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("id", t.getId());
+                    item.put("type", t.getType());
+                    item.put("amount", t.getAmount());
+                    item.put("note", t.getNote());
+                    item.put("date", t.getTransactionDate());
+                    item.put("category", (t.getCategory() != null) ? t.getCategory().getName() : null);
+                    return item;
+                }).collect(Collectors.toList());
+
+                // === Gộp vào result ===
+                result.put("summary", Map.of(
+                        "income", income,
+                        "expense", expense,
+                        "balance", balance
+                ));
+                result.put("topCategory", topCategory);
+                result.put("raw", safeList);
+            }
+
+            // --- Ghi JSON ra response ---
+            String json = GSON.toJson(result);
+            System.out.println("📤 JSON ready, length=" + json.length());
+            try (PrintWriter out = resp.getWriter()) {
+                out.write(json);
+                out.flush();
+            }
+            System.out.println("✅ JSON sent successfully");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            resp.setStatus(500);
+            String errJson = "{\"error\":\"" + e.getMessage().replace("\"", "'") + "\"}";
+            resp.getWriter().write(errJson);
+            resp.getWriter().flush();
         }
     }
 
-    private static String param(HttpServletRequest req, String key, String def) {
-        String val = req.getParameter(key);
-        return (val == null || val.isBlank()) ? def : val;
+    private String param(HttpServletRequest req, String k, String def) {
+        String v = req.getParameter(k);
+        return (v == null || v.isEmpty()) ? def : v;
     }
-    private static OffsetDateTime parse(String s) {
-        try { return (s == null || s.isBlank()) ? null : OffsetDateTime.parse(s); }
-        catch (Exception e) { return null; }
+
+    private LocalDateTime parse(String s) {
+        if (s == null || s.isEmpty()) return null;
+        try {
+            return LocalDateTime.parse(s + "T00:00:00");
+        } catch (DateTimeParseException e) {
+            return null;
+        }
     }
 }

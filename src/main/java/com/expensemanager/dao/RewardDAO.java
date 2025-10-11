@@ -23,7 +23,7 @@ public class RewardDAO {
         EntityManager em = em();
         try {
             RewardPoints rp = em.find(RewardPoints.class, userId);
-            return rp == null ? 0 : (rp.getPoints() == null ? 0 : rp.getPoints());
+            return rp == null ? 0 : rp.getPoints();
         } finally {
             em.close();
         }
@@ -42,7 +42,7 @@ public class RewardDAO {
                 rp.setUpdatedAt(OffsetDateTime.now());
                 em.persist(rp);
             } else {
-                rp.setPoints((rp.getPoints() == null ? 0 : rp.getPoints()) + delta);
+                rp.setPoints(rp.getPoints() + delta);
                 rp.setUpdatedAt(OffsetDateTime.now());
                 em.merge(rp);
             }
@@ -62,7 +62,7 @@ public class RewardDAO {
         try {
             tx.begin();
             RewardPoints rp = em.find(RewardPoints.class, userId, LockModeType.PESSIMISTIC_WRITE);
-            int cur = (rp == null || rp.getPoints() == null) ? 0 : rp.getPoints();
+            int cur = rp.getPoints();
             if (cur < cost) {
                 tx.rollback();
                 return false;
@@ -199,7 +199,7 @@ public class RewardDAO {
                 rp.setPoints(0);
                 em.persist(rp);
             }
-            rp.setPoints((rp.getPoints() == null ? 0 : rp.getPoints()) + perBudget);
+            rp.setPoints( rp.getPoints() + perBudget);
             rp.setUpdatedAt(OffsetDateTime.now());
             em.merge(rp);
 
