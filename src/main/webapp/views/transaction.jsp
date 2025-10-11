@@ -7,45 +7,41 @@
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-
-<html>
-<head>
-    <title>Title</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/layout/layout.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/transaction.css">
-</head>
-<body>
+<div class="transaction-wrapper">
     <div class="transaction-container">
         <!-- Filter -->
-        <aside class="filter-panel">
-            <h2>FILTER</h2>
-            <label>Category</label>
-            <input type="text" placeholder="Category">
+        <form action="${pageContext.request.contextPath}/transaction" method="POST" class="filter-form">
+            <aside class="filter-panel">
+                <input type="hidden" name="action" value="filter">
 
-            <label>From / To</label>
-            <div class="range-inputs">
-                <input type="date">
-                <input type="date">
-            </div>
+                <h2>FILTER</h2>
 
-            <label>Notes</label>
-            <input type="text" placeholder="Notes">
+                <label>Category</label>
+                <input type="text" id="select_new_category" placeholder="Select category" readonly class="open-category-modal">
+                <input type="hidden" name="category" id="hidden_new_category">
 
-            <label>Checked / Not checked</label>
-            <div class="checkbox-group">
-                <label><input type="checkbox" checked> Checked</label>
-                <label><input type="checkbox" checked> Not checked</label>
-            </div>
+                <label>From / To</label>
+                <div class="range-inputs">
+                    <input type="text" id="select_new_date" name="fromDate" placeholder="Select Date" readonly>
+                    <input type="text" id="select_new_date" name="toDate" placeholder="Select Date" readonly>
+                </div>
 
-            <label>Type</label>
-            <div class="checkbox-group">
-                <label><input type="checkbox" checked> Expenses</label>
-                <label><input type="checkbox" checked> Income</label>
-                <label><input type="checkbox"> Transfer between accounts</label>
-            </div>
+                <label>Notes</label>
+                <input type="text" name="notes" placeholder="Notes">
 
-            <button class="cancel-btn">CANCEL</button>
-        </aside>
+
+                <label>Type</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="type" value="Expense" checked> Expenses</label>
+                    <label><input type="checkbox" name="type" value="Income" checked> Income</label>
+                    <label><input type="checkbox" name="type" value="Transfer"> Transfer between accounts</label>
+                </div>
+
+                <button type="submit" class="apply-btn">OK</button>
+                <button type="reset" class="cancel-btn">CANCEL</button>
+            </aside>
+        </form>
+
 
         <!-- Transactions -->
         <section class="transaction-list">
@@ -58,31 +54,244 @@
             <ul class="transaction-items">
                 <c:forEach var="t" items="${transList}">
                     <li class="transaction-item">
-                        <img src="${t.iconUrl}" alt=List">
+<%--                        <img src="${t.iconUrl}" alt=List">--%>
                         <div class="details">
-                            <h3>${t.name}</h3>
-                            <p>${t.source}</p>
+                            <h3>${t.category.name}</h3>
+                            <p>${t.account.name}</p>
                         </div>
-                        <div class="amount ${t.positive ? 'positive' : 'negative'}">
+                        <div class="amount ${t.type ? "income" : "expense"}">
                             <c:choose>
-                                <c:when test="${t.positive}">+ $${t.amount}</c:when>
+                                <c:when test="${t.type}">+ $${t.amount}</c:when>
                                 <c:otherwise>- $${t.amount}</c:otherwise>
                             </c:choose>
                         </div>
-                        <div class="date">${t.date}</div>
+                        <div class="date">${t.transactionDate}</div>
                     </li>
                 </c:forEach>
             </ul>
-            </div>
         </section>
 
-        <!-- Floating buttons -->
+        <!-- Form Income khi nhấp + (Add Transaction Income Form) -->
+        <div id="container-addForm">
+            <form id="addForm" class="modal-addForm"
+                  action="${pageContext.request.contextPath}/transaction"
+                  method="POST">
+
+                <!-- Ẩn hành động để Controller nhận biết -->
+                <input type="hidden" name="action" value="add_income">
+
+                <div class="addForm-header">
+                    <h2>New Income</h2>
+                    <button type="button" class="exchange-btn">Exchange</button>
+                </div>
+
+                <div class="addForm-body">
+                    <!-- Category -->
+                    <div class="input-group">
+                        <div class="input-img">
+                            <img src="assets/icons/salary.png" alt="Icon">
+                        </div>
+                        <div class="input-wrap">
+                            <label for="select_new_category">Category</label>
+                            <input type="text" id="select_new_category"
+                                   placeholder="Select category" readonly
+                                   class="open-category-modal">
+                            <input type="hidden" name="category" id="hidden_new_category">
+                        </div>
+
+                        <!-- Value -->
+                        <div class="input-group-2">
+                            <div class="input-wrap">
+                                <label for="type_value">Value</label>
+                                <input type="number" step="0.01" id="type_value"
+                                       name="value" placeholder="0.00" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account -->
+                    <div class="input-group">
+                        <div class="input-img">
+                            <img src="assets/icons/salary.png" alt="Icon">
+                        </div>
+                        <div class="input-wrap">
+                            <label for="select_new_account">Account</label>
+                            <select id="select_new_account" name="account" required>
+                                <option value="" disabled selected>Select account</option>
+                                <c:forEach var="a" items="${accountList}">
+                                    <option value="${a.id}">${a.name}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Date & Time -->
+                    <div class="input-group">
+                        <div class="input-img">
+                            <img src="assets/icons/salary.png" alt="Icon">
+                        </div>
+                        <div class="input-wrap">
+                            <label for="select_new_date">Date</label>
+                            <input type="text" id="select_new_date"
+                                   name="date" placeholder="Select Date" readonly required>
+                        </div>
+                        <div class="input-group-2">
+                            <div class="input-wrap">
+                                <label for="select_new_time">Time</label>
+                                <input type="text" id="select_new_time"
+                                       name="time" placeholder="00:00" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Source -->
+                    <div class="input-group">
+                        <div class="input-img">
+                            <img src="assets/icons/salary.png" alt="Icon">
+                        </div>
+                        <div class="input-wrap">
+                            <label for="select_new_from">From</label>
+                            <select id="select_new_from" name="source" required>
+                                <option value="" disabled selected>Select source</option>
+                                <option value="work">Công việc</option>
+                                <option value="side_hustle">Việc phụ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="input-group">
+                        <div class="input-img">
+                            <img src="assets/icons/salary.png" alt="Icon">
+                        </div>
+                        <div class="input-wrap">
+                            <label for="type_new_notes">Note</label>
+                            <textarea id="type_new_notes" name="notes"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="addForm-footer">
+                    <button type="button" id="cancelTransactionBtn" class="save-btn">CANCEL</button>
+                    <!-- Nút SAVE gửi form -->
+                    <button type="submit" id="saveTransactionBtn" class="save-btn">SAVE</button>
+                </div>
+            </form>
+        </div>
+
+
+        <!-- Form Expense khi nhấp + (Add Transaction Expense Form) -->
+        <div id="container-addForm-expense">
+            <form id="addForm" class="modal-addForm" action="newTransaction" method="POST">
+                <div class="addForm-header">
+                    <h2>New Expense</h2>
+                    <button type="button" class="exchange-btn">Exchange</button>
+                </div>
+                <div class="addForm-body">
+
+                    <div class="input-group">
+                        <div class="input-img">
+                            <img src="assets/icons/salary.png" alt="Icon">
+                        </div>
+                        <div class="input-wrap">
+                            <label for="select_new_category">Category</label>
+                            <input type="text" id="select_new_category" placeholder="Select category" readonly class="open-category-modal">
+                            <input type="hidden" name="category" id="hidden_new_category">
+                        </div>
+                        <div class="group"></div>
+                        <div class="input-group-2">
+                            <div class="input-wrap">
+                                <label for="type_value">Value</label>
+                                <input type="text" id="type_value" name="value" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-img">
+                            <img src="assets/icons/salary.png" alt="Icon">
+                        </div>
+                        <div class="input-wrap">
+                            <label for="select_new_account">Account</label>
+                            <select id="select_new_account" name="account">
+                                <option value="" disabled selected>Select account</option>
+                                <c:forEach var="a" items="${accountList}">
+                                    <option value=${a.id}>${a.name}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-img">
+                            <img src="assets/icons/salary.png" alt="Icon">
+                        </div>
+                        <div class="input-wrap">
+                            <label for="select_new_date">Date</label>
+                            <input type="text" id="select_new_date" name="date" placeholder="Select Date" readonly>
+                        </div>
+                        <div class="group"></div>
+                        <div class="input-group-2">
+                            <div class="input-wrap">
+                                <label for="select_new_time">Time</label>
+                                <input type="text" id="select_new_time" name="time" placeholder="00:00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-img">
+                            <img src="assets/icons/salary.png" alt="Icon">
+                        </div>
+                        <div class="input-wrap" id="input-wrap-from">
+                            <label for="select_new_from">To</label>
+                            <select id="select_new_from" name="source">
+                                <option value="" disabled selected>Select source</option>
+                                <option value="work">Công việc</option>
+                                <option value="side_hustle">Việc phụ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-img">
+                            <img src="assets/icons/salary.png" alt="Icon">
+                        </div>
+                        <div class="input-wrap" id="input-wrap-note">
+                            <label for="type_new_notes">Note</label>
+                            <textarea id="type_new_notes" name="notes"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="addForm-footer">
+                    <button type="submit" id="cancelTransactionBtn" class="save-btn">CANCEL</button>
+                    <button type="submit" id="saveTransactionBtn" class="save-btn">SAVE</button>
+                </div>
+            </form> </div>
+
+        <!-- Modal chọn Category -->
+        <div id="categoryModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close-category-modal">&times;</span>
+                <h2>Select Category</h2>
+                <ul id="categoryList">
+                    <c:forEach var="c" items="${categoryList}">
+                        <li>
+                            <button type="button" data-category="${c.id}">
+                                    ${c.name}
+                            </button>
+                        </li>
+                    </c:forEach>
+                </ul>
+            </div>
+        </div>
+
+
         <div class="fab-buttons">
-            <button class="fab add">+</button>
-            <button class="fab remove">−</button>
+            <button class="fab add-income">+</button>
+            <button class="fab add-expense">−</button>
         </div>
     </div>
+</div>
 
-    <script defer src="${pageContext.request.contextPath}/assets/js/transaction.js"></script>
-</body>
-</html>
