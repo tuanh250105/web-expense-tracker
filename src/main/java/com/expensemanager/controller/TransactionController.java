@@ -8,13 +8,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpSession;
-import org.hibernate.jdbc.Expectation;
 
 
 @WebServlet("/transaction")
@@ -28,13 +26,11 @@ public class TransactionController extends HttpServlet {
 
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user_id") == null) {
-//            response.sendRedirect("login");
-//            return;
-            UUID userId = UUID.fromString("4efcb554-f4c5-442a-b57c-89d213861501");
+            response.sendRedirect("login");
+            return;
 
         }
-        UUID userId = UUID.fromString("4efcb554-f4c5-442a-b57c-89d213861501");
-        //UUID userId = (UUID) session.getAttribute("user_id");
+        UUID userId = (UUID) session.getAttribute("user_id");
 
         LocalDate today = LocalDate.now();
         int month = today.getMonthValue();
