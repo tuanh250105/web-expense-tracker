@@ -1,157 +1,104 @@
 package com.expensemanager.controller;
 
 import com.expensemanager.model.Category;
+import com.expensemanager.model.User;
 import com.expensemanager.service.CategoryService;
-
-import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
+import jakarta.servlet.http.*;
 import java.io.IOException;
-import java.sql.Date;
 import java.util.List;
+import java.util.UUID;
 
 @WebServlet("/categories")
 public class CategoryController extends HttpServlet {
-    private CategoryService categoryService;
 
-    @Override
-    public void init() {
-        categoryService = new CategoryService();
-    }
+    private final CategoryService categoryService = new CategoryService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String action = request.getParameter("action");
-        if (action == null) {
-            action = "list";
+
+        HttpSession session = request.getSession(false);
+
+        // 🔹 Kiểm tra session
+        if (session == null || session.getAttribute("user_id") == null) {
+            System.out.println("⚠️ Session chưa có user_id — người dùng chưa đăng nhập!");
+            // Nếu chưa login thì không tải dữ liệu, chỉ hiển thị thông báo
+            request.setAttribute("error", "Bạn chưa đăng nhập. Hãy đăng nhập để xem danh mục của bạn!");
+            request.setAttribute("view", "/views/categories.jsp");
+            request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
+            return;
         }
 
-        try {
-            switch (action) {
-                case "new":
-                    showNewForm(request, response);
-                    break;
-                case "edit":
-                    showEditForm(request, response);
-                    break;
-                case "delete":
-                    deleteCategory(request, response);
-                    break;
-                default:
-                    listCategories(request, response);
-                    break;
-            }
-        } catch (Exception e) {
-            throw new ServletException(e);
+        UUID userId = (UUID) session.getAttribute("user_id");
+
+        // ✅ Lấy danh mục theo user
+        List<Category> categories = categoryService.getCategoriesByUser(userId);
+        request.setAttribute("categories", categories);
+
+        String action = request.getParameter("action");
+        if ("edit".equals(action)) {
+            UUID id = UUID.fromString(request.getParameter("id"));
+            Category editCategory = categoryService.getCategoryById(id);
+            request.setAttribute("editCategory", editCategory);
+        } else if ("delete".equals(action)) {
+            UUID id = UUID.fromString(request.getParameter("id"));
+            categoryService.deleteCategory(id);
+            response.sendRedirect(request.getContextPath() + "/categories");
+            return;
         }
+
+        // Hiển thị trong layout
+        request.setAttribute("view", "/views/categories.jsp");
+        request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        try {
-            String idParam = request.getParameter("id");
-            Category category;
 
-            // Nếu có id => sửa, nếu không có => thêm mới
-            if (idParam != null && !idParam.isEmpty()) {
-                Integer id = Integer.parseInt(idParam);
-                category = categoryService.getCategoryById(id);
-            } else {
-                category = new Category();
-                category.setCreatedAt(new Date(System.currentTimeMillis()));
-            }
+        HttpSession session = request.getSession(false);
 
-            // Gán dữ liệu từ form
-            String name = request.getParameter("name");
-            String type = request.getParameter("type");
-            String icon = request.getParameter("icon");
-            String color = request.getParameter("color");
-            String parentIdParam = request.getParameter("parentId");
-
-            category.setName(name);
-            category.setType(type);
-            category.setIconPath(icon);
-            category.setColor(color);
-
-            if (parentIdParam != null && !parentIdParam.isEmpty()) {
-                Category parent = categoryService.getCategoryById(Integer.parseInt(parentIdParam));
-                category.setParent(parent);
-            } else {
-                category.setParent(null);
-            }
-
-            // Xử lý thêm hoặc cập nhật
-            if (category.getId() != null) {
-                categoryService.updateCategory(category);
-            } else {
-                categoryService.addCategory(category);
-            }
-
-            response.sendRedirect("categories");
-
-        } catch (Exception e) {
-            throw new ServletException(e);
-        }
-    }
-
-    // ------------------ CÁC HÀM HỖ TRỢ ------------------
-
-    private void listCategories(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        List<Category> categories = categoryService.getAllCategories();
-
-        // Cập nhật lại icon và màu sắc (phòng khi giá trị bị null hoặc trống)
-        for (Category c : categories) {
-            if (c.getIconPath() == null || c.getIconPath().isEmpty()) {
-                c.setIconPath("fa-solid fa-tag"); // icon mặc định
-            }
-            if (c.getColor() == null || c.getColor().isEmpty()) {
-                c.setColor("#4a90e2"); // màu mặc định
-            }
+        if (session == null || session.getAttribute("user_id") == null) {
+            System.out.println("⚠️ Session chưa có user_id — người dùng chưa đăng nhập!");
+            request.setAttribute("error", "Bạn chưa đăng nhập. Hãy đăng nhập để thêm danh mục!");
+            request.setAttribute("view", "/views/categories.jsp");
+            request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
+            return;
         }
 
-        request.setAttribute("categories", categories);
-        request.setAttribute("view", "/views/categories.jsp");
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/layout/layout.jsp");
-        dispatcher.forward(request, response);
-    }
+        UUID userId = (UUID) session.getAttribute("user_id");
+        User user = new User();
+        user.setId(userId);
 
-    private void showNewForm(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        listCategories(request, response);
-    }
+        // 🔹 Lấy dữ liệu form
+        String idParam = request.getParameter("id");
+        String name = request.getParameter("name");
+        String type = request.getParameter("type");
+        String iconPath = request.getParameter("icon");
+        String color = request.getParameter("color");
+        String parentId = request.getParameter("parentId");
 
-    private void showEditForm(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        Integer id = Integer.parseInt(request.getParameter("id"));
-        Category editCategory = categoryService.getCategoryById(id);
+        Category category = new Category();
+        category.setName(name);
+        category.setType(type);
+        category.setIconPath(iconPath);
+        category.setColor(color);
+        category.setUser(user);
 
-        // Nếu icon hoặc màu bị trống thì thêm mặc định để hiển thị preview
-        if (editCategory.getIconPath() == null || editCategory.getIconPath().isEmpty()) {
-            editCategory.setIconPath("fa-solid fa-tag");
+        if (parentId != null && !parentId.isEmpty()) {
+            Category parent = categoryService.getCategoryById(UUID.fromString(parentId));
+            category.setParent(parent);
         }
-        if (editCategory.getColor() == null || editCategory.getColor().isEmpty()) {
-            editCategory.setColor("#4a90e2");
+
+        if (idParam == null || idParam.isEmpty()) {
+            categoryService.saveCategory(category, user);
+        } else {
+            category.setId(UUID.fromString(idParam));
+            categoryService.updateCategory(category);
         }
 
-        request.setAttribute("editCategory", editCategory);
-        request.setAttribute("categories", categoryService.getAllCategories());
-        request.setAttribute("view", "/views/categories.jsp");
-
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/layout/layout.jsp");
-        dispatcher.forward(request, response);
-    }
-
-    private void deleteCategory(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
-        Integer id = Integer.parseInt(request.getParameter("id"));
-        categoryService.deleteCategory(id);
-        response.sendRedirect("categories");
+        response.sendRedirect(request.getContextPath() + "/categories");
     }
 }

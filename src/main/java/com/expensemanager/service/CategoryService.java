@@ -1,36 +1,33 @@
 package com.expensemanager.service;
 
-import com.expensemanager.dao.CategoryDAO; // Vẫn import lớp CategoryDAO
+import com.expensemanager.dao.CategoryDAO;
 import com.expensemanager.model.Category;
-
+import com.expensemanager.model.User;
 import java.util.List;
+import java.util.UUID;
 
 public class CategoryService {
 
-    private final CategoryDAO categoryDAO;
+    private final CategoryDAO categoryDAO = new CategoryDAO();
 
-    public CategoryService() {
-        // Chỉ cần thay đổi dòng này: không còn "Impl" nữa
-        this.categoryDAO = new CategoryDAO();
+    public List<Category> getCategoriesByUser(UUID userId) {
+        return categoryDAO.findAllByUser(userId);
     }
 
-    public List<Category> getAllCategories() {
-        return categoryDAO.findAll();
-    }
-
-    public void addCategory(Category category) {
-        categoryDAO.save(category);
-    }
-
-    public void deleteCategory(Integer id) {
-        categoryDAO.delete(id);
-    }
-
-    public Category getCategoryById(Integer id) {
+    public Category getCategoryById(UUID id) {
         return categoryDAO.findById(id);
     }
 
-    public void updateCategory(Category updated) {
-        categoryDAO.update(updated);
+    public void saveCategory(Category category, User user) {
+        category.setUser(user);
+        categoryDAO.save(category);
+    }
+
+    public void updateCategory(Category category) {
+        categoryDAO.update(category);
+    }
+
+    public void deleteCategory(UUID id) {
+        categoryDAO.delete(id);
     }
 }
