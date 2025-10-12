@@ -14,9 +14,7 @@
         <!--  thêm bởi DƯ  -->
     </properties>
     <dependencies>
-<<<<<<< HEAD
-        <!--  Servlet API  -->
-=======
+
         <!-- JPA -->
         <dependency>
             <groupId>jakarta.persistence</groupId>
@@ -32,16 +30,12 @@
         </dependency>
 
         <!-- Servlet API -->
->>>>>>> 14ad5cc8000a1004f85b9762e0f1c1397356e0bb
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
             <version>6.0.0</version>
             <scope>provided</scope>
         </dependency>
-<<<<<<< HEAD
-        <!--  JSP + JSTL  -->
-=======
 
         <!-- JPA API -->
         <dependency>
@@ -65,7 +59,6 @@
         </dependency>
 
         <!-- JSTL for JSP -->
->>>>>>> 14ad5cc8000a1004f85b9762e0f1c1397356e0bb
         <dependency>
             <groupId>jakarta.servlet.jsp.jstl</groupId>
             <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
@@ -76,20 +69,13 @@
             <artifactId>jakarta.servlet.jsp.jstl</artifactId>
             <version>3.0.1</version>
         </dependency>
-<<<<<<< HEAD
-        <!--  PostgreSQL JDBC driver  -->
-=======
 
         <!-- BCrypt for password hashing -->
->>>>>>> 14ad5cc8000a1004f85b9762e0f1c1397356e0bb
         <dependency>
             <groupId>org.mindrot</groupId>
             <artifactId>jbcrypt</artifactId>
             <version>0.4</version>
         </dependency>
-<<<<<<< HEAD
-        <!--  JUnit  -->
-=======
 
         <!-- CSV Utility -->
         <dependency>
@@ -116,6 +102,7 @@
             <artifactId>poi-ooxml</artifactId>
             <version>5.2.5</version>
         </dependency>
+
         <!-- Jakarta Mail (Angus Mail implementation) -->
         <dependency>
             <groupId>org.eclipse.angus</groupId>
@@ -151,7 +138,6 @@
         </dependency>
 
         <!-- JUnit (tests) -->
->>>>>>> 14ad5cc8000a1004f85b9762e0f1c1397356e0bb
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -198,10 +184,6 @@
     <build>
         <finalName>BudgetBuddy</finalName>
         <plugins>
-<<<<<<< HEAD
-            <!--  Compiler plugin  -->
-=======
->>>>>>> 14ad5cc8000a1004f85b9762e0f1c1397356e0bb
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -211,10 +193,6 @@
                     <target>21</target>
                 </configuration>
             </plugin>
-<<<<<<< HEAD
-            <!--  WAR plugin  -->
-=======
->>>>>>> 14ad5cc8000a1004f85b9762e0f1c1397356e0bb
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>

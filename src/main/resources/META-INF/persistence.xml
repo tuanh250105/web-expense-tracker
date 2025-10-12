@@ -13,6 +13,8 @@
         <class>com.expensemanager.model.Transaction</class>
         <class>com.expensemanager.model.User</class>
         <class>com.expensemanager.model.PasswordResetToken</class>
+        <class>com.expensemanager.model.FAQ</class>
+        <class>com.expensemanager.model.ScheduledTransaction</class>
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
             <property name="jakarta.persistence.jdbc.url" value="${DB_URL}"/>
