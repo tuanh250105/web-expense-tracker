@@ -19,9 +19,9 @@ public class FAQRepository {
                 if (emf == null) {
                     try {
                         emf = Persistence.createEntityManagerFactory("BugetBuddyUnit");
-                        System.out.println("✅ Lazy init EntityManagerFactory thành công!");
+                        System.out.println("lazy init EntityManagerFactory thành công");
                     } catch (Exception e) {
-                        System.err.println("❌ Lỗi lazy init EMF: " + e.getMessage());
+                        System.err.println("Lỗi lazy init EMF " + e.getMessage());
                         e.printStackTrace();
                         throw new RuntimeException("JPA lazy init thất bại", e);
                     }
