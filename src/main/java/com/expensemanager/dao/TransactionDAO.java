@@ -17,7 +17,7 @@ import java.util.UUID;
 public class TransactionDAO {
 
     private static final EntityManagerFactory emf =
-            Persistence.createEntityManagerFactory("BudgetBuddyUnit");
+            Persistence.createEntityManagerFactory("default");
 
     public Account findAccountById(UUID id) {
         EntityManager em = emf.createEntityManager();
