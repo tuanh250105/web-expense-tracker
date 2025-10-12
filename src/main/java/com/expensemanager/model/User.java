@@ -1,8 +1,15 @@
 package com.expensemanager.model;
 
-import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
@@ -19,14 +26,15 @@ public class User {
     @Column(nullable = false, unique = true)
     private String username;
 
-    @Column(name = "full_name")
-    private String fullName;
-
     @Column(nullable = false, unique = true)
     private String email;
 
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
+
+    @Column(name = "full_name")
+    private String fullName;
+
 
     @Column(nullable = false)
     private String role = "USER";

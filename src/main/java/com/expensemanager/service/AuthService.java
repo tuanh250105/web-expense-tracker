@@ -32,6 +32,8 @@ public class AuthService {
     u.setPasswordHash(PasswordUtil.hash(password));
     u.setProvider("LOCAL");
     repo.save(u);
+    // Save to Supabase
+    new SupabaseUserService().saveUser(u.getUsername(), u.getEmail(), u.getFullName(), u.getProvider());
     return u;
   }
 

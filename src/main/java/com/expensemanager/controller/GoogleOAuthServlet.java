@@ -75,6 +75,12 @@ public class GoogleOAuthServlet extends HttpServlet {
     var transport = new NetHttpTransport();
     var jsonFactory = GsonFactory.getDefaultInstance();
 
+    System.out.println("🔍 [Google OAuth Callback]");
+    System.out.println("code=" + code);
+    System.out.println("redirect=" + redirect);
+    System.out.println("clientId=" + System.getenv("GOOGLE_CLIENT_ID"));
+    System.out.println("clientSecret=" + System.getenv("GOOGLE_CLIENT_SECRET").substring(0,5) + "...");
+
     GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(
         transport, jsonFactory, "https://oauth2.googleapis.com/token",
         System.getenv("GOOGLE_CLIENT_ID"),
