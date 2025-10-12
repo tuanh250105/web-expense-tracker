@@ -25,14 +25,12 @@ public class RewardsController extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException, ServletException {
 
-        // ✅ Nếu truy cập giao diện /rewards → forward layout.jsp
         if ("/rewards".equals(req.getServletPath())) {
             req.setAttribute("view", "/views/rewards.jsp");
             req.getRequestDispatcher("/layout/layout.jsp").forward(req, resp);
             return;
         }
 
-        // ✅ Giữ nguyên phần API /api/rewards/*
         resp.setContentType("application/json;charset=UTF-8");
         String path = Optional.ofNullable(req.getPathInfo()).orElse("/");
         UUID uid = parseUserId(req);

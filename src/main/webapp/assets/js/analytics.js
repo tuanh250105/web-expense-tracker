@@ -14,7 +14,6 @@
     const sumOutEl  = $('#bb-sum-out');
     const sumBalEl  = $('#bb-sum-bal');
 
-    // ====== UI setup ======
     function populateApps() {
         const type = elType.value;
         elApp.innerHTML = '';
@@ -45,7 +44,6 @@
     elApp.addEventListener('change', toggleTop);
     populateApps();
 
-    // ====== Chart rendering ======
     let chart;
     function renderBar(labels, values, color) {
         if (chart) chart.destroy();
@@ -94,7 +92,6 @@
         return g;
     }
 
-    // ====== Export ======
     document.getElementById('bb-export')?.addEventListener('click', () => {
         if (!chart) return alert('Chưa có biểu đồ để export');
         const url = chart.toBase64Image();
@@ -104,7 +101,6 @@
         a.click();
     });
 
-    // ====== API ======
     const CTX = window.location.pathname.split('/')[1];
     const BASE = `/${CTX}/api/analytics`;
 
@@ -130,7 +126,6 @@
         return { labels, values, sumIn, sumOut, balance: sumIn - sumOut };
     }
 
-    // ====== Fetch + render ======
     elApply.addEventListener('click', async () => {
         const chartType = elType.value;
         const app = elApp.value;
@@ -140,21 +135,20 @@
         const topN = parseInt(elTop.value || '5', 10);
         const type = $('#bb-kind')?.value || 'all';
 
-        console.log("📡 Fetch:", `${BASE}?type=${type}&from=${from}&to=${to}`);
+        console.log(" Fetch:", `${BASE}?type=${type}&from=${from}&to=${to}`);
 
         try {
             const res = await fetch(`${BASE}?type=${type}&from=${from}&to=${to}`);
             if (!res.ok) throw new Error("Lỗi tải dữ liệu");
             const data = await res.json();
-            console.log("✅ API data:", data);
+            console.log(" API data:", data);
 
             const list = data.raw || data;
             if (!list || list.length === 0) {
-                alert("⚠️ Không có dữ liệu giao dịch để hiển thị!");
+                alert("Không có dữ liệu giao dịch để hiển thị!");
                 return;
             }
 
-            // Cập nhật tổng
             const summary = data.summary || {};
             sumInEl.textContent  = (summary.income || 0).toLocaleString('vi-VN');
             sumOutEl.textContent = (summary.expense || 0).toLocaleString('vi-VN');
@@ -166,7 +160,7 @@
             } else if (app === 'top-category') {
                 const top = data.topCategory || [];
                 if (top.length === 0) {
-                    alert("⚠️ Không có dữ liệu danh mục!");
+                    alert("Không có dữ liệu danh mục!");
                     return;
                 }
                 const labels = top.map(t => t.categoryName || `Danh mục #${t.categoryId}`);
@@ -175,12 +169,11 @@
                 else renderPie(labels, values);
             }
         } catch (err) {
-            console.error("❌ Lỗi khi fetch API:", err);
+            console.error("Lỗi khi fetch API:", err);
             alert("Không thể tải dữ liệu từ API.");
         }
     });
 
-    // ====== Tự load mặc định ======
     window.addEventListener("DOMContentLoaded", () => {
         const now = new Date();
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);

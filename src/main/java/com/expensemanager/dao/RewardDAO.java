@@ -12,13 +12,12 @@ import java.util.UUID;
 public class RewardDAO {
 
     private static final EntityManagerFactory EMF =
-            Persistence.createEntityManagerFactory("BudgetBuddyUnit"); // ✅ fix typo
+            Persistence.createEntityManagerFactory("BudgetBuddyUnit");
 
     private EntityManager em() {
         return EMF.createEntityManager();
     }
 
-    // ======= ĐIỂM NGƯỜI DÙNG =======
     public int getUserScore(UUID userId) {
         EntityManager em = em();
         try {
@@ -134,8 +133,6 @@ public class RewardDAO {
         }
     }
 
-    // ======= LIÊN KẾT VỚI BUDGET (không cần model Budget.java) =======
-
     /** Số ngân sách đã đạt mục tiêu */
     public int countAchievedBudgets(UUID userId) {
         EntityManager em = em();
@@ -155,7 +152,6 @@ public class RewardDAO {
         }
     }
 
-    /** Đã nhận bao nhiêu lượt (mỗi lượt = +perBudget điểm) */
     public int countBudgetClaims(UUID userId, int perBudget) {
         EntityManager em = em();
         try {
@@ -175,14 +171,12 @@ public class RewardDAO {
         }
     }
 
-    /** Nhận 1 lượt (+perBudget điểm). Trả về điểm vừa cộng (0 hoặc perBudget). */
     public int claimOneBudgetAward(UUID userId, int perBudget) {
         EntityManager em = em();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
 
-            // còn bao nhiêu lượt có thể nhận
             int achieved = countAchievedBudgets(userId);
             int claimed = countBudgetClaims(userId, perBudget);
             int remain = Math.max(achieved - claimed, 0);
@@ -191,7 +185,6 @@ public class RewardDAO {
                 return 0;
             }
 
-            // + perBudget điểm
             RewardPoints rp = em.find(RewardPoints.class, userId, LockModeType.PESSIMISTIC_WRITE);
             if (rp == null) {
                 rp = new RewardPoints();
@@ -203,12 +196,11 @@ public class RewardDAO {
             rp.setUpdatedAt(OffsetDateTime.now());
             em.merge(rp);
 
-            // log 1 lượt đã nhận vào reward_spins
             RewardSpin s = new RewardSpin();
             s.setUserId(userId);
-            s.setPrizeCode(null);              // NULL để không dính FK
-            s.setPrizeLabel("BUDGET_AWARD");   // flag để nhận diện
-            s.setPointsSpent(-perBudget);      // âm = cộng điểm
+            s.setPrizeCode(null);
+            s.setPrizeLabel("BUDGET_AWARD");
+            s.setPointsSpent(-perBudget);
             s.setCreatedAt(OffsetDateTime.now());
             em.persist(s);
 

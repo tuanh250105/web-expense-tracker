@@ -2,7 +2,6 @@
     const CTX = window.BB_CTX || "";
     const USER_ID = window.BB_USER_ID || "00000000-0000-0000-0000-000000000001";
 
-    // ---- DOM ----
     const wheelEl   = document.getElementById("rw-wheel");
     const spinBtn   = document.getElementById("rw-spin");
     const awardBtn  = document.getElementById("rw-award");
@@ -11,7 +10,6 @@
     const resultEl  = document.getElementById("rw-result");
     if (!wheelEl || !spinBtn || !awardBtn || !pointsEl || !historyEl || !resultEl) return;
 
-    // ---- Canvas setup ----
     wheelEl.width = 420;
     wheelEl.height = 420;
     const ctx = wheelEl.getContext("2d");
@@ -28,11 +26,9 @@
     const bag = [];
     prizes.forEach(p => { for (let i = 0; i < Math.max(1, p.weight); i++) bag.push(p); });
 
-    // ---- Vẽ vòng quay ----
     function draw(angle = 0) {
         ctx.clearRect(0, 0, wheelEl.width, wheelEl.height);
 
-        // ==== Vẽ các lát ====
         prizes.forEach((p, i) => {
             ctx.beginPath();
             ctx.moveTo(cx, cy);
@@ -51,13 +47,12 @@
             ctx.restore();
         });
 
-        // ==== Vẽ cây kim chỉa xuống (ở hướng 12h) ====
         ctx.save();
         ctx.translate(cx, cy);
-        ctx.rotate(-Math.PI / 2); // 💡 đây là dòng fix quan trọng — xoay kim lên trên
+        ctx.rotate(-Math.PI / 2); //
         ctx.beginPath();
-        ctx.moveTo(0, -r - 5);   // đỉnh ngoài
-        ctx.lineTo(0, -r + 25);  // vào trong bánh
+        ctx.moveTo(0, -r - 5);
+        ctx.lineTo(0, -r + 25);
         ctx.strokeStyle = "#0ea5e9";
         ctx.lineWidth = 6;
         ctx.lineCap = "round";
@@ -69,7 +64,6 @@
 
     draw();
 
-    // ---- Hiển thị popup (toast) ----
     function showToast(msg, color = "#16a34a") {
         const t = document.getElementById("rw-toast");
         if (!t) return;
@@ -79,13 +73,11 @@
         setTimeout(() => t.classList.remove("show"), 1500);
     }
 
-    // ---- LocalStorage fallback ----
     const ls = {
         get(k, def) { try { return JSON.parse(localStorage.getItem(k) ?? JSON.stringify(def)); } catch { return def; } },
         set(k, v)   { localStorage.setItem(k, JSON.stringify(v)); }
     };
 
-    // ---- API wrappers ----
     async function apiGetPoints() {
         try {
             const res = await fetch(`${CTX}/api/rewards/points?userId=${encodeURIComponent(USER_ID)}`);
@@ -139,7 +131,6 @@
         return { prizeCode: pick.code, prizeLabel: pick.label, spent: 20 };
     }
 
-    // ---- UI helpers ----
     async function refreshPointsAndHistory() {
         pointsEl.textContent = await apiGetPoints();
         const items = await apiRecent(10);
@@ -171,7 +162,6 @@
         }
     }
 
-    // ---- Sự kiện nút "Nhận thưởng" ----
     awardBtn.addEventListener("click", async () => {
         const cur = await apiGetPoints();
         if (false) {
@@ -191,7 +181,6 @@
         }
     });
 
-    // ---- Sự kiện "Quay" ----
     spinBtn.addEventListener("click", async () => {
         const resp = await apiSpin();
         if (resp.error === "not_enough_points") {
@@ -216,17 +205,14 @@
             resultEl.textContent = "🎁 Bạn nhận: " + label;
             showToast(`🎉 ${label}`);
 
-            // ✅ Thêm lịch sử vào giao diện NGAY (chưa cần backend)
             const now = new Date().toLocaleString();
             const li = document.createElement("li");
             li.textContent = `${now} – ${label}`;
             historyEl.prepend(li);
 
-            // ✅ Cập nhật điểm (đã trừ)
             let curPoints = parseInt(pointsEl.textContent) || 0;
             pointsEl.textContent = Math.max(0, curPoints - 20);
 
-            // 🔧 Đợi 2s rồi refresh lại để sync backend (nếu backend lưu chậm)
             setTimeout(() => refreshPointsAndHistory(), 2000);
         });
 
@@ -245,12 +231,10 @@
             if (p < 1) requestAnimationFrame(frame);
             else onDone && onDone();
         }
-
         requestAnimationFrame(frame);
     }
 
 
-    // ---- Khi DOM sẵn sàng ----
     document.addEventListener("DOMContentLoaded", async () => {
         await refreshPointsAndHistory();
         await updateAwardButton();

@@ -23,7 +23,6 @@ public class RewardPrize {
     @Column(nullable = false)
     private Boolean active = true;
 
-    // ✅ Native Hibernate JSONB mapping
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> meta;

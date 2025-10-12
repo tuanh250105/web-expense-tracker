@@ -21,7 +21,6 @@
 #rw-history li{padding:6px 8px;border-bottom:1px dashed #e5e7eb;color:#374151}
 #rw-history li:last-child{border-bottom:none}
 
-/* Ẩn tiêu đề dummy từ layout ngay trong trang chức năng (không sửa layout.jsp) */
 .content>h2,.content>p{display:none}
 .bb-rewards {
     display: flex;

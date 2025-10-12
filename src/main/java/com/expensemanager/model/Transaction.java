@@ -11,13 +11,11 @@ import java.util.UUID;
 @Table(name = "transactions")
 public class Transaction {
 
-    // ====== ID (UUID) ======
     @Id
     @GeneratedValue
     @Column(columnDefinition = "uuid DEFAULT gen_random_uuid()")
     private UUID id;
 
-    // ====== RELATIONSHIPS ======
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
@@ -26,7 +24,6 @@ public class Transaction {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    // ====== FIELDS ======
     @Column(nullable = false)
     private String type; // "income" | "expense"
 
@@ -38,7 +35,6 @@ public class Transaction {
     @Column(name = "transaction_date", nullable = false)
     private LocalDateTime transactionDate;
 
-    // ====== TIMESTAMP ======
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -47,7 +43,6 @@ public class Transaction {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // ====== CONSTRUCTORS ======
     public Transaction() {}
 
     public Transaction(UUID id, Account account, String type, Category category,
@@ -64,7 +59,6 @@ public class Transaction {
         this.updatedAt = updatedAt;
     }
 
-    // ====== GETTERS & SETTERS ======
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -92,7 +86,6 @@ public class Transaction {
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
-    // ====== toString() ======
     @Override
     public String toString() {
         return "Transaction{" +

@@ -43,7 +43,6 @@ canvas#bb-analytics-chart{display:block;width:100% !important;height:360px !impo
 }
 .bb-btn:disabled { opacity: .6; cursor: not-allowed; }
 .content>h2,.content>p{display:none}
-/* === FIX: Nút Áp dụng hiển thị rõ hơn === */
 #bb-apply {
     background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
     color: #fff !important;

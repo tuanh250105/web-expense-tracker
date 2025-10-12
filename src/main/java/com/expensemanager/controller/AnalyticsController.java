@@ -24,14 +24,12 @@ public class AnalyticsController extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException, ServletException {
 
-        // ✅ Nếu truy cập giao diện /analytics → load layout.jsp
         if ("/analytics".equals(req.getServletPath())) {
             req.setAttribute("view", "/views/analytics.jsp");
             req.getRequestDispatcher("/layout/layout.jsp").forward(req, resp);
             return;
         }
 
-        // ✅ Còn lại là API /api/analytics
         resp.setContentType("application/json;charset=UTF-8");
         resp.setCharacterEncoding("UTF-8");
 

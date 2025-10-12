@@ -1,5 +1,4 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%-- Chỉ là phần thân, layout.jsp sẽ bao ngoài --%>
 
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/analytics.css"/>
 
@@ -58,9 +57,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-
-<%-- TẮT MOCK, DÙNG API THẬT --%>
-<%-- <script src="${pageContext.request.contextPath}/assets/js/analytics-mock.js"></script> --%>
 
 <script src="${pageContext.request.contextPath}/assets/js/analytics.js"></script>
 

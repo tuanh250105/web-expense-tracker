@@ -46,7 +46,6 @@
         <li><a href="#"><i class="fa-solid fa-hand-holding-dollar"></i> <span>Quản lý nợ</span></a></li>
         <hr>
 
-        <!-- ✅ chỉnh 3 dòng này để đúng servlet controller -->
         <li><a href="${pageContext.request.contextPath}/analytics"><i class="fa-solid fa-chart-pie"></i> <span>Tổng hợp biểu đồ</span></a></li>
         <li><a href="#"><i class="fa-solid fa-calendar"></i> <span>Lịch</span></a></li>
         <li><a href="#"><i class="fa-solid fa-people-group"></i> <span>Chi tiêu nhóm</span></a></li>
@@ -63,7 +62,6 @@
 </nav>
 
 <main class="content">
-    <!-- ✅ giữ nguyên, controller sẽ setAttribute("view") -->
     <jsp:include page="${view}" />
 </main>
 

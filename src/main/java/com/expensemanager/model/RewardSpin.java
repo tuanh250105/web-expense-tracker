@@ -27,7 +27,6 @@ public class RewardSpin {
     @Column(name = "created_at", columnDefinition = "timestamp with time zone")
     private OffsetDateTime createdAt;
 
-    // ✅ Relationships (optional lazy fetch)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;
