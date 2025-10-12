@@ -1,7 +1,7 @@
 package com.expensemanager.model;
 
 import jakarta.persistence.*;
-import java.util.List;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -9,41 +9,54 @@ import java.util.UUID;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue
+    @Column(columnDefinition = "uuid")
     private UUID id;
+
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(name = "full_name")
+    private String fullName;
 
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
-    private String name;
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash;
 
     @Column(nullable = false)
-    private String password;
+    private String role = "USER";
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Account> accounts;
+    @Column(nullable = false)
+    private String provider = "LOCAL";
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Category> categories;
+    @Column(name = "created_at", updatable = false)
+    private Instant createdAt = Instant.now();
 
-    public User() {}
+    @Column(name = "updated_at")
+    private Instant updatedAt = Instant.now();
 
+    @PreUpdate
+    public void updateTime() { updatedAt = Instant.now(); }
+
+    // --- Getter / Setter ---
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
-
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
-    public List<Account> getAccounts() { return accounts; }
-    public void setAccounts(List<Account> accounts) { this.accounts = accounts; }
-
-    public List<Category> getCategories() { return categories; }
-    public void setCategories(List<Category> categories) { this.categories = categories; }
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+    public String getProvider() { return provider; }
+    public void setProvider(String provider) { this.provider = provider; }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }

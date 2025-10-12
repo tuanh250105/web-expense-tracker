@@ -12,16 +12,16 @@ import java.util.UUID;
 public class Transaction {
 
     @Id
-    @GeneratedValue
-    @Column(columnDefinition = "uuid DEFAULT gen_random_uuid()")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(columnDefinition = "UUID", updatable = false, nullable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id", nullable = false)
+    @JoinColumn(name = "account_id", nullable = true)
     private Account account;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
+    @JoinColumn(name = "category_id", nullable = true)
     private Category category;
 
     @Column(nullable = false)
@@ -30,24 +30,25 @@ public class Transaction {
     @Column(nullable = false)
     private int amount;
 
+    @Column
     private String note;
 
     @Column(name = "transaction_date", nullable = false)
     private LocalDateTime transactionDate;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "create_at", nullable = false, updatable = false)
+    private LocalDateTime create_at;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "update_at")
+    private LocalDateTime update_at;
 
     public Transaction() {}
 
     public Transaction(UUID id, Account account, String type, Category category,
                        int amount, String note, LocalDateTime transactionDate,
-                       LocalDateTime createdAt, LocalDateTime updatedAt) {
+                       LocalDateTime create_at, LocalDateTime update_at) {
         this.id = id;
         this.account = account;
         this.type = type;
@@ -55,10 +56,11 @@ public class Transaction {
         this.amount = amount;
         this.note = note;
         this.transactionDate = transactionDate;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
+        this.create_at = create_at;
+        this.update_at = update_at;
     }
 
+    // --- Getter/Setter giữ nguyên snake_case ---
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -80,11 +82,11 @@ public class Transaction {
     public LocalDateTime getTransactionDate() { return transactionDate; }
     public void setTransactionDate(LocalDateTime transactionDate) { this.transactionDate = transactionDate; }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getCreate_at() { return create_at; }
+    public void setCreate_at(LocalDateTime create_at) { this.create_at = create_at; }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public LocalDateTime getUpdate_at() { return update_at; }
+    public void setUpdate_at(LocalDateTime update_at) { this.update_at = update_at; }
 
     @Override
     public String toString() {
@@ -96,8 +98,8 @@ public class Transaction {
                 ", amount=" + amount +
                 ", note='" + note + '\'' +
                 ", transactionDate=" + transactionDate +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
+                ", create_at=" + create_at +
+                ", update_at=" + update_at +
                 '}';
     }
 }

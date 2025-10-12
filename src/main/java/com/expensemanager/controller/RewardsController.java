@@ -33,7 +33,7 @@ public class RewardsController extends HttpServlet {
 
         resp.setContentType("application/json;charset=UTF-8");
         String path = Optional.ofNullable(req.getPathInfo()).orElse("/");
-        UUID uid = parseUserId(req);
+        UUID uid = resolveUserId(req);
 
         switch (path) {
             case "/points" -> write(resp, Map.of("points", dao.getUserScore(uid)));
@@ -69,7 +69,7 @@ public class RewardsController extends HttpServlet {
 
         resp.setContentType("application/json;charset=UTF-8");
         String path = Optional.ofNullable(req.getPathInfo()).orElse("/");
-        UUID uid = parseUserId(req);
+        UUID uid = resolveUserId(req);
 
         switch (path) {
             case "/claim-one" -> {
@@ -103,11 +103,17 @@ public class RewardsController extends HttpServlet {
 
         RewardPrize pick = prizes.get(new Random().nextInt(prizes.size()));
         dao.saveSpin(uid, pick.getCode(), pick.getLabel(), COST_SPIN);
+
+        if ("EXTRA".equalsIgnoreCase(pick.getCode())) {
+            dao.addPoints(uid, COST_SPIN);
+        }
+
         write(resp, Map.of(
                 "prizeCode", pick.getCode(),
                 "prizeLabel", pick.getLabel(),
                 "spent", COST_SPIN
         ));
+
     }
 
     private void write(HttpServletResponse resp, Object obj) throws IOException {
@@ -116,12 +122,29 @@ public class RewardsController extends HttpServlet {
         }
     }
 
-    private UUID parseUserId(HttpServletRequest req) {
-        String u = req.getParameter("userId");
-        try { return UUID.fromString(u); }
-        catch (Exception e) {
-            return UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
+    private UUID resolveUserId(HttpServletRequest req) {
+        // Ưu tiên lấy từ session
+        HttpSession session = req.getSession(false);
+        UUID uid = null;
+
+        if (session != null && session.getAttribute("userId") != null) {
+            Object val = session.getAttribute("userId");
+            if (val instanceof UUID u) uid = u;
+            else if (val instanceof String s && !s.isBlank()) {
+                try { uid = UUID.fromString(s); } catch (Exception ignored) {}
+            }
         }
+
+        // Fallback nếu chưa login hoặc chưa có session
+        if (uid == null) {
+            try {
+                uid = UUID.fromString(req.getParameter("userId"));
+            } catch (Exception e) {
+                uid = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
+            }
+        }
+
+        return uid;
     }
 
     private int parseInt(String s, int def) {

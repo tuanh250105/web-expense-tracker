@@ -9,7 +9,9 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+
 public class RewardDAO {
+
 
     private static final EntityManagerFactory EMF =
             Persistence.createEntityManagerFactory("BudgetBuddyUnit");
@@ -28,32 +30,30 @@ public class RewardDAO {
         }
     }
 
-    public int addPoints(UUID userId, int delta) {
-        EntityManager em = em();
-        EntityTransaction tx = em.getTransaction();
+    public void addPoints(UUID userId, int points) {
+        EntityManager em = EMF.createEntityManager();
         try {
-            tx.begin();
-            RewardPoints rp = em.find(RewardPoints.class, userId);
-            if (rp == null) {
-                rp = new RewardPoints();
-                rp.setUserId(userId);
-                rp.setPoints(Math.max(delta, 0));
-                rp.setUpdatedAt(OffsetDateTime.now());
-                em.persist(rp);
-            } else {
-                rp.setPoints(rp.getPoints() + delta);
+            em.getTransaction().begin();
+
+            var rp = em.createQuery(
+                            "SELECT r FROM RewardPoints r WHERE r.user.id = :uid", RewardPoints.class)
+                    .setParameter("uid", userId)
+                    .getResultStream()
+                    .findFirst()
+                    .orElse(null);
+
+            if (rp != null) {
+                rp.setPoints(rp.getPoints() + points);
                 rp.setUpdatedAt(OffsetDateTime.now());
                 em.merge(rp);
             }
-            tx.commit();
-            return rp.getPoints();
-        } catch (RuntimeException e) {
-            if (tx.isActive()) tx.rollback();
-            throw e;
+
+            em.getTransaction().commit();
         } finally {
             em.close();
         }
     }
+
 
     public boolean trySpendPoints(UUID userId, int cost) {
         EntityManager em = em();

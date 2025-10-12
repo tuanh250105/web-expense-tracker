@@ -1,5 +1,5 @@
 (() => {
-    const CTX = window.BB_CTX || "";
+    const CTX = window.BB_CTX || window.location.pathname.split('/')[1] ? `/${window.location.pathname.split('/')[1]}` : "";
     const USER_ID = window.BB_USER_ID || "00000000-0000-0000-0000-000000000001";
 
     const wheelEl   = document.getElementById("rw-wheel");
@@ -233,7 +233,6 @@
         }
         requestAnimationFrame(frame);
     }
-
 
     document.addEventListener("DOMContentLoaded", async () => {
         await refreshPointsAndHistory();

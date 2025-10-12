@@ -29,5 +29,6 @@
 <script>
     window.BB_CTX = "${pageContext.request.contextPath}";
     window.BB_USER_ID = "67b78d51-4eec-491c-bbf0-30e982def9e0";
+    console.log("Reward Page Loaded:", window.BB_CTX, "User:", window.BB_USER_ID);
 </script>
 <script src="${pageContext.request.contextPath}/assets/js/rewards.js"></script>

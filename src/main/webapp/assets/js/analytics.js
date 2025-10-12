@@ -1,5 +1,6 @@
 (() => {
     const $ = (s) => document.querySelector(s);
+    const USER_ID = window.BB_USER_ID || "67b78d51-4eec-491c-bbf0-30e982def9e0";
 
     const elChart   = $('#bb-analytics-chart');
     const elType    = $('#bb-chart-type');
@@ -101,8 +102,7 @@
         a.click();
     });
 
-    const CTX = window.location.pathname.split('/')[1];
-    const BASE = `/${CTX}/api/analytics`;
+    const BASE = `${window.BB_CTX}/api/analytics`;
 
     function groupByDate(rows) {
         const map = {};
@@ -134,45 +134,56 @@
         const color= elColor.value;
         const topN = parseInt(elTop.value || '5', 10);
         const type = $('#bb-kind')?.value || 'all';
+        const group = elGroup.value;
 
-        console.log(" Fetch:", `${BASE}?type=${type}&from=${from}&to=${to}`);
+        console.log("Fetch:", `${BASE}?userId=${USER_ID}&type=${type}&from=${from}&to=${to}&group=${group}&top=${topN}`);
 
         try {
-            const res = await fetch(`${BASE}?type=${type}&from=${from}&to=${to}`);
+            const res = await fetch(`${BASE}?userId=${USER_ID}&type=${type}&from=${from}&to=${to}&group=${group}&top=${topN}`);
             if (!res.ok) throw new Error("Lỗi tải dữ liệu");
             const data = await res.json();
-            console.log(" API data:", data);
+            console.log("API Data:", data);
 
-            const list = data.raw || data;
-            if (!list || list.length === 0) {
-                alert("Không có dữ liệu giao dịch để hiển thị!");
-                return;
-            }
-
+            // === Cập nhật tổng thu/chi ===
             const summary = data.summary || {};
             sumInEl.textContent  = (summary.income || 0).toLocaleString('vi-VN');
             sumOutEl.textContent = (summary.expense || 0).toLocaleString('vi-VN');
             sumBalEl.textContent = (summary.balance || 0).toLocaleString('vi-VN');
 
+            // === Biểu đồ theo chuỗi thời gian ===
             if (app === 'timeseries') {
-                const grouped = groupByDate(list);
-                renderBar(grouped.labels, grouped.values, color);
-            } else if (app === 'top-category') {
+                const grouped = data.grouped || [];
+                if (grouped.length === 0) {
+                    alert("Không có dữ liệu chuỗi thời gian!");
+                    return;
+                }
+                const labels = grouped.map(x => x.label);
+                const values = grouped.map(x => x.value);
+                renderBar(labels, values, color);
+            }
+
+            // === Biểu đồ Top danh mục ===
+            else if (app === 'top-category') {
                 const top = data.topCategory || [];
                 if (top.length === 0) {
                     alert("Không có dữ liệu danh mục!");
                     return;
                 }
+
+                // Lấy đúng số top danh mục backend trả về
                 const labels = top.map(t => t.categoryName || `Danh mục #${t.categoryId}`);
                 const values = top.map(t => t.total);
+
                 if (chartType === 'bar') renderBar(labels, values, color);
                 else renderPie(labels, values);
             }
+
         } catch (err) {
             console.error("Lỗi khi fetch API:", err);
             alert("Không thể tải dữ liệu từ API.");
         }
     });
+
 
     window.addEventListener("DOMContentLoaded", () => {
         const now = new Date();

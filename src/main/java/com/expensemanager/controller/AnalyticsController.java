@@ -31,57 +31,109 @@ public class AnalyticsController extends HttpServlet {
         }
 
         resp.setContentType("application/json;charset=UTF-8");
-        resp.setCharacterEncoding("UTF-8");
-
-        System.out.println("👉 AnalyticsController triggered");
 
         String type = param(req, "type", "all");
         LocalDateTime from = parse(req.getParameter("from"));
         LocalDateTime to = parse(req.getParameter("to"));
+        String group = param(req, "group", "day");
+
+        // 🔹 Lấy userId (ưu tiên session, fallback parameter hoặc ID test)
+        UUID userId = null;
+        HttpSession session = req.getSession(false);
+        if (session != null && session.getAttribute("userId") != null) {
+            Object val = session.getAttribute("userId");
+            if (val instanceof UUID uid) userId = uid;
+            else if (val instanceof String s && !s.isBlank()) {
+                try { userId = UUID.fromString(s); } catch (Exception ignored) {}
+            }
+        }
+        if (userId == null) {
+            try {
+                userId = UUID.fromString(req.getParameter("userId"));
+            } catch (Exception e) {
+                userId = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
+            }
+        }
 
         Map<String, Object> result = new LinkedHashMap<>();
 
         try {
-            List<Transaction> list = service.find(type, from, to);
-            System.out.println("✅ Query done, size = " + list.size());
+            List<Transaction> list = service.find(userId, type, from, to);
+            System.out.println("AnalyticsController → Query size = " + list.size());
 
             if (list.isEmpty()) {
                 result.put("message", "No data found");
             } else {
+                // ===== Tổng thu - chi =====
                 double income = list.stream()
                         .filter(t -> "income".equalsIgnoreCase(t.getType()))
                         .mapToDouble(Transaction::getAmount)
                         .sum();
-
                 double expense = list.stream()
                         .filter(t -> "expense".equalsIgnoreCase(t.getType()))
                         .mapToDouble(Transaction::getAmount)
                         .sum();
-
                 double balance = income - expense;
 
-                Map<String, Double> grouped = list.stream()
-                        .collect(Collectors.groupingBy(
-                                t -> {
-                                    if (t.getCategory() != null && t.getCategory().getName() != null) {
-                                        return t.getCategory().getName();
-                                    }
-                                    return "Không xác định";
-                                },
-                                Collectors.summingDouble(Transaction::getAmount)
-                        ));
+                // ===== Nhóm theo ngày/tháng/năm =====
+                Map<String, Double> groupedByTime = new TreeMap<>();
+                for (Transaction t : list) {
+                    if (t.getTransactionDate() == null) continue;
+                    String key;
+                    switch (group.toLowerCase()) {
+                        case "month":
+                            key = String.format("%d-%02d",
+                                    t.getTransactionDate().getYear(),
+                                    t.getTransactionDate().getMonthValue());
+                            break;
+                        case "year":
+                            key = String.valueOf(t.getTransactionDate().getYear());
+                            break;
+                        default: // day
+                            key = t.getTransactionDate().toLocalDate().toString();
+                            break;
+                    }
+                    double amt = "income".equalsIgnoreCase(t.getType())
+                            ? t.getAmount()
+                            : -t.getAmount();
+                    groupedByTime.merge(key, amt, Double::sum);
+                }
 
-                List<Map<String, Object>> topCategory = grouped.entrySet().stream()
-                        .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
-                        .limit(10)
+                List<Map<String, Object>> groupedList = groupedByTime.entrySet().stream()
                         .map(e -> {
-                            Map<String, Object> map = new LinkedHashMap<>();
-                            map.put("categoryName", e.getKey());
-                            map.put("total", e.getValue());
-                            return map;
+                            Map<String, Object> m = new LinkedHashMap<>();
+                            m.put("label", e.getKey());
+                            m.put("value", e.getValue());
+                            return m;
                         })
                         .collect(Collectors.toList());
 
+                // ===== Top danh mục =====
+                Map<String, Double> groupedCategory = list.stream()
+                        .collect(Collectors.groupingBy(
+                                t -> (t.getCategory() != null && t.getCategory().getName() != null)
+                                        ? t.getCategory().getName()
+                                        : "Không xác định",
+                                Collectors.summingDouble(Transaction::getAmount)
+                        ));
+
+                int topN = 10;
+                try {
+                    topN = Integer.parseInt(req.getParameter("top"));
+                } catch (Exception ignored) {}
+
+                List<Map<String, Object>> topCategory = groupedCategory.entrySet().stream()
+                        .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                        .limit(topN)
+                        .map(e -> {
+                            Map<String, Object> m = new LinkedHashMap<>();
+                            m.put("categoryName", e.getKey());
+                            m.put("total", e.getValue());
+                            return m;
+                        })
+                        .collect(Collectors.toList());
+
+                // ===== Dữ liệu gốc (raw) =====
                 List<Map<String, Object>> safeList = list.stream().map(t -> {
                     Map<String, Object> item = new LinkedHashMap<>();
                     item.put("id", t.getId());
@@ -89,15 +141,18 @@ public class AnalyticsController extends HttpServlet {
                     item.put("amount", t.getAmount());
                     item.put("note", t.getNote());
                     item.put("date", t.getTransactionDate());
-                    item.put("category", (t.getCategory() != null) ? t.getCategory().getName() : null);
+                    item.put("category", (t.getCategory() != null)
+                            ? t.getCategory().getName() : null);
                     return item;
                 }).collect(Collectors.toList());
 
+                // ===== Gắn vào JSON =====
                 result.put("summary", Map.of(
                         "income", income,
                         "expense", expense,
                         "balance", balance
                 ));
+                result.put("grouped", groupedList);
                 result.put("topCategory", topCategory);
                 result.put("raw", safeList);
             }
@@ -117,6 +172,7 @@ public class AnalyticsController extends HttpServlet {
         }
     }
 
+    // ===== Helper =====
     private String param(HttpServletRequest req, String k, String def) {
         String v = req.getParameter(k);
         return (v == null || v.isEmpty()) ? def : v;

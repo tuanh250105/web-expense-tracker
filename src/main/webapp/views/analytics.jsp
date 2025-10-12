@@ -56,7 +56,9 @@
     </div>
 </div>
 
+<script>
+    window.BB_CTX = "${pageContext.request.contextPath}";
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-
 <script src="${pageContext.request.contextPath}/assets/js/analytics.js"></script>
 
