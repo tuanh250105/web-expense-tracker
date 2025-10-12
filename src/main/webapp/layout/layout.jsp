@@ -1,11 +1,10 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: khodo
-  Date: 13/9/25
-  Time: 14:20
-  To change this template use File | Settings | File Templates.
---%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%
+    if (session.getAttribute("user") == null) {
+        response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
+        return;
+    }
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,7 +12,7 @@
     <title>BudgetBuddy Layout</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="layout.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/layout/layout.css">
 </head>
 <body>
 <header>
@@ -22,7 +21,6 @@
         <span>BudgetBuddy</span>
     </div>
 
-    <!-- Banner động -->
     <div class="banner-text">
         <span class="text-rotate">
         <span>💰 Quản lý chi tiêu thông minh</span>
@@ -47,7 +45,7 @@
 <nav class="sidebar">
     <ul>
         <li class="active"><a href="#"><i class="fa-solid fa-chart-line"></i> <span>Overallview</span></a></li>
-        <li><a href="../transaction"><i class="fa-solid fa-receipt"></i> <span>Giao dịch</span></a></li>
+        <li><a href="#"><i class="fa-solid fa-receipt"></i> <span>Giao dịch</span></a></li>
         <li><a href="#"><i class="fa-solid fa-calendar-days"></i> <span>Giao dịch hằng tháng</span></a></li>
         <li><a href="#"><i class="fa-solid fa-building-columns"></i> <span>Tài khoản</span></a></li>
         <li><a href="#"><i class="fa-solid fa-wallet"></i> <span>Ngân sách</span></a></li>
@@ -56,9 +54,9 @@
         <li><a href="#"><i class="fa-solid fa-chart-pie"></i> <span>Tổng hợp biểu đồ</span></a></li>
         <li><a href="#"><i class="fa-solid fa-calendar"></i> <span>Lịch</span></a></li>
         <li><a href="#"><i class="fa-solid fa-people-group"></i> <span>Chi tiêu nhóm</span></a></li>
-        <li><a href="#"><i class="fa-solid fa-file-import"></i> <span>Import / Export file</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/import-export"><i class="fa-solid fa-file-import"></i> <span>Import / Export file</span></a></li>
         <li><a href="#"><i class="fa-solid fa-list-ul"></i> <span>Thống kê Top Categories</span></a></li>
-        <li><a href="#"><i class="fa-solid fa-folder-open"></i> <span>Quản lí danh mục</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/categories"><i class="fa-solid fa-folder-open"></i> <span>Quản lí danh mục</span></a></li>
         <hr>
         <li><a href="#"><i class="fa-solid fa-star"></i> <span>* Thưởng thêm</span></a></li>
         <li><a href="#"><i class="fa-solid fa-calendar-check"></i> <span>Quản lý sự kiện tài chính</span></a></li>
@@ -69,11 +67,9 @@
 </nav>
 
 <main class="content">
-    <h2>Trang nội dung</h2>
-    <p>Đây là chỗ code phần chức năng.</p>
     <jsp:include page="${view}" />
 </main>
 
-<script src="layout.js"></script>
+<script src="${pageContext.request.contextPath}/layout/layout.js"></script>
 </body>
 </html>

@@ -1,61 +1,63 @@
 package com.expensemanager.util;
 
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import com.expensemanager.model.Transaction;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 public class PDFUtil {
 
-    public static byte[] generate(List<Transaction> txs) throws IOException {
-        PDDocument doc = new PDDocument();
-        PDPage page = new PDPage(PDRectangle.A4);
-        doc.addPage(page);
+    // Ghi danh sách Transaction ra file PDF
+    public static void writePDF(OutputStream outputStream, List<Transaction> list) throws Exception {
+        Document document = new Document(PageSize.A4);
+        PdfWriter.getInstance(document, outputStream);
+        document.open();
 
-        PDPageContentStream cs = new PDPageContentStream(doc, page);
+        Font headerFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD);
+        Font bodyFont = new Font(Font.FontFamily.HELVETICA, 10);
 
-        // Tiêu đề
-        cs.beginText();
-        cs.setFont(PDType1Font.HELVETICA_BOLD, 16);
-        cs.newLineAtOffset(50, 780);
-        cs.showText("Transactions Report");
-        cs.endText();
+        Paragraph title = new Paragraph("Transaction Report", headerFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        document.add(title);
+        document.add(new Paragraph(" ")); // dòng trống
 
-        // Dữ liệu
-        float y = 760;
-        cs.setFont(PDType1Font.HELVETICA, 10);
+        PdfPTable table = new PdfPTable(9);
+        table.setWidthPercentage(100);
 
-        for (Transaction t : txs) {
-            y -= 14;
-            if (y < 50) break; // tránh tràn trang
+        String[] headers = {
+                "ID", "Account", "Type", "Category", "Amount", "Note", "Transaction Date", "Created At", "Updated At"
+        };
 
-            cs.beginText();
-            cs.newLineAtOffset(50, y);
-
-            String date = (t.getTransactionDate() != null)
-                    ? t.getTransactionDate().toLocalDateTime().toLocalDate().toString()
-                    : "";
-            String category = (t.getCategory() != null) ? t.getCategory() : "";
-            String amount = (t.getAmount() != null) ? t.getAmount().toPlainString() : "";
-            String note = (t.getNote() != null) ? t.getNote() : "";
-
-            // Format chuẩn không có lỗi dấu ngoặc
-            String text = String.format("%s | %s | %s | %s", date, category, amount, note);
-            cs.showText(text);
-
-            cs.endText();
+        // Header table
+        for (String h : headers) {
+            PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
+            cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            table.addCell(cell);
         }
 
-        cs.close();
+        // Nội dung từng dòng Transaction
+        for (Transaction t : list) {
+            table.addCell(getValue(t.getId() != null ? t.getId().toString() : "", bodyFont));
+            table.addCell(getValue(t.getAccount() != null ? t.getAccount().getId().toString() : "", bodyFont));
+            table.addCell(getValue(t.getType(), bodyFont));
+            table.addCell(getValue(t.getCategory() != null ? t.getCategory().getId().toString() : "", bodyFont));
+            table.addCell(getValue(String.valueOf(t.getAmount()), bodyFont));
+            table.addCell(getValue(t.getNote(), bodyFont));
+            table.addCell(getValue(t.getTransactionDate() != null ? t.getTransactionDate().toString() : "", bodyFont));
+            table.addCell(getValue(t.getCreate_at() != null ? t.getCreate_at().toString() : "", bodyFont));
+            table.addCell(getValue(t.getUpdate_at() != null ? t.getUpdate_at().toString() : "", bodyFont));
+        }
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        doc.save(out);
-        doc.close();
-        return out.toByteArray();
+        document.add(table);
+        document.close();
+    }
+
+    private static PdfPCell getValue(String text, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "", font));
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        return cell;
     }
 }
