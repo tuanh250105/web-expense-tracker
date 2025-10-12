@@ -21,9 +21,10 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/layout/layout.css">
 
     <!-- CSS riêng cho từng trang -->
-    <c:if test="${not empty pageCss}">
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/${pageCss}">
-    </c:if>
+<%--    <c:if test="${not empty pageCss}">--%>
+<%--        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/${pageCss}">--%>
+<%--    </c:if>--%>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/transaction.css">
 
 
 </head>
@@ -88,8 +89,13 @@
 <script defer src="${pageContext.request.contextPath}/assets/js/layout.js"></script>
 
 <!-- JS riêng cho từng trang -->
-<c:if test="${not empty pageJs}">
-    <script defer src="${pageContext.request.contextPath}/assets/js/${pageJs}"></script>
-</c:if>
+<%--<c:if test="${not empty pageJs}">--%>
+<%--    <script defer src="${pageContext.request.contextPath}/assets/js/${pageJs}"></script>--%>
+<%--</c:if>--%>
+
+<script defer src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js"></script>
+
+
+<script defer src="${pageContext.request.contextPath}/assets/js/transaction.js"></script>
 </body>
 </html>

@@ -2,6 +2,7 @@ package com.expensemanager.model;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -32,7 +33,7 @@ public class Transaction {
     @CreationTimestamp // Tự động gán thời gian khi tạo mới
     private LocalDateTime create_at;
 
-    @CreationTimestamp // Tự động gán thời gian khi tạo mới
+    @UpdateTimestamp // Tự động gán thời gian khi tạo mới
     private LocalDateTime update_at;
 
 
