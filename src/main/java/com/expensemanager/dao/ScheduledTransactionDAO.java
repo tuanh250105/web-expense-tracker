@@ -16,6 +16,7 @@ import java.util.UUID;
 
 public class ScheduledTransactionDAO {
 
+    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("default");
     public List<ScheduledTransaction> getAll() {
         return getFiltered(null, null, null, null, null, null, null);
     }
@@ -23,7 +24,7 @@ public class ScheduledTransactionDAO {
     public List<ScheduledTransaction> getFiltered(String categoryNameFilter, String account,
                                                   String from, String to, String note,
                                                   String[] types, UUID userId) {
-        EntityManager em = JpaUtil.getEntityManagerFactory().createEntityManager();
+        EntityManager em = emf.createEntityManager();
         try {
             StringBuilder jpql = new StringBuilder(
                     "SELECT s FROM ScheduledTransaction s " +
@@ -97,7 +98,7 @@ public class ScheduledTransactionDAO {
     }
 
     public List<Account> getAccountsByUserId(UUID userId) {
-        EntityManager em = JpaUtil.getEntityManagerFactory().createEntityManager();
+        EntityManager em = emf.createEntityManager();
         try {
             String jpql = "SELECT a FROM Account a WHERE a.user.id = :userId";
             Query query = em.createQuery(jpql, Account.class);
@@ -109,7 +110,7 @@ public class ScheduledTransactionDAO {
     }
 
     public Account findAccountById(UUID id, UUID userId) {
-        EntityManager em = JpaUtil.getEntityManagerFactory().createEntityManager();
+        EntityManager em = emf.createEntityManager();
         try {
             String jpql = "SELECT a FROM Account a WHERE a.id = :id AND a.user.id = :userId";
             Query query = em.createQuery(jpql, Account.class);
@@ -122,7 +123,7 @@ public class ScheduledTransactionDAO {
     }
 
     public Category findCategoryById(UUID id) {
-        EntityManager em = JpaUtil.getEntityManagerFactory().createEntityManager();
+        EntityManager em = emf.createEntityManager();
         try {
             return em.find(Category.class, id);
         } finally {
@@ -131,7 +132,7 @@ public class ScheduledTransactionDAO {
     }
 
     public void add(ScheduledTransaction t) {
-        EntityManager em = JpaUtil.getEntityManagerFactory().createEntityManager();
+        EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
             em.persist(t);

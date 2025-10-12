@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-=======
+
 package com.expensemanager.model;
 
 import java.math.BigDecimal;
@@ -213,4 +212,3 @@ public class Account {
                 '}';
     }
 }
->>>>>>> feature/bank
