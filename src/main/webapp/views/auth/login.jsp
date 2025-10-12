@@ -112,8 +112,10 @@
   </form>
   <form method="get" action="${pageContext.request.contextPath}/auth/google/start" style="margin-top:10px;">
     <button type="submit" class="google-btn">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" />
-      Đăng nhập với Google
+      <span style="display:flex;align-items:center;gap:6px;">
+        <i class="fa-brands fa-google" style="color:#4285F4;font-size:20px;"></i>
+        <span>Đăng nhập với Google</span>
+      </span>
     </button>
   </form>
   <div class="links">

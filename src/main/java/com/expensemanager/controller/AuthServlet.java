@@ -33,6 +33,7 @@ public class AuthServlet extends HttpServlet {
       req.getRequestDispatcher("/views/auth/login.jsp").forward(req, resp);
     } else {
       req.getSession(true).setAttribute("user", u);
+      req.setAttribute("view", "/views/dashboard/dashboard.jsp");
       req.getRequestDispatcher("/layout/layout.jsp").forward(req, resp);
     }
   }
@@ -45,6 +46,7 @@ public class AuthServlet extends HttpServlet {
         req.getParameter("email"),
         req.getParameter("password"));
   req.getSession(true).setAttribute("user", u);
+  req.setAttribute("view", "/views/dashboard/dashboard.jsp");
   req.getRequestDispatcher("/layout/layout.jsp").forward(req, resp);
     } catch (IllegalArgumentException e) {
       req.setAttribute("error", e.getMessage());
