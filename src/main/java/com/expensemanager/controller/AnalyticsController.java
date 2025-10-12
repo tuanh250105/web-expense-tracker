@@ -40,18 +40,23 @@ public class AnalyticsController extends HttpServlet {
         // 🔹 Lấy userId (ưu tiên session, fallback parameter hoặc ID test)
         UUID userId = null;
         HttpSession session = req.getSession(false);
-        if (session != null && session.getAttribute("userId") != null) {
-            Object val = session.getAttribute("userId");
-            if (val instanceof UUID uid) userId = uid;
-            else if (val instanceof String s && !s.isBlank()) {
-                try { userId = UUID.fromString(s); } catch (Exception ignored) {}
+        if (session != null) {
+            Object userObj = session.getAttribute("user");
+            if (userObj instanceof com.expensemanager.model.User u && u.getId() != null) {
+                userId = u.getId();
+            } else if (session.getAttribute("userId") != null) {
+                Object val = session.getAttribute("userId");
+                if (val instanceof UUID uid) userId = uid;
+                else if (val instanceof String s && !s.isBlank()) {
+                    try { userId = UUID.fromString(s); } catch (Exception ignored) {}
+                }
             }
         }
         if (userId == null) {
             try {
                 userId = UUID.fromString(req.getParameter("userId"));
             } catch (Exception e) {
-                userId = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
+                userId = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0"); // fallback test
             }
         }
 
@@ -69,33 +74,30 @@ public class AnalyticsController extends HttpServlet {
                         .filter(t -> "income".equalsIgnoreCase(t.getType()))
                         .mapToDouble(Transaction::getAmount)
                         .sum();
+
                 double expense = list.stream()
                         .filter(t -> "expense".equalsIgnoreCase(t.getType()))
                         .mapToDouble(Transaction::getAmount)
                         .sum();
+
                 double balance = income - expense;
 
                 // ===== Nhóm theo ngày/tháng/năm =====
                 Map<String, Double> groupedByTime = new TreeMap<>();
                 for (Transaction t : list) {
                     if (t.getTransactionDate() == null) continue;
+
                     String key;
                     switch (group.toLowerCase()) {
-                        case "month":
-                            key = String.format("%d-%02d",
-                                    t.getTransactionDate().getYear(),
-                                    t.getTransactionDate().getMonthValue());
-                            break;
-                        case "year":
-                            key = String.valueOf(t.getTransactionDate().getYear());
-                            break;
-                        default: // day
-                            key = t.getTransactionDate().toLocalDate().toString();
-                            break;
+                        case "month" -> key = String.format("%d-%02d",
+                                t.getTransactionDate().getYear(),
+                                t.getTransactionDate().getMonthValue());
+                        case "year" -> key = String.valueOf(t.getTransactionDate().getYear());
+                        default -> key = t.getTransactionDate().toLocalDate().toString();
                     }
-                    double amt = "income".equalsIgnoreCase(t.getType())
-                            ? t.getAmount()
-                            : -t.getAmount();
+
+                    double amt = t.getAmount();
+                    if ("expense".equalsIgnoreCase(t.getType())) amt = -amt;
                     groupedByTime.merge(key, amt, Double::sum);
                 }
 
@@ -111,9 +113,12 @@ public class AnalyticsController extends HttpServlet {
                 // ===== Top danh mục =====
                 Map<String, Double> groupedCategory = list.stream()
                         .collect(Collectors.groupingBy(
-                                t -> (t.getCategory() != null && t.getCategory().getName() != null)
-                                        ? t.getCategory().getName()
-                                        : "Không xác định",
+                                (Transaction t) -> {
+                                    if (t.getCategory() != null && t.getCategory().getName() != null) {
+                                        return t.getCategory().getName();
+                                    }
+                                    return "Không xác định";
+                                },
                                 Collectors.summingDouble(Transaction::getAmount)
                         ));
 
@@ -142,7 +147,8 @@ public class AnalyticsController extends HttpServlet {
                     item.put("note", t.getNote());
                     item.put("date", t.getTransactionDate());
                     item.put("category", (t.getCategory() != null)
-                            ? t.getCategory().getName() : null);
+                            ? t.getCategory().getName()
+                            : null);
                     return item;
                 }).collect(Collectors.toList());
 
