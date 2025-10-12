@@ -2,7 +2,6 @@ package com.expensemanager.service;
 
 import com.expensemanager.dao.ScheduledTransactionDAO;
 import com.expensemanager.model.Account;
-import com.expensemanager.model.Category;
 import com.expensemanager.model.ScheduledTransaction;
 import org.quartz.CronExpression;
 
@@ -126,9 +125,12 @@ public class ScheduledTransactionService {
     }
 
     private UUID getUserIdFromAccount(ScheduledTransaction st) {
-        return st.getAccount() != null ? st.getAccount().getUserId() :
-                UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0"); // Fallback hardcoded
+        if (st.getAccount() != null && st.getAccount().getUser() != null) {
+            return st.getAccount().getUser().getId();
+        }
+        return UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0"); // fallback
     }
+
     //BỎ QUA GIAO DỊCH
     public void skipTransaction(UUID id, UUID userId) {
         ScheduledTransaction st = dao.getById(id, userId);

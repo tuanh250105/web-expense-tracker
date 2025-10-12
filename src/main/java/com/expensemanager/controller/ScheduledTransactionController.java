@@ -1,7 +1,6 @@
 package com.expensemanager.controller;
 
 import com.expensemanager.model.Account;
-import com.expensemanager.model.Category;
 import com.expensemanager.model.ScheduledTransaction;
 import com.expensemanager.service.ScheduledTransactionService;
 
