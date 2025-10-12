@@ -192,6 +192,10 @@
             </c:choose>
         </h2>
 
+        <c:if test="${readonly}">
+            <p style="color:red; font-weight:bold;">⚠️ Bạn đang ở chế độ khách — không thể chỉnh sửa!</p>
+        </c:if>
+
         <form action="${pageContext.request.contextPath}/categories" method="post">
             <c:if test="${not empty editCategory}">
                 <input type="hidden" name="id" value="${editCategory.id}">
@@ -201,12 +205,12 @@
                 <div class="form-group">
                     <label for="name">Tên danh mục:</label>
                     <input type="text" id="name" name="name"
-                           value="${editCategory.name}" required placeholder="Ví dụ: Ăn uống">
+                           value="${editCategory.name}" required placeholder="Ví dụ: Ăn uống" ${readonly ? 'disabled' : ''}>
                 </div>
 
                 <div class="form-group">
                     <label for="type">Loại:</label>
-                    <select id="type" name="type">
+                    <select id="type" name="type" ${readonly ? 'disabled' : ''}>
                         <option value="expense" ${editCategory.type == 'expense' ? 'selected' : ''}>Chi tiêu</option>
                         <option value="income" ${editCategory.type == 'income' ? 'selected' : ''}>Thu nhập</option>
                     </select>
@@ -214,7 +218,7 @@
 
                 <div class="form-group">
                     <label for="parentId">Danh mục cha:</label>
-                    <select id="parentId" name="parentId">
+                    <select id="parentId" name="parentId" ${readonly ? 'disabled' : ''}>
                         <option value="">-- Không có (Là danh mục cha) --</option>
                         <c:forEach var="cat" items="${categories}">
                             <c:if test="${empty cat.parent}">
@@ -232,7 +236,9 @@
                                placeholder="fa-solid fa-utensils" readonly>
                         <i id="previewIcon"
                            class="${empty editCategory.iconPath ? 'fa-solid fa-tag' : editCategory.iconPath}"></i>
-                        <button type="button" id="chooseIconBtn">Chọn</button>
+                        <c:if test="${!readonly}">
+                            <button type="button" id="chooseIconBtn">Chọn</button>
+                        </c:if>
                     </div>
 
                     <div id="iconPicker">
@@ -245,17 +251,19 @@
                 <div class="form-group">
                     <label for="color">Màu sắc:</label>
                     <input type="color" id="color" name="color"
-                           value="${empty editCategory.color ? '#4a90e2' : editCategory.color}">
+                           value="${empty editCategory.color ? '#4a90e2' : editCategory.color}" ${readonly ? 'disabled' : ''}>
                 </div>
             </div>
 
-            <button type="submit">
-                <i class="fa-solid fa-plus"></i>
-                <c:choose>
-                    <c:when test="${not empty editCategory}">Cập nhật</c:when>
-                    <c:otherwise>Thêm Mới</c:otherwise>
-                </c:choose>
-            </button>
+            <c:if test="${!readonly}">
+                <button type="submit">
+                    <i class="fa-solid fa-plus"></i>
+                    <c:choose>
+                        <c:when test="${not empty editCategory}">Cập nhật</c:when>
+                        <c:otherwise>Thêm Mới</c:otherwise>
+                    </c:choose>
+                </button>
+            </c:if>
         </form>
     </div>
 
@@ -281,13 +289,15 @@
                         </td>
                         <td>${parentCat.type}</td>
                         <td class="actions">
-                            <a href="${pageContext.request.contextPath}/categories?action=edit&id=${parentCat.id}">
-                                <i class="fa-solid fa-pen"></i> Sửa
-                            </a>
-                            <a href="${pageContext.request.contextPath}/categories?action=delete&id=${parentCat.id}"
-                               onclick="return confirm('Bạn có chắc muốn xóa danh mục này không?');">
-                                <i class="fa-solid fa-trash"></i> Xóa
-                            </a>
+                            <c:if test="${!readonly}">
+                                <a href="${pageContext.request.contextPath}/categories?action=edit&id=${parentCat.id}">
+                                    <i class="fa-solid fa-pen"></i> Sửa
+                                </a>
+                                <a href="${pageContext.request.contextPath}/categories?action=delete&id=${parentCat.id}"
+                                   onclick="return confirm('Bạn có chắc muốn xóa danh mục này không?');">
+                                    <i class="fa-solid fa-trash"></i> Xóa
+                                </a>
+                            </c:if>
                         </td>
                     </tr>
 
@@ -301,13 +311,15 @@
                                 </td>
                                 <td>${childCat.type}</td>
                                 <td class="actions">
-                                    <a href="${pageContext.request.contextPath}/categories?action=edit&id=${childCat.id}">
-                                        <i class="fa-solid fa-pen"></i> Sửa
-                                    </a>
-                                    <a href="${pageContext.request.contextPath}/categories?action=delete&id=${childCat.id}"
-                                       onclick="return confirm('Bạn có chắc muốn xóa danh mục này không?');">
-                                        <i class="fa-solid fa-trash"></i> Xóa
-                                    </a>
+                                    <c:if test="${!readonly}">
+                                        <a href="${pageContext.request.contextPath}/categories?action=edit&id=${childCat.id}">
+                                            <i class="fa-solid fa-pen"></i> Sửa
+                                        </a>
+                                        <a href="${pageContext.request.contextPath}/categories?action=delete&id=${childCat.id}"
+                                           onclick="return confirm('Bạn có chắc muốn xóa danh mục này không?');">
+                                            <i class="fa-solid fa-trash"></i> Xóa
+                                        </a>
+                                    </c:if>
                                 </td>
                             </tr>
                         </c:if>
@@ -338,7 +350,7 @@
         }
 
         document.addEventListener("click", (e) => {
-            if (!picker.contains(e.target) && e.target !== btn) {
+            if (picker && !picker.contains(e.target) && e.target !== btn) {
                 picker.style.display = "none";
             }
         });

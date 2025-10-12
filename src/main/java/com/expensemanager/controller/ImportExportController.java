@@ -33,20 +33,25 @@ public class ImportExportController extends HttpServlet {
 
         HttpSession session = request.getSession(false);
         UUID userId = null;
+        boolean isGuest = false;
 
-        // ✅ Kiểm tra session để lấy user_id
-        if (session != null && session.getAttribute("user_id") != null) {
-            userId = (UUID) session.getAttribute("user_id");
+        // 🔹 Nếu chưa đăng nhập → chỉ cho xem giao diện (readonly)
+        if (session == null || session.getAttribute("user_id") == null) {
+            System.out.println("⚠️ Chưa đăng nhập — hiển thị chế độ khách (readonly).");
+            isGuest = true;
+            /*if (session == null) session = request.getSession(true);
+            userId = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
+            session.setAttribute("user_id", userId);*/
         } else {
-            System.out.println("⚠️ Chưa có user_id trong session — cần đăng nhập để xem dữ liệu cá nhân.");
-            request.setAttribute("error", "Bạn chưa đăng nhập. Không thể tải tài khoản cá nhân.");
+            userId = (UUID) session.getAttribute("user_id");
         }
 
-        // 🔹 Nếu có userId → chỉ lấy account của user đó
+        // 🔹 Lấy danh sách tài khoản (nếu có user), còn không thì danh sách trống
         List<Account> accounts = (userId != null)
                 ? accountService.getAllAccountsByUser(userId)
                 : List.of();
 
+        request.setAttribute("readonly", isGuest); // gắn flag để JSP ẩn/khóa nút
         request.setAttribute("accounts", accounts);
         request.setAttribute("view", "/views/import_export.jsp");
         request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
@@ -57,17 +62,18 @@ public class ImportExportController extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession(false);
-        UUID userId = null;
 
-        if (session != null && session.getAttribute("user_id") != null) {
-            userId = (UUID) session.getAttribute("user_id");
-        } else {
-            System.out.println("⚠️ Chưa có user_id trong session — cần đăng nhập để import/export theo user.");
-            request.setAttribute("error", "Bạn chưa đăng nhập, không thể thao tác import/export.");
-            loadView(request, response, "Vui lòng đăng nhập lại.", null, List.of());
+        // ⚠️ Nếu chưa đăng nhập → chỉ hiển thị cảnh báo, không thực hiện được thao tác
+        if (session == null || session.getAttribute("user_id") == null) {
+            loadView(
+                    request, response,
+                    "⚠️ Bạn cần đăng nhập để thực hiện import hoặc export dữ liệu!",
+                    null, List.of()
+            );
             return;
         }
 
+        UUID userId = (UUID) session.getAttribute("user_id");
         String action = request.getParameter("action");
         if (action == null || action.isBlank()) action = "view";
 
@@ -107,6 +113,7 @@ public class ImportExportController extends HttpServlet {
                 }
 
                 case "import": {
+                    @SuppressWarnings("unchecked")
                     List<Transaction> toSave = (List<Transaction>) session.getAttribute("importPreviewList");
                     UUID accountId = (UUID) session.getAttribute("importPreviewAccountId");
 

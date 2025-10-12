@@ -4,10 +4,7 @@ import com.expensemanager.dao.ImportExportDAO;
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
-import com.expensemanager.util.CSVUtil;
-import com.expensemanager.util.JpaUtil;
-import com.expensemanager.util.XLSXUtil;
-import com.expensemanager.util.PDFUtil;
+import com.expensemanager.util.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,14 +25,11 @@ public class ImportExportService {
     }
 
     /**
-     * Đọc file (CSV hoặc XLSX), gán account và category thật từ DB.
-     * Không cần thay đổi model Transaction.
+     * Đọc file CSV/XLSX và gán account, category thật từ DB
      */
     public List<Transaction> previewImport(InputStream file, String type, UUID accountId) throws Exception {
-        List<Transaction> list;
-
-        // ✅ Dữ liệu đọc raw từng dòng để lấy category_id riêng
         List<Map<String, String>> rawData;
+
         if ("csv".equalsIgnoreCase(type)) {
             rawData = CSVUtil.readRawCSV(file);
         } else if ("xlsx".equalsIgnoreCase(type)) {
@@ -46,48 +40,80 @@ public class ImportExportService {
 
         EntityManager em = emf.createEntityManager();
         Account acc = accountService.findById(accountId);
-        if (acc == null) throw new IllegalArgumentException("Tài khoản không tồn tại: " + accountId);
+        if (acc == null)
+            throw new IllegalArgumentException("Tài khoản không tồn tại: " + accountId);
 
         List<Transaction> result = new ArrayList<>();
 
-        for (Map<String, String> row : rawData) {
+        for (Map<String, String> raw : rawData) {
+            // normalize key (bảo vệ khi header không đúng)
+            Map<String, String> row = new HashMap<>();
+            for (Map.Entry<String, String> e : raw.entrySet()) {
+                String k = (e.getKey() == null)
+                        ? ""
+                        : e.getKey().replace("\uFEFF", "").trim().toLowerCase(Locale.ROOT);
+                String v = (e.getValue() == null) ? "" : e.getValue().trim();
+                row.put(k, v);
+            }
+
             try {
                 Transaction t = new Transaction();
 
-                // gán các cột cơ bản
-                t.setType(row.get("type"));
-                t.setAmount(Integer.parseInt(row.get("amount")));
-                t.setNote(row.get("note"));
-                t.setTransactionDate(java.time.LocalDateTime.parse(row.get("transaction_date")));
-                t.setCreate_at(java.time.LocalDateTime.parse(row.get("create_at")));
-                t.setUpdate_at(java.time.LocalDateTime.parse(row.get("update_at")));
+                // Type
+                String typeStr = row.getOrDefault("type", "");
+                if (!typeStr.equalsIgnoreCase("income") && !typeStr.equalsIgnoreCase("expense"))
+                    throw new IllegalArgumentException("type không hợp lệ: " + typeStr);
+                t.setType(typeStr);
+
+                // Amount
+                String amountStr = row.getOrDefault("amount", "");
+                amountStr = amountStr.replaceAll("[^0-9\\-]", "");
+                t.setAmount(amountStr.isEmpty() ? 0 : Integer.parseInt(amountStr));
+
+                // Note
+                t.setNote(row.getOrDefault("note", ""));
+
+                // Dates (transaction_date, create_at, update_at)
+                t.setTransactionDate(parseDateTime(row.get("transaction_date")));
+                t.setCreate_at(parseDateTime(row.get("create_at")));
+                t.setUpdate_at(parseDateTime(row.get("update_at")));
                 t.setAccount(acc);
 
-                // ✅ Lấy category_id rồi fetch Category từ DB
-                String catIdStr = row.get("category_id");
-                if (catIdStr == null || catIdStr.isBlank()) {
-                    throw new IllegalArgumentException("Thiếu category_id trong dữ liệu.");
-                }
-
-                try {
-                    int catId = Integer.parseInt(catIdStr.trim());
-                    Category c = em.find(Category.class, catId);
-                    if (c == null) {
-                        throw new IllegalArgumentException("Category ID " + catId + " không tồn tại trong DB.");
-                    }
-                    t.setCategory(c);
-                } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("category_id không hợp lệ: " + catIdStr);
-                }
+                // ✅ Category (UUID)
+                String catIdStr = row.getOrDefault("category_id", "");
+                if (catIdStr.isEmpty())
+                    throw new IllegalArgumentException("Thiếu category_id");
+                UUID catId = UUID.fromString(catIdStr);
+                Category c = em.find(Category.class, catId);
+                if (c == null)
+                    throw new IllegalArgumentException("Category ID không tồn tại: " + catIdStr);
+                t.setCategory(c);
 
                 result.add(t);
+
             } catch (Exception e) {
+                System.out.println("❌ Lỗi khi đọc dòng: " + raw);
+                e.printStackTrace();
                 throw new IllegalArgumentException("Lỗi khi đọc dòng dữ liệu: " + e.getMessage());
             }
         }
 
         em.close();
         return result;
+    }
+
+    private static java.time.LocalDateTime parseDateTime(String text) {
+        if (text == null || text.isBlank()) return null;
+        text = text.trim().replace(" ", "T");
+        try {
+            return java.time.LocalDateTime.parse(text);
+        } catch (Exception e) {
+            try {
+                return java.time.LocalDate.parse(text).atStartOfDay();
+            } catch (Exception ex) {
+                return null;
+            }
+        }
     }
 
     public void saveTransactions(List<Transaction> transactions) {
@@ -97,19 +123,8 @@ public class ImportExportService {
     }
 
     public byte[] exportByAccount(UUID accountId, String start, String end, String format) throws Exception {
-        LocalDate startDate;
-        LocalDate endDate;
-
-        try {
-            startDate = (start == null || start.isBlank()) ? LocalDate.MIN : LocalDate.parse(start);
-        } catch (Exception e) {
-            startDate = LocalDate.MIN;
-        }
-        try {
-            endDate = (end == null || end.isBlank()) ? LocalDate.now() : LocalDate.parse(end);
-        } catch (Exception e) {
-            endDate = LocalDate.now();
-        }
+        LocalDate startDate = (start == null || start.isBlank()) ? LocalDate.MIN : LocalDate.parse(start);
+        LocalDate endDate = (end == null || end.isBlank()) ? LocalDate.now() : LocalDate.parse(end);
 
         List<Transaction> data = dao.getTransactionsByAccountAndDate(accountId, startDate, endDate);
         if (data == null) data = Collections.emptyList();
@@ -141,8 +156,9 @@ public class ImportExportService {
             default -> throw new IllegalArgumentException("Định dạng không hỗ trợ: " + format);
         }
 
-        var os = resp.getOutputStream();
-        os.write(data);
-        os.flush();
+        try (OutputStream os = resp.getOutputStream()) {
+            os.write(data);
+            os.flush();
+        }
     }
 }
