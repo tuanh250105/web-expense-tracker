@@ -2,7 +2,6 @@ package com.expensemanager.service;
 
 import com.expensemanager.dao.FAQRepository;
 import com.expensemanager.model.FAQ;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -25,14 +24,14 @@ public class FAQService {
         repository.delete(id);
     }
 
-    // Phương thức init để thêm dữ liệu mẫu (gọi một lần, ví dụ trong listener hoặc servlet init)
+    // Phương thức init để thêm dữ liệu mẫu
     public void initSampleFAQs() {
         // Thêm FAQ với answer chứa HTML link
         addFAQ(new FAQ("Ứng dụng Expense Manager là gì và dành cho ai?",
                 "Expense Manager là ứng dụng web hỗ trợ quản lý chi tiêu cá nhân hoặc nhóm hiệu quả. Nó ghi chép giao dịch, lập kế hoạch ngân sách, theo dõi nợ nần, lập lịch giao dịch tự động, và thêm yếu tố giải trí qua trò chơi thưởng. Phù hợp cho cá nhân (sinh viên, nhân viên), gia đình, hoặc nhóm bạn bè chia sẻ chi phí (như chuyến du lịch). Với giao diện thân thiện, bạn có thể truy cập từ máy tính hoặc điện thoại. Khám phá thêm tại <a href=\"/\">Trang Chủ</a>."));
 
         addFAQ(new FAQ("Làm thế nào để đăng nhập hoặc đăng ký tài khoản?",
-                "Truy cập <a href=\"/\">Trang Chủ</a>, chọn \"Đăng Ký\" để tạo tài khoản mới với email, mật khẩu, và thông tin cơ bản (tên, loại tài khoản). Xác nhận qua email để đăng nhập. Nếu quên mật khẩu, dùng \"Quên Mật Khẩu\" để reset. Tài khoản cá nhân hóa đảm bảo dữ liệu an toàn trên đám mây với mã hóa."));
+                "Truy cập <a href=\"${pageContext.request.contextPath}/faq\">Trang Chủ</a>, chọn \"Đăng Ký\" để tạo tài khoản mới với email, mật khẩu, và thông tin cơ bản (tên, loại tài khoản). Xác nhận qua email để đăng nhập. Nếu quên mật khẩu, dùng \"Quên Mật Khẩu\" để reset. Tài khoản cá nhân hóa đảm bảo dữ liệu an toàn trên đám mây với mã hóa."));
 
         addFAQ(new FAQ("Trang Tổng Quan (Overview) hiển thị những gì?",
                 "Trang Overview là trung tâm, cho thấy số dư tài khoản, biểu đồ chi tiêu (pie chart theo danh mục), giao dịch gần nhất, và cảnh báo vượt ngân sách. Ví dụ: Nếu \"Ăn Uống\" chiếm 40% thu nhập, biểu đồ sẽ highlight. Cập nhật giao dịch thường xuyên để dữ liệu chính xác, hỗ trợ dự báo xu hướng. Xem ngay tại <a href=\"/overview\">Trang Tổng Quan</a>."));
@@ -43,7 +42,6 @@ public class FAQService {
         addFAQ(new FAQ("Giao dịch định kỳ (Scheduled Transactions) hoạt động ra sao?",
                 "Tính năng <a href=\"/scheduled_transactions\">Giao Dịch Định Kỳ</a> lập lịch tự động (hóa đơn, lương). Chọn \"Tạo Mới\", nhập số tiền, danh mục, và lịch (ví dụ: ngày 1 hàng tháng). Ứng dụng tự tạo giao dịch khi đến hạn, cho phép skip hoặc run now. Tiết kiệm thời gian và tránh quên thanh toán."));
 
-        // Thêm các FAQ còn lại tương tự, với link phù hợp như /accounts, /budgets, /debts, /charts, /calendar, /group_expenses, /import_export, /settings/mode, /top_categories, /manage_categories, /contact, /settings/email, /events, /gamification
         addFAQ(new FAQ("Quản lý tài khoản (Accounts) có những tính năng gì?",
                 "Phần <a href=\"/accounts\">Tài Khoản</a> theo dõi nhiều tài khoản (ví tiền, thẻ tín dụng). Thêm tài khoản với tên và số dư ban đầu, ứng dụng cập nhật tự động. Liên kết ngân hàng (qua API an toàn) để lấy lịch sử. Xem tổng số dư và chuyển tiền giữa tài khoản."));
 
