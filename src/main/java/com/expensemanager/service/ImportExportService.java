@@ -1,7 +1,6 @@
 package com.expensemanager.service;
 
 import com.expensemanager.dao.ImportExportDAO;
-import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
 import com.expensemanager.util.*;
@@ -39,9 +38,17 @@ public class ImportExportService {
         }
 
         EntityManager em = emf.createEntityManager();
-        Account acc = accountService.findById(accountId);
-        if (acc == null)
-            throw new IllegalArgumentException("Tài khoản không tồn tại: " + accountId);
+        Account acc = null; // Khởi tạo account là null
+
+        // Chỉ lấy account nếu ID được cung cấp
+        if (accountId != null) {
+            acc = accountService.getAccountById(accountId);
+            // Nếu ID được cung cấp nhưng không hợp lệ, báo lỗi
+            if (acc == null) {
+                em.close();
+                throw new IllegalArgumentException("Tài khoản với ID cung cấp không tồn tại: " + accountId);
+            }
+        }
 
         List<Transaction> result = new ArrayList<>();
 
@@ -51,7 +58,7 @@ public class ImportExportService {
             for (Map.Entry<String, String> e : raw.entrySet()) {
                 String k = (e.getKey() == null)
                         ? ""
-                        : e.getKey().replace("\uFEFF", "").trim().toLowerCase(Locale.ROOT);
+                        : e.getKey().replace("﻿", "").trim().toLowerCase(Locale.ROOT);
                 String v = (e.getValue() == null) ? "" : e.getValue().trim();
                 row.put(k, v);
             }
@@ -77,6 +84,8 @@ public class ImportExportService {
                 t.setTransactionDate(parseDateTime(row.get("transaction_date")));
                 t.setCreate_at(parseDateTime(row.get("create_at")));
                 t.setUpdate_at(parseDateTime(row.get("update_at")));
+                
+                // Gán account (có thể là null nếu không được chọn)
                 t.setAccount(acc);
 
                 // ✅ Category (UUID)

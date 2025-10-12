@@ -1,7 +1,6 @@
 package com.expensemanager.controller;
 
 import com.expensemanager.model.Category;
-import com.expensemanager.model.User;
 import com.expensemanager.service.CategoryService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -21,18 +20,17 @@ public class CategoryController extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession(false);
+        User user = null;
         UUID userId = null;
         boolean isGuest = false;
 
         // 🔹 Nếu chưa đăng nhập → cho xem giao diện nhưng không thao tác
-        if (session == null || session.getAttribute("user_id") == null) {
+        if (session == null || session.getAttribute("user") == null) {
             System.out.println("⚠️ Chưa đăng nhập — hiển thị chế độ khách (readonly).");
             isGuest = true;
-            /*if (session == null) session = request.getSession(true);
-            userId = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
-            session.setAttribute("user_id", userId);*/
         } else {
-            userId = (UUID) session.getAttribute("user_id");
+            user = (User) session.getAttribute("user");
+            userId = user.getId();
         }
 
         String action = request.getParameter("action");
@@ -68,18 +66,17 @@ public class CategoryController extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession(false);
+        User user = (session != null) ? (User) session.getAttribute("user") : null;
 
         // ⚠️ Nếu chưa đăng nhập thì chỉ hiển thị cảnh báo, không thêm được
-        if (session == null || session.getAttribute("user_id") == null) {
+        if (user == null) {
             request.setAttribute("error", "⚠️ Bạn cần đăng nhập để thêm hoặc chỉnh sửa danh mục!");
             request.setAttribute("view", "/views/categories.jsp");
             request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
             return;
         }
 
-        UUID userId = (UUID) session.getAttribute("user_id");
-        User user = new User();
-        user.setId(userId);
+        UUID userId = user.getId();
 
         // 🔹 Lấy dữ liệu form
         String idParam = request.getParameter("id");

@@ -42,16 +42,18 @@
 
     <!-- Thông báo -->
     <c:if test="${not empty error}">
-        <div class="msg error"><i class="fa-solid fa-triangle-exclamation"></i> ${error}</div>
+        <div style="background-color:#ffe6e6; color:#b30000; padding:10px; border-radius:6px; margin-bottom:10px;">
+            ${error}
+        </div>
     </c:if>
     <c:if test="${not empty success}">
         <div class="msg success"><i class="fa-solid fa-circle-check"></i> ${success}</div>
     </c:if>
 
     <c:if test="${readonly}">
-        <p style="color: red; font-weight: bold;">
-            ⚠️ Bạn đang ở chế độ khách — không thể import hoặc export dữ liệu!
-        </p>
+        <div style="background-color:#fff3cd; color:#856404; padding:10px; border-radius:6px; margin-bottom:10px;">
+            🔒 Bạn đang ở chế độ khách — chỉ có thể xem và xem trước file.
+        </div>
     </c:if>
 
     <c:if test="${!readonly}">
