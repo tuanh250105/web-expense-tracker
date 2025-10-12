@@ -2,7 +2,7 @@ package com.expensemanager.service;
 
 import com.expensemanager.dao.CategoryDAO;
 import com.expensemanager.model.Category;
-
+import com.expensemanager.model.User;
 import java.util.List;
 import java.util.UUID;
 

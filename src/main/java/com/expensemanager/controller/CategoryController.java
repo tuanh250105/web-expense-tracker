@@ -1,6 +1,7 @@
 package com.expensemanager.controller;
 
 import com.expensemanager.model.Category;
+import com.expensemanager.model.User;
 import com.expensemanager.service.CategoryService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;

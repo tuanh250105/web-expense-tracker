@@ -74,7 +74,6 @@ public class CategoryDAO {
             em.close();
         }
     }
-
     public List<Category> getByType(String type) {
         EntityManager em = JpaUtil.getEntityManagerFactory().createEntityManager();
         try {
