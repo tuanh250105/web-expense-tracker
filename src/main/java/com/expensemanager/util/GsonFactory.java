@@ -1,4 +1,4 @@
-package com.expensemanager.shared;
+package com.expensemanager.util;
 
 import com.google.gson.*;
 import java.lang.reflect.Type;

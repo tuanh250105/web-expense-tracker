@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <persistence xmlns="https://jakarta.ee/xml/ns/persistence"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              version="3.0"
@@ -6,26 +7,48 @@
     <persistence-unit name="BudgetBuddyUnit" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 
-        <class>com.expensemanager.model.Transaction</class>
+        <!-- ====== Liệt kê tất cả entity để tránh lỗi LazyInitializationException / mapping ====== -->
+        <class>com.expensemanager.model.Account</class>
+        <class>com.expensemanager.model.User</class>
         <class>com.expensemanager.model.Category</class>
+        <class>com.expensemanager.model.Transaction</class>
+        <class>com.expensemanager.model.Budget</class>
         <class>com.expensemanager.model.RewardPrize</class>
         <class>com.expensemanager.model.RewardPoints</class>
         <class>com.expensemanager.model.RewardSpin</class>
-        <class>com.expensemanager.model.Budget</class>
-        <class>com.expensemanager.model.User</class>
-        <class>com.expensemanager.model.Account</class>
 
         <properties>
+            <!-- ====== Kết nối tới Supabase (PostgreSQL) ====== -->
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
-            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require"/>
+            <property name="jakarta.persistence.jdbc.url"
+                      value="jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require&amp;ApplicationName=BudgetBuddy"/>
             <property name="jakarta.persistence.jdbc.user" value="postgres.bgbaeuehewyxditjnncg"/>
             <property name="jakarta.persistence.jdbc.password" value="web_database@pass"/>
 
+            <!-- ====== Hibernate Config ====== -->
             <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
-            <property name="hibernate.hbm2ddl.auto" value="validate"/>
+
+            <!--
+                update  : cập nhật schema (dev)
+                validate: chỉ kiểm tra schema (prod)
+                create-drop : chỉ dùng khi test local
+            -->
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+
+            <!-- Hiển thị log SQL (dành cho dev) -->
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
+
+            <!-- Giữ timezone nhất quán (UTC để đồng bộ server Supabase) -->
             <property name="hibernate.jdbc.time_zone" value="UTC"/>
+
+            <!-- Pool limit (Supabase pool giới hạn connections) -->
+            <property name="hibernate.connection.pool_size" value="5"/>
+            <property name="hibernate.connection.autocommit" value="false"/>
+            <property name="hibernate.connection.release_mode" value="after_transaction"/>
+
+            <!-- Fix UTF-8 encoding -->
+            <property name="hibernate.connection.charSet" value="UTF-8"/>
         </properties>
     </persistence-unit>
 </persistence>

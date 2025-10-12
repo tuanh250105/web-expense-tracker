@@ -3,6 +3,7 @@ package com.expensemanager.controller;
 import com.expensemanager.dao.RewardDAO;
 import com.expensemanager.model.RewardPrize;
 import com.google.gson.Gson;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 
@@ -12,7 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.UUID;
 
-@WebServlet(name = "RewardsController", urlPatterns = {"/api/rewards/*"})
+@WebServlet(name = "RewardsController", urlPatterns = {"/rewards", "/api/rewards/*"})
 public class RewardsController extends HttpServlet {
 
     private static final Gson GSON = new Gson();
@@ -21,7 +22,17 @@ public class RewardsController extends HttpServlet {
     private static final int REWARD_PER_BUDGET = 5;
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException, ServletException {
+
+        // ✅ Nếu truy cập giao diện /rewards → forward layout.jsp
+        if ("/rewards".equals(req.getServletPath())) {
+            req.setAttribute("view", "/views/rewards.jsp");
+            req.getRequestDispatcher("/layout/layout.jsp").forward(req, resp);
+            return;
+        }
+
+        // ✅ Giữ nguyên phần API /api/rewards/*
         resp.setContentType("application/json;charset=UTF-8");
         String path = Optional.ofNullable(req.getPathInfo()).orElse("/");
         UUID uid = parseUserId(req);
@@ -30,12 +41,14 @@ public class RewardsController extends HttpServlet {
             case "/points" -> write(resp, Map.of("points", dao.getUserScore(uid)));
             case "/recent" -> {
                 int limit = parseInt(req.getParameter("limit"), 5);
-                var list = dao.recentSpins(uid, limit).stream().map(s -> Map.of(
-                        "prizeLabel", s.getPrizeLabel(),
-                        "prizeCode", s.getPrizeCode(),
-                        "pointsSpent", s.getPointsSpent(),
-                        "createdAt", s.getCreatedAt().toString()
-                )).toList();
+                var list = dao.recentSpins(uid, limit).stream().map(s -> {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    map.put("prizeLabel", s.getPrizeLabel());
+                    map.put("prizeCode", s.getPrizeCode());
+                    map.put("pointsSpent", s.getPointsSpent());
+                    map.put("createdAt", s.getCreatedAt().toString());
+                    return map;
+                }).collect(Collectors.toList());
                 write(resp, list);
             }
             case "/claimable" -> {
@@ -43,7 +56,7 @@ public class RewardsController extends HttpServlet {
                 int claimed = dao.countBudgetClaims(uid, REWARD_PER_BUDGET);
                 write(resp, Map.of("remaining", Math.max(achieved - claimed, 0)));
             }
-            default -> { // fallback: trả danh sách prize & điểm
+            default -> {
                 var prizes = dao.getActivePrizes().stream()
                         .map(p -> Map.of("code", p.getCode(), "label", p.getLabel()))
                         .collect(Collectors.toList());
@@ -53,7 +66,9 @@ public class RewardsController extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+
         resp.setContentType("application/json;charset=UTF-8");
         String path = Optional.ofNullable(req.getPathInfo()).orElse("/");
         UUID uid = parseUserId(req);
@@ -105,12 +120,14 @@ public class RewardsController extends HttpServlet {
 
     private UUID parseUserId(HttpServletRequest req) {
         String u = req.getParameter("userId");
-        try { return UUID.fromString(u); } catch (Exception e) {
-            return UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0"); // fallback user demo
+        try { return UUID.fromString(u); }
+        catch (Exception e) {
+            return UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
         }
     }
 
     private int parseInt(String s, int def) {
-        try { return Integer.parseInt(s); } catch (Exception e) { return def; }
+        try { return Integer.parseInt(s); }
+        catch (Exception e) { return def; }
     }
 }

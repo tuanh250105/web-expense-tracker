@@ -1,11 +1,10 @@
 package com.expensemanager.dao;
 
 import com.expensemanager.model.Transaction;
-import com.expensemanager.shared.JpaUtil;
+import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 
 public class TransactionRepository {

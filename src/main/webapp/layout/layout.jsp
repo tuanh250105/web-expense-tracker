@@ -1,17 +1,12 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%
-    String ctx = request.getContextPath();
-%>
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>BudgetBuddy Layout</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-    <!-- Asset khung: dùng contextPath cho chắc -->
-    <link rel="stylesheet" href="<%=ctx%>/layout/layout.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/layout/layout.css">
 </head>
 <body>
 <header>
@@ -29,9 +24,14 @@
     </div>
 
     <div class="header-actions">
-        <i class="fa-regular fa-bell notification"><span class="badge">3</span></i>
+        <i class="fa-regular fa-bell notification">
+            <span class="badge">3</span>
+        </i>
         <button class="btn-login"><i class="fa-solid fa-right-to-bracket"></i> Login / Sign up</button>
-        <label class="switch"><input type="checkbox" id="darkModeToggle"><span class="slider"></span></label>
+        <label class="switch">
+            <input type="checkbox" id="darkModeToggle">
+            <span class="slider"></span>
+        </label>
         <span class="menu-toggle"><i class="fa-solid fa-bars"></i></span>
     </div>
 </header>
@@ -45,15 +45,16 @@
         <li><a href="#"><i class="fa-solid fa-wallet"></i> <span>Ngân sách</span></a></li>
         <li><a href="#"><i class="fa-solid fa-hand-holding-dollar"></i> <span>Quản lý nợ</span></a></li>
         <hr>
-        <!-- 2 mục bạn phụ trách: link tới dispatcher pages -->
-        <li><a href="<%=ctx%>/layout/layout.jsp?view=/views/analytics.jsp"><i class="fa-solid fa-chart-pie"></i> <span>Tổng hợp biểu đồ</span></a></li>
+
+        <!-- ✅ chỉnh 3 dòng này để đúng servlet controller -->
+        <li><a href="${pageContext.request.contextPath}/analytics"><i class="fa-solid fa-chart-pie"></i> <span>Tổng hợp biểu đồ</span></a></li>
         <li><a href="#"><i class="fa-solid fa-calendar"></i> <span>Lịch</span></a></li>
         <li><a href="#"><i class="fa-solid fa-people-group"></i> <span>Chi tiêu nhóm</span></a></li>
-        <li><a href="#"><i class="fa-solid fa-file-import"></i> <span>Import / Export file</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/import-export"><i class="fa-solid fa-file-import"></i> <span>Import / Export file</span></a></li>
         <li><a href="#"><i class="fa-solid fa-list-ul"></i> <span>Thống kê Top Categories</span></a></li>
-        <li><a href="#"><i class="fa-solid fa-folder-open"></i> <span>Quản lí danh mục</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/categories"><i class="fa-solid fa-folder-open"></i> <span>Quản lí danh mục</span></a></li>
         <hr>
-        <li><a href="<%=ctx%>/layout/layout.jsp?view=/views/rewards.jsp"><i class="fa-solid fa-star"></i> <span>Thưởng thêm</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/rewards"><i class="fa-solid fa-star"></i> <span>Thưởng thêm</span></a></li>
         <li><a href="#"><i class="fa-solid fa-calendar-check"></i> <span>Quản lý sự kiện tài chính</span></a></li>
         <hr>
         <li><a href="#"><i class="fa-solid fa-circle-question"></i> <span>Help - Hỏi đáp</span></a></li>
@@ -62,17 +63,10 @@
 </nav>
 
 <main class="content">
-    <h2>Trang nội dung</h2>
-    <p>Đây là chỗ code phần chức năng.</p>
-    <%
-        String v = request.getParameter("view");
-        if (v != null && v.startsWith("/views/") && v.endsWith(".jsp")) {
-            request.setAttribute("view", v);
-        }
-    %>
+    <!-- ✅ giữ nguyên, controller sẽ setAttribute("view") -->
     <jsp:include page="${view}" />
 </main>
 
-<script src="layout.js"></script>
+<script src="${pageContext.request.contextPath}/layout/layout.js"></script>
 </body>
 </html>

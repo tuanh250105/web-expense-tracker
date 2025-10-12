@@ -3,6 +3,7 @@ package com.expensemanager.model;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -10,21 +11,24 @@ import java.util.UUID;
 @Table(name = "transactions")
 public class Transaction {
 
+    // ====== ID (UUID) ======
     @Id
     @GeneratedValue
     @Column(columnDefinition = "uuid DEFAULT gen_random_uuid()")
     private UUID id;
 
+    // ====== RELATIONSHIPS ======
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
-    @Column(nullable = false)
-    private String type; // "income" | "expense"
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    // ====== FIELDS ======
+    @Column(nullable = false)
+    private String type; // "income" | "expense"
 
     @Column(nullable = false)
     private int amount;
@@ -34,6 +38,7 @@ public class Transaction {
     @Column(name = "transaction_date", nullable = false)
     private LocalDateTime transactionDate;
 
+    // ====== TIMESTAMP ======
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -42,7 +47,24 @@ public class Transaction {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // ====== GETTER / SETTER ======
+    // ====== CONSTRUCTORS ======
+    public Transaction() {}
+
+    public Transaction(UUID id, Account account, String type, Category category,
+                       int amount, String note, LocalDateTime transactionDate,
+                       LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.account = account;
+        this.type = type;
+        this.category = category;
+        this.amount = amount;
+        this.note = note;
+        this.transactionDate = transactionDate;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    // ====== GETTERS & SETTERS ======
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -69,4 +91,20 @@ public class Transaction {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    // ====== toString() ======
+    @Override
+    public String toString() {
+        return "Transaction{" +
+                "id=" + id +
+                ", account=" + (account != null ? account.getId() : null) +
+                ", category=" + (category != null ? category.getId() : null) +
+                ", type='" + type + '\'' +
+                ", amount=" + amount +
+                ", note='" + note + '\'' +
+                ", transactionDate=" + transactionDate +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                '}';
+    }
 }

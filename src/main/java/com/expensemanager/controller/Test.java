@@ -1,7 +1,7 @@
 package com.expensemanager.controller;
 
 import com.expensemanager.model.Transaction;
-import com.expensemanager.shared.JpaUtil;
+import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;

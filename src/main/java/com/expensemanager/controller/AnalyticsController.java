@@ -2,8 +2,9 @@ package com.expensemanager.controller;
 
 import com.expensemanager.model.Transaction;
 import com.expensemanager.service.AnalyticsService;
-import com.expensemanager.shared.GsonFactory;
+import com.expensemanager.util.GsonFactory;
 import com.google.gson.Gson;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 
@@ -14,13 +15,23 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@WebServlet(name = "AnalyticsController", urlPatterns = {"/api/analytics"})
+@WebServlet(name = "AnalyticsController", urlPatterns = {"/analytics", "/api/analytics"})
 public class AnalyticsController extends HttpServlet {
     private static final Gson GSON = GsonFactory.create();
     private final AnalyticsService service = new AnalyticsService();
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException, ServletException {
+
+        // ✅ Nếu truy cập giao diện /analytics → load layout.jsp
+        if ("/analytics".equals(req.getServletPath())) {
+            req.setAttribute("view", "/views/analytics.jsp");
+            req.getRequestDispatcher("/layout/layout.jsp").forward(req, resp);
+            return;
+        }
+
+        // ✅ Còn lại là API /api/analytics
         resp.setContentType("application/json;charset=UTF-8");
         resp.setCharacterEncoding("UTF-8");
 
@@ -39,7 +50,6 @@ public class AnalyticsController extends HttpServlet {
             if (list.isEmpty()) {
                 result.put("message", "No data found");
             } else {
-                // === Tổng hợp dữ liệu ===
                 double income = list.stream()
                         .filter(t -> "income".equalsIgnoreCase(t.getType()))
                         .mapToDouble(Transaction::getAmount)
@@ -52,7 +62,6 @@ public class AnalyticsController extends HttpServlet {
 
                 double balance = income - expense;
 
-                // === Nhóm theo danh mục ===
                 Map<String, Double> grouped = list.stream()
                         .collect(Collectors.groupingBy(
                                 t -> {
@@ -64,7 +73,6 @@ public class AnalyticsController extends HttpServlet {
                                 Collectors.summingDouble(Transaction::getAmount)
                         ));
 
-                // === Lấy top danh mục ===
                 List<Map<String, Object>> topCategory = grouped.entrySet().stream()
                         .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
                         .limit(10)
@@ -76,7 +84,6 @@ public class AnalyticsController extends HttpServlet {
                         })
                         .collect(Collectors.toList());
 
-                // === Dữ liệu gốc (safe DTO) ===
                 List<Map<String, Object>> safeList = list.stream().map(t -> {
                     Map<String, Object> item = new LinkedHashMap<>();
                     item.put("id", t.getId());
@@ -88,7 +95,6 @@ public class AnalyticsController extends HttpServlet {
                     return item;
                 }).collect(Collectors.toList());
 
-                // === Gộp vào result ===
                 result.put("summary", Map.of(
                         "income", income,
                         "expense", expense,
@@ -98,14 +104,11 @@ public class AnalyticsController extends HttpServlet {
                 result.put("raw", safeList);
             }
 
-            // --- Ghi JSON ra response ---
             String json = GSON.toJson(result);
-            System.out.println("📤 JSON ready, length=" + json.length());
             try (PrintWriter out = resp.getWriter()) {
                 out.write(json);
                 out.flush();
             }
-            System.out.println("✅ JSON sent successfully");
 
         } catch (Exception e) {
             e.printStackTrace();
