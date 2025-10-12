@@ -64,7 +64,7 @@ public class ScheduledTransaction {
         if (category != null) this.categoryName = category.getName();
     }
 
-    public Integer getCategoryId() { return category != null ? category.getId() : null; }
+    public UUID getCategoryId() { return category != null ? category.getId() : null; }
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
@@ -89,27 +89,20 @@ public class ScheduledTransaction {
     public String getRepeatLabel() {
         if (scheduleCron == null || scheduleCron.isBlank()) return "Không xác định";
         scheduleCron = scheduleCron.trim();
-
         // Hàng ngày
         if (scheduleCron.equals("0 0 * * * ?"))
             return "Hàng ngày";
-
         // Hàng tuần
         if (scheduleCron.matches("0 0 0 \\? \\* [0-7]\\s*"))
             return "Hàng tuần";
-
         // Hàng tháng (0 0 10 * ?)
         if (scheduleCron.matches("0 0 \\d{1,2} \\* \\?"))
             return "Hàng tháng";
-
         // Hàng năm (0 0 10 10 ?)
         if (scheduleCron.matches("0 0 \\d{1,2} \\d{1,2} \\?"))
             return "Hàng năm";
-
         return scheduleCron; // fallback
     }
-
-
 
     public Timestamp getNextRun() { return nextRun; }
     public void setNextRun(Timestamp nextRun) { this.nextRun = nextRun; }
