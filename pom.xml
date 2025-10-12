@@ -5,6 +5,10 @@
     <version>1.0-SNAPSHOT</version>
     <name>BudgetBuddy</name>
     <packaging>war</packaging>
+<<<<<<< HEAD
+=======
+    
+>>>>>>> feature/bank
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>21</maven.compiler.source>
@@ -13,23 +17,29 @@
         <hibernate.version>7.1.3.Final</hibernate.version>
         <!--  thêm bởi DƯ  -->
     </properties>
+<<<<<<< HEAD
     <dependencies>
 
         <!-- JPA -->
+=======
+    
+    <dependencies>
+        <!-- Hibernate 7.x Jakarta EE - Core -->
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>7.1.3.Final</version>
+        </dependency>
+        
+        <!-- JPA API -->
+>>>>>>> feature/bank
         <dependency>
             <groupId>jakarta.persistence</groupId>
             <artifactId>jakarta.persistence-api</artifactId>
             <version>3.2.0</version>
         </dependency>
 
-        <!-- Hibernate (development version) -->
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-core</artifactId>
-            <version>7.1.3.Final</version>
-        </dependency>
-
-        <!-- Servlet API -->
+        <!--  Servlet API  -->
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
@@ -37,6 +47,7 @@
             <scope>provided</scope>
         </dependency>
 
+<<<<<<< HEAD
         <!-- JPA API -->
         <dependency>
             <groupId>jakarta.persistence</groupId>
@@ -59,6 +70,15 @@
         </dependency>
 
         <!-- JSTL for JSP -->
+=======
+        <dependency>
+            <groupId>jakarta.transaction</groupId>
+            <artifactId>jakarta.transaction-api</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
+        <!--  JSP + JSTL  -->
+>>>>>>> feature/bank
         <dependency>
             <groupId>jakarta.servlet.jsp.jstl</groupId>
             <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
@@ -69,13 +89,19 @@
             <artifactId>jakarta.servlet.jsp.jstl</artifactId>
             <version>3.0.1</version>
         </dependency>
+<<<<<<< HEAD
 
         <!-- BCrypt for password hashing -->
+=======
+        
+        <!--  PostgreSQL JDBC driver  -->
+>>>>>>> feature/bank
         <dependency>
             <groupId>org.mindrot</groupId>
             <artifactId>jbcrypt</artifactId>
             <version>0.4</version>
         </dependency>
+<<<<<<< HEAD
 
         <!-- CSV Utility -->
         <dependency>
@@ -138,6 +164,10 @@
         </dependency>
 
         <!-- JUnit (tests) -->
+=======
+        
+        <!--  JUnit  -->
+>>>>>>> feature/bank
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -168,6 +198,7 @@
             <artifactId>quartz</artifactId>
             <version>2.3.2</version>
         </dependency>
+<<<<<<< HEAD
         <!--  Hibernate ORM cho JPA thêm bởi Dư  -->
         <dependency>
             <groupId>org.hibernate</groupId>
@@ -184,6 +215,23 @@
     <build>
         <finalName>BudgetBuddy</finalName>
         <plugins>
+=======
+        
+        <!-- Gson for JSON processing -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+        
+        <!--  Hibernate ORM cho JPA thêm bởi Dư  -->
+    </dependencies>
+    
+    <build>
+        <finalName>BudgetBuddy</finalName>
+        <plugins>
+            <!--  Compiler plugin  -->
+>>>>>>> feature/bank
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -193,12 +241,32 @@
                     <target>21</target>
                 </configuration>
             </plugin>
+<<<<<<< HEAD
+=======
+            
+            <!--  WAR plugin  -->
+>>>>>>> feature/bank
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.4.0</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
+                </configuration>
+            </plugin>
+            
+            <!-- Jetty plugin for development -->
+            <plugin>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-maven-plugin</artifactId>
+                <version>11.0.18</version>
+                <configuration>
+                    <webApp>
+                        <contextPath>/BudgetBuddy</contextPath>
+                    </webApp>
+                    <httpConnector>
+                        <port>8080</port>
+                    </httpConnector>
                 </configuration>
             </plugin>
         </plugins>
