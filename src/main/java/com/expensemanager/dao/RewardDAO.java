@@ -12,7 +12,6 @@ import java.util.UUID;
 
 public class RewardDAO {
 
-
     private static final EntityManagerFactory EMF =
             Persistence.createEntityManagerFactory("BudgetBuddyUnit");
 
