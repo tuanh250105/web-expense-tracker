@@ -5,22 +5,31 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 
 public class JpaUtil {
-    private static EntityManagerFactory emf;
-
-    public static EntityManagerFactory getEntityManagerFactory() {
-        if (emf == null) {
-            emf = Persistence.createEntityManagerFactory("BugetBuddyUnit"); // Tên PU từ persistence.xml
+    private static EntityManagerFactory entityManagerFactory;
+    
+    static {
+        try {
+            // Sử dụng persistence unit name đúng từ persistence.xml
+            entityManagerFactory = Persistence.createEntityManagerFactory("BudgetBuddyUnit");
+            System.out.println("✅ JpaUtil: EntityManagerFactory initialized successfully!");
+        } catch (Exception e) {
+            System.err.println("❌ JpaUtil: Initial EntityManagerFactory creation failed: " + e);
+            throw new ExceptionInInitializerError(e);
         }
-        return emf;
     }
-
+    
     public static EntityManager getEntityManager() {
-        return getEntityManagerFactory().createEntityManager();
+        return entityManagerFactory.createEntityManager();
     }
-
-    public static void shutdown() {
-        if (emf != null && emf.isOpen()) {
-            emf.close();
+    
+    public static EntityManagerFactory getEntityManagerFactory() {
+        return entityManagerFactory;
+    }
+    
+    public static void close() {
+        if (entityManagerFactory != null && entityManagerFactory.isOpen()) {
+            entityManagerFactory.close();
+            System.out.println("✅ JpaUtil: EntityManagerFactory closed!");
         }
     }
 }

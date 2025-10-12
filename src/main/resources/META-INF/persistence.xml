@@ -1,37 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <persistence xmlns="https://jakarta.ee/xml/ns/persistence"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             version="3.0" 
-             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
+             version="3.2"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_2.xsd">
 
-    <persistence-unit name="BugetBuddyUnit" transaction-type="RESOURCE_LOCAL">
-        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-
-        <!-- Liệt kê TẤT CẢ entity để fix association error -->
+    <persistence-unit name="BudgetBuddyUnit" transaction-type="RESOURCE_LOCAL">
+        <!-- Hibernate 7.x không cần explicit provider -->
+        
+        <!-- Entity Classes for Supabase Schema -->
         <class>com.expensemanager.model.Account</class>
         <class>com.expensemanager.model.Category</class>
         <class>com.expensemanager.model.Transaction</class>
         <class>com.expensemanager.model.User</class>
+        <class>com.expensemanager.model.CategoryStats</class>
+        <class>com.expensemanager.model.TopTransaction</class>
+        <class>com.expensemanager.model.TopDebt</class>
 
         <properties>
-            <!-- Kết nối tới Supabase (PostgreSQL) -->
+            <!-- Supabase PostgreSQL Connection (Transaction mode - Port 6543) -->
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
-            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?prepareThreshold=0&amp;ApplicationName=BudgetBuddy"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require"/>
             <property name="jakarta.persistence.jdbc.user" value="postgres.bgbaeuehewyxditjnncg"/>
-            <property name="jakarta.persistence.jdbc.password" value="web_database@pass"/>
+                <property name="jakarta.persistence.jdbc.password" value="web_database@pass"/>
 
-            <!-- Hibernate tự động tạo/cập nhật bảng -->
-            <property name="hibernate.hbm2ddl.auto" value="update"/>
+            <!-- Hibernate 7.x Configuration -->
             <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
-
-            <!-- Hiển thị SQL trên console -->
-            <property name="hibernate.show_sql" value="true"/>
-            <property name="hibernate.format_sql" value="true"/>
-
-            <!-- Pool config cho Supabase (giới hạn để tránh overload pooler) -->
-            <property name="hibernate.connection.pool_size" value="5"/>
+            <property name="hibernate.schema_update.unique_constraint_strategy" value="RECREATE_QUIETLY"/>
+            <property name="hibernate.hbm2ddl.auto" value="none"/>  <!-- none để không validate/create tables -->
+            
+            <!-- Connection Pool Settings (minimal for Supabase free tier) -->
+            <property name="hibernate.connection.pool_size" value="1"/>
             <property name="hibernate.connection.autocommit" value="false"/>
             <property name="hibernate.connection.release_mode" value="after_transaction"/>
+            <property name="hibernate.connection.provider_disables_autocommit" value="true"/>
+            <property name="hibernate.connection.isolation" value="2"/>
+            
+            <!-- Performance & Debugging -->
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.use_sql_comments" value="true"/>
+            
+            <!-- JPA/Hibernate 7.x Settings -->
+            <property name="hibernate.connection.provider_class" value="org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl"/>
+            <property name="hibernate.current_session_context_class" value="thread"/>
+            
+            <!-- Timezone Settings -->
+            <property name="hibernate.jdbc.time_zone" value="UTC"/>
+            
+            <!-- Hibernate 7.x specific settings -->
+            <property name="hibernate.bytecode.use_reflection_optimizer" value="false"/>
         </properties>
     </persistence-unit>
 </persistence>

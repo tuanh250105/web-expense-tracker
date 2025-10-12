@@ -37,8 +37,12 @@ public class Category {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // ===== GETTER / SETTER =====
+    // === CONSTRUCTORS ===
+    public Category() {
+        // Default constructor for JPA
+    }
 
+    // === GETTERS AND SETTERS ===
     public UUID getId() {
         return id;
     }
@@ -69,6 +73,11 @@ public class Category {
 
     public void setIconPath(String iconPath) {
         this.iconPath = iconPath;
+    }
+    
+    // Alias getter for icon (same as iconPath)
+    public String getIcon() {
+        return iconPath;
     }
 
     public String getColor() {

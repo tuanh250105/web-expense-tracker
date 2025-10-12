@@ -1,0 +1,317 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thống kê Top Categories - BudgetBuddy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/top-categories.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // ✅ REST API Configuration
+        var API_BASE = '/BudgetBuddy/api';
+        
+        // 🔧 Load data when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCategoryStats();
+            loadTopCategories();
+        });
+        
+        // 📊 Load category statistics from REST API
+        function loadCategoryStats() {
+            fetch(API_BASE + '/categories/stats')
+                .then(function(response) { return response.json(); })
+                .then(function(result) {
+                    if (result.success && result.data) {
+                        updateCategoryCharts(result.data);
+                        updateStatsCards(result.data);
+                    } else {
+                        console.error('Error loading category stats:', result.message);
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Failed to load category stats:', error);
+                });
+        }
+        
+        // 🏆 Load top categories from REST API  
+        function loadTopCategories() {
+            fetch(API_BASE + '/categories/top?limit=10')
+                .then(function(response) { return response.json(); })
+                .then(function(result) {
+                    if (result.success && result.data) {
+                        updateTopCategoriesList(result.data);
+                    } else {
+                        console.error('Error loading top categories:', result.message);
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Failed to load top categories:', error);
+                });
+        }
+        
+        // 📈 Update charts with real data
+        function updateCategoryCharts(statsData) {
+            // Update pie chart and other charts with real data
+            if (window.categoryChart) {
+                var labels = [];
+                var amounts = [];
+                for (var i = 0; i < statsData.length; i++) {
+                    labels.push(statsData[i].categoryName);
+                    amounts.push(parseFloat(statsData[i].totalAmount));
+                }
+                
+                window.categoryChart.data.labels = labels;
+                window.categoryChart.data.datasets[0].data = amounts;
+                window.categoryChart.update();
+            }
+        }
+        
+        // 📋 Update stats cards
+        function updateStatsCards(statsData) {
+            // Calculate totals
+            var totalSpent = 0;
+            for (var i = 0; i < statsData.length; i++) {
+                totalSpent += parseFloat(statsData[i].totalAmount);
+            }
+            var totalCategories = statsData.length;
+            
+            // Update DOM elements if they exist
+            var totalSpentElement = document.querySelector('.total-spent');
+            var totalCategoriesElement = document.querySelector('.total-categories');
+            var topCategoryNameElement = document.querySelector('.top-category-name');
+            var topCategoryAmountElement = document.querySelector('.top-category-amount');
+            
+            if (totalSpentElement) {
+                var formatter = new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND'
+                });
+                totalSpentElement.textContent = formatter.format(totalSpent);
+            }
+            
+            if (totalCategoriesElement) {
+                totalCategoriesElement.textContent = totalCategories;
+            }
+            
+            // Show top category
+            if (statsData.length > 0 && topCategoryNameElement && topCategoryAmountElement) {
+                var topCategory = statsData[0];
+                topCategoryNameElement.textContent = topCategory.categoryName;
+                var formatter2 = new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND'
+                });
+                topCategoryAmountElement.textContent = formatter2.format(parseFloat(topCategory.totalAmount));
+            }
+        }
+        
+        // 🎯 Update top categories list
+        function updateTopCategoriesList(topCategories) {
+            var listContainer = document.querySelector('.categories-list');
+            if (!listContainer) return;
+            
+            var formatter = new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            });
+            
+            var html = '';
+            for (var i = 0; i < topCategories.length; i++) {
+                var category = topCategories[i];
+                var formattedAmount = formatter.format(parseFloat(category.totalAmount));
+                html += '<div class="category-item">' +
+                        '<div class="category-rank">#' + (i + 1) + '</div>' +
+                        '<div class="category-info">' +
+                        '<h3>' + category.categoryName + '</h3>' +
+                        '<p>' + category.transactionCount + ' giao dịch</p>' +
+                        '</div>' +
+                        '<div class="category-amount">' +
+                        formattedAmount +
+                        '</div>' +
+                        '</div>';
+            }
+            
+            listContainer.innerHTML = html;
+        }
+    </script>
+</head>
+<body>
+    <div class="top-categories-container">
+        <!-- Header Section -->
+        <div class="page-header">
+            <div class="header-left">
+                <h1><i class="fas fa-chart-bar"></i> Thống kê Top Categories</h1>
+                <p class="subtitle">Phân tích chi tiết về chi tiêu theo danh mục</p>
+            </div>
+            <div class="header-right">
+                <div class="time-filter">
+                    <select id="timeFilter" class="filter-select">
+                        <option value="week">Tuần này</option>
+                        <option value="month" selected>Tháng này</option>
+                        <option value="quarter">Quý này</option>
+                        <option value="year">Năm này</option>
+                    </select>
+                </div>
+                <button class="export-btn">
+                    <i class="fas fa-download"></i> Xuất báo cáo
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card total-expense">
+                <div class="card-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Tổng chi tiêu</h3>
+                    <p class="amount total-spent">₫0</p>
+                    <span class="change neutral">
+                        <i class="fas fa-chart-line"></i> API Connected
+                    </span>
+                </div>
+            </div>
+
+            <div class="summary-card top-category">
+                <div class="card-icon">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Danh mục chi nhiều nhất</h3>
+                    <p class="category-name top-category-name">Đang tải...</p>
+                    <span class="amount-small top-category-amount">₫0</span>
+                </div>
+            </div>
+
+            <div class="summary-card transactions-count">
+                <div class="card-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Tổng danh mục</h3>
+                    <p class="count total-categories">0</p>
+                    <span class="change neutral">
+                        <i class="fas fa-database"></i> Real Data
+                    </span>
+                </div>
+            </div>
+
+            <div class="summary-card avg-transaction">
+                <div class="card-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Chi tiêu TB/ngày</h3>
+                    <p class="amount">₫0</p>
+                    <span class="change neutral">
+                        <i class="fas fa-minus"></i> 0%
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="content-grid">
+            <!-- Top Categories Chart -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3><i class="fas fa-chart-pie"></i> Top 10 Danh mục chi tiêu</h3>
+                    <div class="chart-controls">
+                        <button class="chart-type-btn active" data-type="pie">
+                            <i class="fas fa-chart-pie"></i>
+                        </button>
+                        <button class="chart-type-btn" data-type="bar">
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                        <button class="chart-type-btn" data-type="doughnut">
+                            <i class="fas fa-circle-notch"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="topCategoriesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Category Details Table -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h3><i class="fas fa-list"></i> Chi tiết theo danh mục</h3>
+                    <div class="table-controls">
+                        <input type="text" placeholder="Tìm kiếm danh mục..." class="search-input">
+                        <select class="sort-select">
+                            <option value="amount-desc">Số tiền (Cao → Thấp)</option>
+                            <option value="amount-asc">Số tiền (Thấp → Cao)</option>
+                            <option value="count-desc">Số giao dịch (Nhiều → Ít)</option>
+                            <option value="name-asc">Tên (A → Z)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="categories-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Danh mục</th>
+                                <th>Số tiền</th>
+                                <th>% Tổng</th>
+                                <th>Giao dịch</th>
+                                <th>TB/Giao dịch</th>
+                                <th>Xu hướng</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesTableBody">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Secondary Charts Row -->
+        <div class="secondary-charts">
+            <!-- Trend Chart -->
+            <div class="chart-container small">
+                <div class="chart-header">
+                    <h3><i class="fas fa-chart-line"></i> Xu hướng theo thời gian</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Transactions -->
+            <div class="top-transactions">
+                <div class="chart-header">
+                    <h3><i class="fas fa-star"></i> Top giao dịch lớn nhất</h3>
+                </div>
+                <div class="transactions-list">
+                    <div style="text-align: center; padding: 20px; color: #718096;">
+                        <i class="fas fa-inbox" style="font-size: 24px; margin-bottom: 8px; opacity: 0.5;"></i>
+                        <div>Chưa có dữ liệu giao dịch</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Debts -->
+            <div class="top-debts">
+                <div class="chart-header">
+                    <h3><i class="fas fa-hand-holding-dollar"></i> Top nợ cần trả</h3>
+                </div>
+                <div class="debts-list">
+                    <div style="text-align: center; padding: 20px; color: #718096;">
+                        <i class="fas fa-inbox" style="font-size: 24px; margin-bottom: 8px; opacity: 0.5;"></i>
+                        <div>Chưa có dữ liệu nợ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/top-categories.js"></script>
+</body>
+</html>
