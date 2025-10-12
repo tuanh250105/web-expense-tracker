@@ -42,112 +42,122 @@
 
     <!-- Thông báo -->
     <c:if test="${not empty error}">
-        <div class="msg error"><i class="fa-solid fa-triangle-exclamation"></i> ${error}</div>
+        <div style="background-color:#ffe6e6; color:#b30000; padding:10px; border-radius:6px; margin-bottom:10px;">
+            ${error}
+        </div>
     </c:if>
     <c:if test="${not empty success}">
         <div class="msg success"><i class="fa-solid fa-circle-check"></i> ${success}</div>
     </c:if>
 
-    <div class="row">
+    <c:if test="${readonly}">
+        <div style="background-color:#fff3cd; color:#856404; padding:10px; border-radius:6px; margin-bottom:10px;">
+            🔒 Bạn đang ở chế độ khách — chỉ có thể xem và xem trước file.
+        </div>
+    </c:if>
 
-        <!-- IMPORT -->
-        <div class="card">
-            <h2><i class="fa-solid fa-file-import"></i> Import dữ liệu</h2>
+    <c:if test="${!readonly}">
+        <div class="row">
 
-            <!-- FORM UPLOAD FILE -->
-            <form action="${pageContext.request.contextPath}/import-export" method="post"
-                  enctype="multipart/form-data">
-                <input type="hidden" name="action" value="preview">
+            <!-- IMPORT -->
+            <div class="card">
+                <h2><i class="fa-solid fa-file-import"></i> Import dữ liệu</h2>
 
-                <label for="account_import">Tài khoản</label>
-                <select id="account_import" name="account" required>
-                    <option value="">-- Chọn tài khoản --</option>
-                    <c:forEach var="a" items="${accounts}">
-                        <option value="${a.id}" <c:if test="${a.id == selectedAccountId}">selected</c:if>>
-                                ${a.name}
-                        </option>
-                    </c:forEach>
-                </select>
+                <!-- FORM UPLOAD FILE -->
+                <form action="${pageContext.request.contextPath}/import-export" method="post"
+                      enctype="multipart/form-data">
+                    <input type="hidden" name="action" value="preview">
 
-                <label for="file">Chọn file (CSV hoặc XLSX)</label>
-                <input id="file" type="file" name="file" accept=".csv,.xlsx" required>
-
-                <br>
-                <button type="submit"><i class="fa-solid fa-eye"></i> Xem trước</button>
-            </form>
-
-            <!-- HIỂN THỊ BẢNG XEM TRƯỚC -->
-            <c:if test="${not empty previewTransactions}">
-                <hr>
-                <h3><i class="fa-solid fa-table"></i> Bảng xem trước</h3>
-
-                <div style="max-height:350px; overflow:auto; border:1px solid var(--border); border-radius:8px;">
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>Type</th>
-                            <th>Amount</th>
-                            <th>Note</th>
-                            <th>Transaction Date</th>
-                            <th>Created At</th>
-                            <th>Updated At</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <c:forEach var="t" items="${previewTransactions}">
-                            <tr>
-                                <td>${t.type}</td>
-                                <td>${t.amount}</td>
-                                <td>${t.note}</td>
-                                <td>${t.transactionDate}</td>
-                                <td>${t.create_at}</td>
-                                <td>${t.update_at}</td>
-                            </tr>
+                    <label for="account_import">Tài khoản</label>
+                    <select id="account_import" name="account" required>
+                        <option value="">-- Chọn tài khoản --</option>
+                        <c:forEach var="a" items="${accounts}">
+                            <option value="${a.id}" <c:if test="${a.id == selectedAccountId}">selected</c:if>>
+                                    ${a.name}
+                            </option>
                         </c:forEach>
-                        </tbody>
-                    </table>
-                </div>
+                    </select>
 
-                <!-- FORM XÁC NHẬN IMPORT -->
-                <form action="${pageContext.request.contextPath}/import-export" method="post" style="margin-top:10px;">
-                    <input type="hidden" name="action" value="import">
-                    <button type="submit"><i class="fa-solid fa-circle-check"></i> Xác nhận Import</button>
+                    <label for="file">Chọn file (CSV hoặc XLSX)</label>
+                    <input id="file" type="file" name="file" accept=".csv,.xlsx" required>
+
+                    <br>
+                    <button type="submit"><i class="fa-solid fa-eye"></i> Xem trước</button>
                 </form>
-            </c:if>
+
+                <!-- HIỂN THỊ BẢNG XEM TRƯỚC -->
+                <c:if test="${not empty previewTransactions}">
+                    <hr>
+                    <h3><i class="fa-solid fa-table"></i> Bảng xem trước</h3>
+
+                    <div style="max-height:350px; overflow:auto; border:1px solid var(--border); border-radius:8px;">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Note</th>
+                                <th>Transaction Date</th>
+                                <th>Created At</th>
+                                <th>Updated At</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <c:forEach var="t" items="${previewTransactions}">
+                                <tr>
+                                    <td>${t.type}</td>
+                                    <td>${t.amount}</td>
+                                    <td>${t.note}</td>
+                                    <td>${t.transactionDate}</td>
+                                    <td>${t.create_at}</td>
+                                    <td>${t.update_at}</td>
+                                </tr>
+                            </c:forEach>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- FORM XÁC NHẬN IMPORT -->
+                    <form action="${pageContext.request.contextPath}/import-export" method="post" style="margin-top:10px;">
+                        <input type="hidden" name="action" value="import">
+                        <button type="submit"><i class="fa-solid fa-circle-check"></i> Xác nhận Import</button>
+                    </form>
+                </c:if>
+            </div>
+
+            <!-- EXPORT -->
+            <div class="card">
+                <h2><i class="fa-solid fa-file-export"></i> Export dữ liệu</h2>
+                <form action="${pageContext.request.contextPath}/import-export" method="post">
+                    <input type="hidden" name="action" value="export">
+
+                    <label for="account_export">Tài khoản</label>
+                    <select id="account_export" name="account" required>
+                        <option value="">-- Chọn tài khoản --</option>
+                        <c:forEach var="a" items="${accounts}">
+                            <option value="${a.id}">${a.name}</option>
+                        </c:forEach>
+                    </select>
+
+                    <label for="startDate">Từ ngày</label>
+                    <input id="startDate" type="date" name="startDate">
+
+                    <label for="endDate">Đến ngày</label>
+                    <input id="endDate" type="date" name="endDate">
+
+                    <label for="format">Định dạng</label>
+                    <select id="format" name="format">
+                        <option value="csv">CSV</option>
+                        <option value="xlsx">XLSX</option>
+                        <option value="pdf">PDF</option>
+                    </select>
+
+                    <br><br>
+                    <button type="submit"><i class="fa-solid fa-download"></i> Xuất file</button>
+                </form>
+            </div>
         </div>
-
-        <!-- EXPORT -->
-        <div class="card">
-            <h2><i class="fa-solid fa-file-export"></i> Export dữ liệu</h2>
-            <form action="${pageContext.request.contextPath}/import-export" method="post">
-                <input type="hidden" name="action" value="export">
-
-                <label for="account_export">Tài khoản</label>
-                <select id="account_export" name="account" required>
-                    <option value="">-- Chọn tài khoản --</option>
-                    <c:forEach var="a" items="${accounts}">
-                        <option value="${a.id}">${a.name}</option>
-                    </c:forEach>
-                </select>
-
-                <label for="startDate">Từ ngày</label>
-                <input id="startDate" type="date" name="startDate">
-
-                <label for="endDate">Đến ngày</label>
-                <input id="endDate" type="date" name="endDate">
-
-                <label for="format">Định dạng</label>
-                <select id="format" name="format">
-                    <option value="csv">CSV</option>
-                    <option value="xlsx">XLSX</option>
-                    <option value="pdf">PDF</option>
-                </select>
-
-                <br><br>
-                <button type="submit"><i class="fa-solid fa-download"></i> Xuất file</button>
-            </form>
-        </div>
-    </div>
+    </c:if>
 </div>
 </body>
 </html>

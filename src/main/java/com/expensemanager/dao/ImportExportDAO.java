@@ -6,13 +6,11 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 public class ImportExportDAO {
 
-    // ⚙️ Khởi tạo EntityManagerFactory trùng với persistence.xml
     private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
 
     /**
@@ -23,15 +21,22 @@ public class ImportExportDAO {
         em.getTransaction().begin();
         try {
             for (Transaction t : transactions) {
-                // Merge the detached Account entity back into the persistence context
+                // Merge các đối tượng detached (Account, Category) vào persistence context hiện tại
                 if (t.getAccount() != null && t.getAccount().getId() != null) {
                     t.setAccount(em.merge(t.getAccount()));
+                }
+                if (t.getCategory() != null && t.getCategory().getId() != null) {
+                    t.setCategory(em.merge(t.getCategory()));
                 }
                 em.persist(t);
             }
             em.getTransaction().commit();
         } catch (Exception e) {
-            em.getTransaction().rollback();
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            // In ra lỗi gốc để dễ debug
+            e.printStackTrace();
             throw new RuntimeException("Lỗi khi lưu dữ liệu: " + e.getMessage(), e);
         } finally {
             em.close();
@@ -60,9 +65,10 @@ public class ImportExportDAO {
      */
     public List<Transaction> getAllTransactions() {
         EntityManager em = emf.createEntityManager();
-        List<Transaction> list =
-                em.createQuery("SELECT t FROM Transaction t", Transaction.class).getResultList();
-        em.close();
-        return list;
+        try {
+            return em.createQuery("SELECT t FROM Transaction t", Transaction.class).getResultList();
+        } finally {
+            em.close();
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.expensemanager.controller;
 
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Transaction;
+import com.expensemanager.model.User;
 import com.expensemanager.service.AccountService;
 import com.expensemanager.service.ImportExportService;
 import jakarta.servlet.ServletException;
@@ -18,35 +19,33 @@ import java.util.UUID;
 @MultipartConfig
 public class ImportExportController extends HttpServlet {
 
-    private ImportExportService importExportService;
-    private AccountService accountService;
-
-    @Override
-    public void init() throws ServletException {
-        importExportService = new ImportExportService();
-        accountService = new AccountService();
-    }
+    private final ImportExportService importExportService = new ImportExportService();
+    private final AccountService accountService = new AccountService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         HttpSession session = request.getSession(false);
+        User user = null;
         UUID userId = null;
+        boolean isGuest = false;
 
-        // ✅ Kiểm tra session để lấy user_id
-        if (session != null && session.getAttribute("user_id") != null) {
-            userId = (UUID) session.getAttribute("user_id");
+        // 🔹 Nếu chưa đăng nhập → hiển thị chế độ khách (readonly)
+        if (session == null || session.getAttribute("user") == null) {
+            isGuest = true;
+            request.setAttribute("error", "⚠️ Bạn đang ở chế độ khách — không thể import hoặc export dữ liệu!");
         } else {
-            System.out.println("⚠️ Chưa có user_id trong session — cần đăng nhập để xem dữ liệu cá nhân.");
-            request.setAttribute("error", "Bạn chưa đăng nhập. Không thể tải tài khoản cá nhân.");
+            user = (User) session.getAttribute("user");
+            userId = user.getId();
         }
 
-        // 🔹 Nếu có userId → chỉ lấy account của user đó
+        // 🔹 Lấy danh sách tài khoản (nếu có user), còn không thì danh sách trống
         List<Account> accounts = (userId != null)
-                ? accountService.getAllAccountsByUser(userId)
+                ? accountService.getAccountsByUser(userId)
                 : List.of();
 
+        request.setAttribute("readonly", isGuest); // gắn flag để JSP ẩn/khóa nút
         request.setAttribute("accounts", accounts);
         request.setAttribute("view", "/views/import_export.jsp");
         request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
@@ -57,17 +56,19 @@ public class ImportExportController extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession(false);
-        UUID userId = null;
+        User user = (session != null) ? (User) session.getAttribute("user") : null;
 
-        if (session != null && session.getAttribute("user_id") != null) {
-            userId = (UUID) session.getAttribute("user_id");
-        } else {
-            System.out.println("⚠️ Chưa có user_id trong session — cần đăng nhập để import/export theo user.");
-            request.setAttribute("error", "Bạn chưa đăng nhập, không thể thao tác import/export.");
-            loadView(request, response, "Vui lòng đăng nhập lại.", null, List.of());
+        // ⚠️ Nếu chưa đăng nhập → chỉ hiển thị cảnh báo, không thực hiện được thao tác
+        if (user == null) {
+            loadView(
+                    request, response,
+                    "⚠️ Bạn cần đăng nhập để thực hiện import hoặc export dữ liệu!",
+                    null, List.of()
+            );
             return;
         }
 
+        UUID userId = user.getId();
         String action = request.getParameter("action");
         if (action == null || action.isBlank()) action = "view";
 
@@ -76,7 +77,7 @@ public class ImportExportController extends HttpServlet {
                 case "preview": {
                     Part filePart = request.getPart("file");
                     if (filePart == null || filePart.getSize() == 0) {
-                        loadView(request, response, "Vui lòng chọn file để import.", null, accountService.getAllAccountsByUser(userId));
+                        loadView(request, response, "Vui lòng chọn file để import.", null, accountService.getAccountsByUser(userId));
                         return;
                     }
 
@@ -85,7 +86,7 @@ public class ImportExportController extends HttpServlet {
                     String accountIdStr = request.getParameter("account");
 
                     if (accountIdStr == null || accountIdStr.isBlank()) {
-                        loadView(request, response, "Vui lòng chọn tài khoản để import.", null, accountService.getAllAccountsByUser(userId));
+                        loadView(request, response, "Vui lòng chọn tài khoản để import.", null, accountService.getAccountsByUser(userId));
                         return;
                     }
 
@@ -94,24 +95,36 @@ public class ImportExportController extends HttpServlet {
                         List<Transaction> previewList =
                                 importExportService.previewImport(input, fileType, accountId);
 
+                        if (previewList == null || previewList.isEmpty()) {
+                            loadView(request, response, "Không có dữ liệu hợp lệ trong file.", null, accountService.getAccountsByUser(userId));
+                            return;
+                        }
+
+                        // ✅ Lưu tạm vào session để Import dùng lại
                         session.setAttribute("importPreviewList", previewList);
                         session.setAttribute("importPreviewAccountId", accountId);
 
+                        // Gửi dữ liệu ra view
                         request.setAttribute("previewTransactions", previewList);
                         request.setAttribute("selectedAccountId", accountIdStr);
                         loadView(request, response, null,
                                 "Đã đọc file " + fileName + ". Kiểm tra bảng xem trước rồi bấm Xác nhận Import.",
-                                accountService.getAllAccountsByUser(userId));
+                                accountService.getAccountsByUser(userId));
                     }
                     return;
                 }
 
                 case "import": {
+                    @SuppressWarnings("unchecked")
                     List<Transaction> toSave = (List<Transaction>) session.getAttribute("importPreviewList");
                     UUID accountId = (UUID) session.getAttribute("importPreviewAccountId");
 
+                    System.out.println("🟢 Debug import: toSave=" + (toSave != null ? toSave.size() : "null") +
+                            ", accountId=" + accountId);
+
                     if (toSave == null || toSave.isEmpty() || accountId == null) {
-                        loadView(request, response, "Không có dữ liệu để import.", null, accountService.getAllAccountsByUser(userId));
+                        loadView(request, response, "Không có dữ liệu để import (kiểm tra lại bước xem trước).", null,
+                                accountService.getAccountsByUser(userId));
                         return;
                     }
 
@@ -121,7 +134,7 @@ public class ImportExportController extends HttpServlet {
 
                     loadView(request, response, null,
                             "Import thành công " + toSave.size() + " giao dịch.",
-                            accountService.getAllAccountsByUser(userId));
+                            accountService.getAccountsByUser(userId));
                     return;
                 }
 
@@ -132,7 +145,7 @@ public class ImportExportController extends HttpServlet {
                     String format = request.getParameter("format");
 
                     if (accountIdStr == null || accountIdStr.isBlank()) {
-                        loadView(request, response, "Vui lòng chọn tài khoản để export.", null, accountService.getAllAccountsByUser(userId));
+                        loadView(request, response, "Vui lòng chọn tài khoản để export.", null, accountService.getAccountsByUser(userId));
                         return;
                     }
 
@@ -140,7 +153,7 @@ public class ImportExportController extends HttpServlet {
                     byte[] exported = importExportService.exportByAccount(accountId, startDate, endDate, format);
 
                     if (exported == null || exported.length == 0) {
-                        loadView(request, response, "Không có dữ liệu để xuất.", null, accountService.getAllAccountsByUser(userId));
+                        loadView(request, response, "Không có dữ liệu để xuất.", null, accountService.getAccountsByUser(userId));
                         return;
                     }
 
@@ -149,11 +162,11 @@ public class ImportExportController extends HttpServlet {
                 }
 
                 default:
-                    loadView(request, response, null, null, accountService.getAllAccountsByUser(userId));
+                    loadView(request, response, null, null, accountService.getAccountsByUser(userId));
             }
         } catch (Exception e) {
             e.printStackTrace();
-            loadView(request, response, "Lỗi Import/Export: " + e.getMessage(), null, accountService.getAllAccountsByUser(userId));
+            loadView(request, response, "Lỗi Import/Export: " + e.getMessage(), null, accountService.getAccountsByUser(userId));
         }
     }
 

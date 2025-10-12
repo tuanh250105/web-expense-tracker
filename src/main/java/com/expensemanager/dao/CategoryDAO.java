@@ -74,4 +74,30 @@ public class CategoryDAO {
             em.close();
         }
     }
+    public List<Category> getByType(String type) {
+        EntityManager em = JpaUtil.getEntityManagerFactory().createEntityManager();
+        try {
+            return em.createQuery("SELECT c FROM Category c WHERE c.type = :type ORDER BY c.name", Category.class)
+                    .setParameter("type", type)
+                    .getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            em.close();
+        }
+    }
+
+    public List<Category> getAll() {
+        EntityManager em = JpaUtil.getEntityManagerFactory().createEntityManager();
+        try {
+            return em.createQuery("SELECT c FROM Category c ORDER BY c.name", Category.class)
+                    .getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            em.close();
+        }
+    }
 }
