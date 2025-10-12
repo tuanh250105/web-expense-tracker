@@ -115,7 +115,7 @@ public class ScheduledTransactionController extends HttpServlet {
             return;
         }
 
-        //CREATE MỚI - LOẠI BỎ PRINT THỪA, GIỮ CHỈ ERROR LOG
+        //CREATE MỚI 
         try {
             String accountIdStr = request.getParameter("accountId");
             String categoryIdStr = request.getParameter("categoryId");
