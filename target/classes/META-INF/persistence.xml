@@ -4,7 +4,7 @@
              version="3.0" 
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
 
-    <persistence-unit name="BugetBuddyUnit" transaction-type="RESOURCE_LOCAL">
+    <persistence-unit name="expensePU" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 
         <!-- Liệt kê TẤT CẢ entity để fix association error -->
@@ -12,19 +12,15 @@
         <class>com.expensemanager.model.Category</class>
         <class>com.expensemanager.model.Transaction</class>
         <class>com.expensemanager.model.User</class>
-
+        <class>com.expensemanager.model.PasswordResetToken</class>
         <properties>
-            <!-- Kết nối tới Supabase (PostgreSQL) -->
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
-            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?prepareThreshold=0&amp;ApplicationName=BudgetBuddy"/>
-            <property name="jakarta.persistence.jdbc.user" value="postgres.bgbaeuehewyxditjnncg"/>
-            <property name="jakarta.persistence.jdbc.password" value="web_database@pass"/>
+            <property name="jakarta.persistence.jdbc.url" value="${DB_URL}"/>
+            <property name="jakarta.persistence.jdbc.user" value="${DB_USER}"/>
+            <property name="jakarta.persistence.jdbc.password" value="${DB_PASS}"/>
 
-            <!-- Hibernate tự động tạo/cập nhật bảng -->
             <property name="hibernate.hbm2ddl.auto" value="update"/>
             <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
-
-            <!-- Hiển thị SQL trên console -->
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
 
