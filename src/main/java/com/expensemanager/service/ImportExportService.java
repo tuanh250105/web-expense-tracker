@@ -5,7 +5,7 @@ import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
 import com.expensemanager.util.CSVUtil;
-import com.expensemanager.util.JpaUtil;
+import com.expensemanager.util.JPAUtil;
 import com.expensemanager.util.XLSXUtil;
 import com.expensemanager.util.PDFUtil;
 import jakarta.persistence.EntityManager;
@@ -20,7 +20,7 @@ public class ImportExportService {
 
     private final ImportExportDAO dao;
     private final AccountService accountService;
-    private final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
+    private final EntityManagerFactory emf = JPAUtil.getEntityManagerFactory();
 
     public ImportExportService() {
         dao = new ImportExportDAO();
