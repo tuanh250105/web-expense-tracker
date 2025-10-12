@@ -36,9 +36,11 @@ public class FAQController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getParameter("action");
+
+        // pht triển theem khi login là admin thì mói thêm nhóe
         if ("add".equals(action)) {
             String question = request.getParameter("question");
-            String answer = request.getParameter("answer"); // Answer có thể chứa HTML
+            String answer = request.getParameter("answer"); // answer có thể chứa HTML
             FAQ faq = new FAQ(question, answer);
             service.addFAQ(faq);
             response.sendRedirect("/faq");
