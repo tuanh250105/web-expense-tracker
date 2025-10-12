@@ -1,6 +1,5 @@
 package com.expensemanager.controller;
 
-import com.expensemanager.model.Transaction;
 import com.expensemanager.service.AnalyticsService;
 import com.expensemanager.util.GsonFactory;
 import com.google.gson.Gson;
