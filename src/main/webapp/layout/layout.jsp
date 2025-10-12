@@ -1,12 +1,25 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%
+    // BẮT BUỘC: bảo vệ session; nếu chưa đăng nhập thì đá về login.jsp
+    if (session.getAttribute("user") == null) {
+        response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
+        return;
+    }
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>BudgetBuddy Layout</title>
+
+    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- CSS layout -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/layout/layout.css">
+
+    <!-- (GIỮ TỪ NHÁNH BẠN) Cung cấp contextPath cho JS front-end -->
     <script>
         window.BB_CTX = "${pageContext.request.contextPath}";
         console.log("Layout loaded, context:", window.BB_CTX);
@@ -66,9 +79,11 @@
 </nav>
 
 <main class="content">
+    <!-- Trang con set thuộc tính request.setAttribute("view", "...jsp") -->
     <jsp:include page="${view}" />
 </main>
 
+<!-- JS layout -->
 <script src="${pageContext.request.contextPath}/layout/layout.js"></script>
 </body>
 </html>

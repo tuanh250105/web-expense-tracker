@@ -40,3 +40,5 @@ build/
 .env.idea/
 
 .idea/
+.env".DS_Store"
+"target/"
