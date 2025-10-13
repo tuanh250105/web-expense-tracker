@@ -1,10 +1,11 @@
 package com.expensemanager.util;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * JpaUtil - tiện ích khởi tạo EntityManagerFactory dùng cho Hibernate + Supabase (PostgreSQL).
@@ -44,8 +45,11 @@ public class JpaUtil {
             props.put("hibernate.hikari.dataSource.prepStmtCacheSize", "0");
             props.put("hibernate.hikari.dataSource.useServerPrepStmts", "false");
 
+            props.put("hibernate.connection.provider_class",
+              "org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl");
+
             // 4️⃣ Tên persistence-unit (phải trùng trong persistence.xml)
-            String persistenceUnitName = "BudgetBuddyUnit";
+            String persistenceUnitName ="default";
 
             // 5️⃣ Tạo EntityManagerFactory
             if (props.isEmpty()) {
