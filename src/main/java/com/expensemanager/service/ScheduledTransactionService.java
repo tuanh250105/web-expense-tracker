@@ -2,6 +2,7 @@ package com.expensemanager.service;
 
 import com.expensemanager.dao.ScheduledTransactionDAO;
 import com.expensemanager.model.Account;
+import com.expensemanager.model.Category;
 import com.expensemanager.model.ScheduledTransaction;
 import org.quartz.CronExpression;
 
@@ -13,13 +14,21 @@ import java.util.UUID;
 
 public class ScheduledTransactionService {
     private ScheduledTransactionDAO dao;
+    private CategoryService categoryService;
+    private TransactionService transactionService;
+
+
 
     public ScheduledTransactionService() {
         this.dao = new ScheduledTransactionDAO();
+        this.categoryService = new CategoryService();
+        this.transactionService = new TransactionService();
     }
 
     public ScheduledTransactionService(ScheduledTransactionDAO dao) {
         this.dao = dao;
+        this.categoryService = new CategoryService();
+        this.transactionService = new TransactionService();
     }
 
     public List<ScheduledTransaction> listTransactions(String categoryNameFilter, String account, String from, String to, String note, String[] types, UUID userId) {
@@ -57,13 +66,7 @@ public class ScheduledTransactionService {
     }
 
     private void processSingle(ScheduledTransaction st, UUID userId) {
-      /*  System.out.println("Đang xử lý schedule " + st.getId()
-                + " | Category=" + st.getCategoryId()
-                + " | Amount=" + st.getAmount()
-                + " | Type=" + st.getType()
-                + " | NextRun=" + st.getNextRun());
-        */
-        boolean paid = dao.hasTransactionNearDue(
+        boolean paid = transactionService.hasTransactionNearDue(
                 st.getCategoryId(),
                 st.getAmount(),
                 st.getType(),
@@ -89,7 +92,7 @@ public class ScheduledTransactionService {
     private void processUpcoming(ScheduledTransaction st, UUID userId) {
         System.out.println("Đang kiểm tra upcoming schedule " + st.getId() + " | NextRun=" + st.getNextRun());
 
-        boolean paid = dao.hasTransactionNearDue(
+        boolean paid = transactionService.hasTransactionNearDue(
                 st.getCategoryId(),
                 st.getAmount(),
                 st.getType(),
@@ -117,12 +120,24 @@ public class ScheduledTransactionService {
 
     private void sendReminderIfNeeded(ScheduledTransaction st, UUID userId) {
         String email = dao.getUserEmailByAccount(st.getAccountId());
+        if (email == null || email.isEmpty()) return;
+
         String subject = "Nhắc nhở thanh toán: " + st.getCategoryName();
+
         String body = "Vui lòng thanh toán " + st.getAmount() + " VND " +
                 " trước hạn " + st.getNextRun().toLocalDateTime().toLocalDate() +
                 ". (Giao dịch định kỳ ID: " + st.getId() + ")";
-        EmailService.sendReminder(email, subject, body);
+
+        EmailService emailService = new EmailService();
+        boolean sent = emailService.send(email, subject, body);
+
+        if (sent) {
+            System.out.println("Đã gửi email nhắc nhở cho " + email);
+        } else {
+            System.out.println("Gửi email thất bại cho " + email);
+        }
     }
+
 
     private UUID getUserIdFromAccount(ScheduledTransaction st) {
         if (st.getAccount() != null && st.getAccount().getUser() != null) {
@@ -218,16 +233,16 @@ public class ScheduledTransactionService {
     }
 
     public Category findCategoryById(UUID id) {
-        return dao.findCategoryById(id);
+        return categoryService.getCategoryById(id);
     }
 
     // Wrapper cho getAllCategories
-    public List<Category> getAllCategories() {
-        return dao.getAllCategories();
+    public List<Category> getAllCategories(UUID userId) {
+        return categoryService.getAllCategories(userId);
     }
 
     // Wrapper cho getByType
-    public List<Category> getCategoriesByType(String type) {
-        return dao.getByType(type);
+    public List<Category> getCategoriesByType(String type, UUID userId) {
+        return categoryService.getCategoriesByType(type, userId);
     }
 }

@@ -13,7 +13,7 @@ import com.expensemanager.service.AccountService;
 import com.expensemanager.service.CategoryService;
 import com.expensemanager.service.SepayService;
 import com.expensemanager.service.SepayService.SepayTransaction;
-import com.expensemanager.service.TransactionService;
+import com.expensemanager.service.TransactionServicestart;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -30,7 +30,7 @@ import jakarta.servlet.http.HttpSession;
 public class BankSyncController extends HttpServlet {
 
     private final SepayService sepayService = new SepayService();
-    private final TransactionService transactionService = new TransactionService();
+    private final TransactionServicestart transactionService = new TransactionServicestart();
     private final AccountService accountService = new AccountService();
     private final CategoryService categoryService = new CategoryService();
 
@@ -41,21 +41,21 @@ public class BankSyncController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         String action = request.getParameter("action");
-        
+
         // Handle sync action via GET (for AJAX calls)
         if ("sync".equals(action)) {
             handleSyncAction(request, response);
             return;
         }
-        
+
         // Handle pending action - get transactions from session
         if ("pending".equals(action)) {
             handlePendingAction(request, response);
             return;
         }
-        
+
         // Giả sử có session check
         // UUID userId = (UUID) session.getAttribute("user_id");
 
@@ -74,44 +74,44 @@ public class BankSyncController extends HttpServlet {
             throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        
+
         try {
             HttpSession session = request.getSession(false);
-            
+
             if (session == null) {
                 response.getWriter().write("{\"transactions\":[]}");
                 return;
             }
-            
+
             @SuppressWarnings("unchecked")
-            List<SepayTransaction> pendingTransactions = 
-                (List<SepayTransaction>) session.getAttribute("pendingBankTransactions");
-            
+            List<SepayTransaction> pendingTransactions =
+                    (List<SepayTransaction>) session.getAttribute("pendingBankTransactions");
+
             if (pendingTransactions == null || pendingTransactions.isEmpty()) {
                 response.getWriter().write("{\"transactions\":[]}");
                 return;
             }
-            
+
             // Build JSON manually (simple approach)
             StringBuilder json = new StringBuilder("{\"transactions\":[");
             for (int i = 0; i < pendingTransactions.size(); i++) {
                 SepayTransaction tx = pendingTransactions.get(i);
                 if (i > 0) json.append(",");
                 json.append("{")
-                    .append("\"id\":\"").append(escapeJson(tx.getId())).append("\",")
-                    .append("\"amount\":").append(tx.getAmount()).append(",")
-                    .append("\"content\":\"").append(escapeJson(tx.getContent())).append("\",")
-                    .append("\"transactionDate\":\"").append(escapeJson(tx.getTransactionDate())).append("\",")
-                    .append("\"accountNumber\":\"").append(escapeJson(tx.getAccountNumber())).append("\",")
-                    .append("\"bankName\":\"").append(escapeJson(tx.getBankName())).append("\",")
-                    .append("\"type\":\"").append(escapeJson(tx.getType())).append("\"")
-                    .append("}");
+                        .append("\"id\":\"").append(escapeJson(tx.getId())).append("\",")
+                        .append("\"amount\":").append(tx.getAmount()).append(",")
+                        .append("\"content\":\"").append(escapeJson(tx.getContent())).append("\",")
+                        .append("\"transactionDate\":\"").append(escapeJson(tx.getTransactionDate())).append("\",")
+                        .append("\"accountNumber\":\"").append(escapeJson(tx.getAccountNumber())).append("\",")
+                        .append("\"bankName\":\"").append(escapeJson(tx.getBankName())).append("\",")
+                        .append("\"type\":\"").append(escapeJson(tx.getType())).append("\"")
+                        .append("}");
             }
             json.append("]}");
-            
+
             response.getWriter().write(json.toString());
             System.out.println("✅ Returned " + pendingTransactions.size() + " pending transactions");
-            
+
         } catch (Exception e) {
             System.err.println("❌ Error fetching pending transactions: " + e.getMessage());
             e.printStackTrace();
@@ -119,17 +119,17 @@ public class BankSyncController extends HttpServlet {
             response.getWriter().write("{\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
         }
     }
-    
+
     /**
      * Escape special characters for JSON
      */
     private String escapeJson(String str) {
         if (str == null) return "";
         return str.replace("\\", "\\\\")
-                  .replace("\"", "\\\"")
-                  .replace("\n", "\\n")
-                  .replace("\r", "\\r")
-                  .replace("\t", "\\t");
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 
     /**
@@ -139,36 +139,36 @@ public class BankSyncController extends HttpServlet {
             throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        
+
         try {
             int days = 30;
             String daysParam = request.getParameter("days");
             if (daysParam != null) {
                 days = Integer.parseInt(daysParam);
             }
-            
+
             System.out.println("🏦 Sync request: fetching " + days + " days of transactions");
             List<SepayTransaction> transactions = sepayService.fetchTransactions(days);
-            
+
             // Save to session for later import
             HttpSession session = request.getSession();
             session.setAttribute("pendingBankTransactions", transactions);
-            
+
             // Return JSON response
             String json = String.format(
-                "{\"status\":\"success\",\"message\":\"Đã lấy %d giao dịch từ ngân hàng\",\"count\":%d}",
-                transactions.size(), transactions.size()
+                    "{\"status\":\"success\",\"message\":\"Đã lấy %d giao dịch từ ngân hàng\",\"count\":%d}",
+                    transactions.size(), transactions.size()
             );
             response.getWriter().write(json);
             System.out.println("✅ Sync successful: " + transactions.size() + " transactions");
-            
+
         } catch (Exception e) {
             System.err.println("❌ Sync failed: " + e.getMessage());
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             String json = String.format(
-                "{\"status\":\"error\",\"message\":\"Lỗi khi đồng bộ: %s\"}",
-                e.getMessage().replace("\"", "'")
+                    "{\"status\":\"error\",\"message\":\"Lỗi khi đồng bộ: %s\"}",
+                    e.getMessage().replace("\"", "'")
             );
             response.getWriter().write(json);
         }
@@ -180,14 +180,14 @@ public class BankSyncController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         // Check if this is an API call to save single transaction
         String pathInfo = request.getPathInfo();
         if (pathInfo != null && pathInfo.equals("/save")) {
             handleSaveTransaction(request, response);
             return;
         }
-        
+
         String action = request.getParameter("action");
 
         try {
@@ -218,14 +218,14 @@ public class BankSyncController extends HttpServlet {
      */
     private void handleFetchTransactions(HttpServletRequest request, HttpServletResponse response)
             throws IOException, InterruptedException, ServletException {
-        
+
         System.out.println("🏦 Bắt đầu lấy giao dịch từ SePay...");
         List<SepayTransaction> transactions = sepayService.fetchTransactions(30); // Lấy 30 ngày
 
         // ✅ Lưu các giao dịch vừa lấy được vào session để chờ người dùng xác nhận
         HttpSession session = request.getSession();
         session.setAttribute("pendingBankTransactions", transactions);
-        
+
         System.out.println("✅ Lấy thành công " + transactions.size() + " giao dịch. Chuyển hướng về trang review.");
         response.sendRedirect(request.getContextPath() + "/bank-sync");
     }
@@ -233,13 +233,13 @@ public class BankSyncController extends HttpServlet {
     /**
      * Xử lý logic nhập các giao dịch đã chọn vào cơ sở dữ liệu.
      */
-    private void handleImportTransactions(HttpServletRequest request, HttpServletResponse response) 
+    private void handleImportTransactions(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
-        
+
         HttpSession session = request.getSession();
         @SuppressWarnings("unchecked")
-        List<SepayTransaction> pendingTransactions = 
-            (List<SepayTransaction>) session.getAttribute("pendingBankTransactions");
+        List<SepayTransaction> pendingTransactions =
+                (List<SepayTransaction>) session.getAttribute("pendingBankTransactions");
 
         // Lấy danh sách các giao dịch được người dùng tick chọn từ form
         String[] selectedIndices = request.getParameterValues("selectedTransaction");
@@ -253,7 +253,7 @@ public class BankSyncController extends HttpServlet {
 
         System.out.println("📥 Bắt đầu nhập " + selectedIndices.length + " giao dịch đã chọn...");
         int successCount = 0;
-        
+
         // Lặp qua các giao dịch được chọn để xử lý
         for (String indexStr : selectedIndices) {
             int index = Integer.parseInt(indexStr);
@@ -263,14 +263,14 @@ public class BankSyncController extends HttpServlet {
             String accountId = request.getParameter("accountId_" + index);
             String categoryId = request.getParameter("categoryId_" + index);
             String note = sepayTx.getContent(); // Fix: getContent() instead of getDescription()
-            
+
             // Chuyển đổi SepayTransaction thành Transaction của hệ thống
             Transaction transaction = new Transaction();
             transaction.setAmount(BigDecimal.valueOf(sepayTx.getAmount()));
             transaction.setNote(note);
             transaction.setTransactionDate(LocalDateTime.now()); // Fix: Use LocalDateTime.now()
             transaction.setType(sepayTx.getAmount() > 0 ? "income" : "expense");
-            
+
             // Get Account and Category objects
             if (accountId != null && !accountId.isEmpty()) {
                 Account account = accountService.getAccountById(UUID.fromString(accountId));
@@ -280,12 +280,12 @@ public class BankSyncController extends HttpServlet {
                 Category category = categoryService.getCategoryById(UUID.fromString(categoryId));
                 transaction.setCategory(category);
             }
-            
+
             // Lưu vào database
             transactionService.addTransaction(transaction);
             successCount++;
         }
-        
+
         // ✅ Xóa các giao dịch chờ khỏi session sau khi đã xử lý xong
         session.removeAttribute("pendingBankTransactions");
 
@@ -293,7 +293,7 @@ public class BankSyncController extends HttpServlet {
         // Chuyển hướng về trang danh sách giao dịch chính với thông báo thành công
         response.sendRedirect(request.getContextPath() + "/transactions?import_success=" + successCount);
     }
-    
+
     /**
      * Handle API POST /save - Save single transaction from bank sync
      */
@@ -301,7 +301,7 @@ public class BankSyncController extends HttpServlet {
             throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        
+
         try {
             // Read JSON from request body
             StringBuilder sb = new StringBuilder();
@@ -310,40 +310,40 @@ public class BankSyncController extends HttpServlet {
                 sb.append(line);
             }
             String jsonString = sb.toString();
-            
+
             System.out.println("📥 Received save transaction request: " + jsonString);
-            
+
             // Parse JSON using Gson
             com.google.gson.Gson gson = new com.google.gson.Gson();
             @SuppressWarnings("unchecked")
             java.util.Map<String, Object> jsonMap = gson.fromJson(jsonString, java.util.Map.class);
-            
+
             String accountId = (String) jsonMap.get("accountId");
             String categoryId = (String) jsonMap.get("categoryId");
             Object amountObj = jsonMap.get("amount");
             String note = (String) jsonMap.get("note");
             String transactionDateStr = (String) jsonMap.get("transactionDate");
             String traceCode = (String) jsonMap.get("traceCode");
-            
-            System.out.println("📝 Parsed data: accountId=" + accountId + ", categoryId=" + categoryId + 
-                             ", amount=" + amountObj + ", note=" + note);
-            
+
+            System.out.println("📝 Parsed data: accountId=" + accountId + ", categoryId=" + categoryId +
+                    ", amount=" + amountObj + ", note=" + note);
+
             // Create transaction
             Transaction transaction = new Transaction();
-            
+
             // Set amount
             if (amountObj instanceof Number) {
                 transaction.setAmount(new BigDecimal(((Number) amountObj).doubleValue()));
             } else {
                 transaction.setAmount(new BigDecimal(amountObj.toString()));
             }
-            
+
             // Set type based on amount
             transaction.setType(transaction.getAmount().compareTo(BigDecimal.ZERO) >= 0 ? "income" : "expense");
-            
+
             // Set note
             transaction.setNote(note);
-            
+
             // Set transaction date - parse from string or use now
             if (transactionDateStr != null && !transactionDateStr.isEmpty()) {
                 try {
@@ -356,7 +356,7 @@ public class BankSyncController extends HttpServlet {
             } else {
                 transaction.setTransactionDate(LocalDateTime.now());
             }
-            
+
             // Load and set account
             if (accountId != null && !accountId.isEmpty()) {
                 Account account = accountService.getAccountById(UUID.fromString(accountId));
@@ -367,7 +367,7 @@ public class BankSyncController extends HttpServlet {
                     throw new IllegalArgumentException("Account not found: " + accountId);
                 }
             }
-            
+
             // Load and set category
             if (categoryId != null && !categoryId.isEmpty()) {
                 Category category = categoryService.getCategoryById(UUID.fromString(categoryId));
@@ -378,21 +378,21 @@ public class BankSyncController extends HttpServlet {
                     throw new IllegalArgumentException("Category not found: " + categoryId);
                 }
             }
-            
+
             // Save to database
             System.out.println("💾 Saving transaction to database...");
             transactionService.addTransaction(transaction);
             System.out.println("✅ Transaction saved successfully with ID: " + transaction.getId());
-            
+
             // Return success response
-            String jsonResponse = "{\"success\":true,\"message\":\"Giao dịch đã được lưu thành công\",\"id\":\"" + 
-                                transaction.getId() + "\"}";
+            String jsonResponse = "{\"success\":true,\"message\":\"Giao dịch đã được lưu thành công\",\"id\":\"" +
+                    transaction.getId() + "\"}";
             response.getWriter().write(jsonResponse);
-            
+
         } catch (Exception e) {
             System.err.println("❌ Error saving transaction: " + e.getClass().getName() + " - " + e.getMessage());
             e.printStackTrace();
-            
+
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("{\"success\":false,\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
         }
@@ -403,10 +403,10 @@ public class BankSyncController extends HttpServlet {
      */
     private void loadFormData(HttpServletRequest request) {
         // Giả sử userId được lấy từ session
-        // UUID userId = (UUID) request.getSession().getAttribute("user_id");
+         UUID userId = (UUID) request.getSession().getAttribute("user_id");
         List<Account> accounts = accountService.getAllAccounts();
-        List<Category> categories = categoryService.getAllCategories(); // Hoặc getCategoriesByUser(userId);
-        
+        List<Category> categories = categoryService.getAllCategories(userId); // Hoặc getCategoriesByUser(userId);
+
         request.setAttribute("accounts", accounts);
         request.setAttribute("categories", categories);
     }

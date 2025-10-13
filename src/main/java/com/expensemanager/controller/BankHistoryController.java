@@ -8,7 +8,7 @@ import java.util.UUID;
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Transaction;
 import com.expensemanager.service.AccountService;
-import com.expensemanager.service.TransactionService;
+import com.expensemanager.service.TransactionServicestart;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -21,7 +21,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class BankHistoryController extends HttpServlet {
 
     // 🔹 Khởi tạo các Service cần thiết, thay vì dùng EntityManager trực tiếp
-    private final TransactionService transactionService = new TransactionService();
+    private final TransactionServicestart transactionService = new TransactionServicestart();
     private final AccountService accountService = new AccountService();
 
     /**
@@ -35,8 +35,8 @@ public class BankHistoryController extends HttpServlet {
         String pathInfo = request.getPathInfo();
         String acceptHeader = request.getHeader("Accept");
         boolean isApiCall = (acceptHeader != null && acceptHeader.contains("application/json")) ||
-                           (pathInfo != null && !pathInfo.isEmpty());
-        
+                (pathInfo != null && !pathInfo.isEmpty());
+
         if (isApiCall) {
             // Handle API call - return JSON
             handleApiRequest(request, response);
@@ -58,7 +58,7 @@ public class BankHistoryController extends HttpServlet {
                 request.setAttribute("error", "Không thể xóa giao dịch này.");
             }
         }
-        
+
         // ✅ Tải dữ liệu cần thiết cho trang JSP
         loadTransactionData(request);
 
@@ -66,7 +66,7 @@ public class BankHistoryController extends HttpServlet {
         request.setAttribute("view", "/views/transactions.jsp");
         request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
     }
-    
+
     /**
      * Handle API requests that expect JSON response
      */
@@ -74,42 +74,42 @@ public class BankHistoryController extends HttpServlet {
             throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        
+
         try {
             String accountIdFilter = request.getParameter("accountId");
-            
+
             System.out.println("🔍 API Request - Loading transactions...");
             System.out.println("📌 Account Filter: " + accountIdFilter);
-            
+
             // Get transactions from service
             List<Transaction> transactions = transactionService.getFilteredTransactions(accountIdFilter);
-            
+
             System.out.println("✅ Found " + transactions.size() + " transactions");
-            
+
             // Build JSON response manually
             StringBuilder json = new StringBuilder();
             json.append("{\"success\":true,\"data\":[");
-            
+
             for (int i = 0; i < transactions.size(); i++) {
                 Transaction tx = transactions.get(i);
                 if (i > 0) json.append(",");
-                
+
                 json.append("{")
-                    .append("\"id\":\"").append(tx.getId()).append("\",")
-                    .append("\"type\":\"").append(escapeJson(tx.getType())).append("\",")
-                    .append("\"amount\":").append(tx.getAmount()).append(",")
-                    .append("\"note\":\"").append(escapeJson(tx.getNote())).append("\",")
-                    .append("\"transactionDate\":\"").append(tx.getTransactionDate()).append("\",")
-                    .append("\"categoryName\":\"").append(tx.getCategory() != null ? escapeJson(tx.getCategory().getName()) : "").append("\",")
-                    .append("\"accountName\":\"").append(tx.getAccount() != null ? escapeJson(tx.getAccount().getName()) : "").append("\"")
-                    .append("}");
+                        .append("\"id\":\"").append(tx.getId()).append("\",")
+                        .append("\"type\":\"").append(escapeJson(tx.getType())).append("\",")
+                        .append("\"amount\":").append(tx.getAmount()).append(",")
+                        .append("\"note\":\"").append(escapeJson(tx.getNote())).append("\",")
+                        .append("\"transactionDate\":\"").append(tx.getTransactionDate()).append("\",")
+                        .append("\"categoryName\":\"").append(tx.getCategory() != null ? escapeJson(tx.getCategory().getName()) : "").append("\",")
+                        .append("\"accountName\":\"").append(tx.getAccount() != null ? escapeJson(tx.getAccount().getName()) : "").append("\"")
+                        .append("}");
             }
-            
+
             json.append("]}");
-            
+
             response.getWriter().write(json.toString());
             System.out.println("✅ JSON response sent successfully");
-            
+
         } catch (Exception e) {
             System.err.println("❌ Error in API request: " + e.getMessage());
             e.printStackTrace();
@@ -117,17 +117,17 @@ public class BankHistoryController extends HttpServlet {
             response.getWriter().write("{\"success\":false,\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
         }
     }
-    
+
     /**
      * Escape special characters for JSON
      */
     private String escapeJson(String str) {
         if (str == null) return "";
         return str.replace("\\", "\\\\")
-                  .replace("\"", "\\\"")
-                  .replace("\n", "\\n")
-                  .replace("\r", "\\r")
-                  .replace("\t", "\\t");
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 
     /**
@@ -136,10 +136,10 @@ public class BankHistoryController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         // Giả sử có session check
         // HttpSession session = request.getSession(false);
-        
+
         try {
             // 🔹 Lấy dữ liệu từ form thay vì đọc JSON
             String accountIdStr = request.getParameter("accountId");
@@ -152,11 +152,11 @@ public class BankHistoryController extends HttpServlet {
             Transaction newTransaction = new Transaction();
             newTransaction.setNote(note);
             newTransaction.setType(type);
-            
+
             if (amountStr != null && !amountStr.isEmpty()) {
                 newTransaction.setAmount(new BigDecimal(amountStr));
             }
-            
+
             // Lấy Account và Category objects
             if (accountIdStr != null && !accountIdStr.isEmpty()) {
                 Account account = accountService.getAccountById(UUID.fromString(accountIdStr));
@@ -167,10 +167,10 @@ public class BankHistoryController extends HttpServlet {
                 // Category category = categoryService.getCategoryById(UUID.fromString(categoryIdStr));
                 // newTransaction.setCategory(category);
             }
-            
+
             // ✅ Gọi service để lưu giao dịch
             transactionService.addTransaction(newTransaction);
-            
+
         } catch (NumberFormatException e) {
             System.err.println("Lỗi định dạng số: " + e.getMessage());
             request.setAttribute("error", "Số tiền không hợp lệ.");
@@ -192,7 +192,7 @@ public class BankHistoryController extends HttpServlet {
         // ✅ Sau khi thêm thành công, redirect về trang danh sách (Post-Redirect-Get Pattern)
         response.sendRedirect(request.getContextPath() + "/transactions");
     }
-    
+
     /**
      * Phương thức trợ giúp để tải dữ liệu và đặt vào request.
      * Tránh lặp code trong cả doGet và doPost khi cần hiển thị lại trang.
@@ -200,17 +200,17 @@ public class BankHistoryController extends HttpServlet {
     private void loadTransactionData(HttpServletRequest request) {
         // Lấy các tham số lọc từ URL
         String accountIdFilter = request.getParameter("filterAccountId");
-        
+
         // ✅ Lấy danh sách giao dịch từ service (có thể có bộ lọc)
         List<Transaction> transactions = transactionService.getFilteredTransactions(accountIdFilter);
-        
+
         // ✅ Lấy danh sách tài khoản để hiển thị trong dropdown bộ lọc/form
         List<Account> accounts = accountService.getAllAccounts();
-        
+
         // ✅ Đặt dữ liệu vào request để JSP có thể truy cập
         request.setAttribute("transactions", transactions);
         request.setAttribute("accounts", accounts);
-        
+
         // (Tương tự, bạn có thể tải danh sách categories ở đây)
         // List<Category> categories = categoryService.getCategoriesByUser(...);
         // request.setAttribute("categories", categories);

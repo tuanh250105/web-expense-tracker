@@ -1,7 +1,9 @@
 package com.expensemanager.controller;
 
 import com.expensemanager.model.Account;
+import com.expensemanager.model.Category;
 import com.expensemanager.model.ScheduledTransaction;
+import com.expensemanager.model.User;
 import com.expensemanager.service.ScheduledTransactionService;
 
 import jakarta.servlet.*;
@@ -19,18 +21,20 @@ public class ScheduledTransactionController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        UUID userId = (UUID) session.getAttribute("userId");
-        boolean TEST_MODE = true; // false để chạy, này đang test
-        if (userId == null) {
-            if (TEST_MODE) {
-                userId = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
-                session.setAttribute("userId", userId);
-            } else {
-                response.sendRedirect("login.jsp");
-                return;
-            }
+        HttpSession session = request.getSession(false);
+        User user = null;
+        UUID userId = null;
+        boolean isGuest = false;
+
+        // 🔹 Nếu chưa đăng nhập → tạo user test (fakeUser)
+        if (session == null || session.getAttribute("user") == null) {
+            System.out.println("⚠️ Chưa đăng nhập — bật chế độ test với user mặc định.");
+            isGuest = true;
+        } else {
+            user = (User) session.getAttribute("user");
+            userId = user.getId();
         }
+
         String action = request.getParameter("action");
 
         if (action == null || "list".equals(action)) {
@@ -51,7 +55,7 @@ public class ScheduledTransactionController extends HttpServlet {
             List<ScheduledTransaction> transactions = service.listTransactions(effectiveCategory, account, from, to, note, types, userId);
             request.setAttribute("transactions", transactions);
 
-            List<Category> allCategories = service.getAllCategories();
+            List<Category> allCategories = service.getAllCategories(userId);
             request.setAttribute("allCategories", allCategories);
 
             List<Account> allAccounts = service.getAccounts(userId);
@@ -66,7 +70,7 @@ public class ScheduledTransactionController extends HttpServlet {
             }
         } else if ("new".equals(action)) {
             String type = request.getParameter("type");
-            List<Category> categories = service.getCategoriesByType(type != null ? type : "income");
+            List<Category> categories = service.getCategoriesByType(type != null ? type : "income", userId);
             request.setAttribute("categories", categories);
             List<Account> accounts = service.getAccounts(userId);
             request.setAttribute("accounts", accounts);
@@ -83,19 +87,20 @@ public class ScheduledTransactionController extends HttpServlet {
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
-        boolean TEST_MODE = true;
-        HttpSession session = request.getSession();
-        UUID userId = (UUID) session.getAttribute("userId");
-        if (userId == null) {
-            if (TEST_MODE) {
-                userId = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
-                session.setAttribute("userId", userId);
-            } else {
-                System.out.println("userId chưa có trong session — yêu cầu đăng nhập trước!");
-                response.sendRedirect("login.jsp");
-                return;
-            }
+        HttpSession session = request.getSession(false);
+        User user = null;
+        UUID userId = null;
+        boolean isGuest = false;
+
+        // 🔹 Nếu chưa đăng nhập → tạo user test (fakeUser)
+        if (session == null || session.getAttribute("user") == null) {
+            System.out.println("⚠️ Chưa đăng nhập — bật chế độ test với user mặc định.");
+            isGuest = true;
+        } else {
+            user = (User) session.getAttribute("user");
+            userId = user.getId();
         }
+
 
         String action = request.getParameter("action");
         System.out.println("POST Action = " + action);
@@ -114,7 +119,7 @@ public class ScheduledTransactionController extends HttpServlet {
             return;
         }
 
-        //CREATE MỚI 
+        //CREATE MỚI
         try {
             String accountIdStr = request.getParameter("accountId");
             String categoryIdStr = request.getParameter("categoryId");

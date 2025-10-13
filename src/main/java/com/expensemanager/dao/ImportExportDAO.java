@@ -1,9 +1,9 @@
 package com.expensemanager.dao;
 
 import com.expensemanager.model.Transaction;
-import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -11,7 +11,8 @@ import java.util.UUID;
 
 public class ImportExportDAO {
 
-    private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
+    // ✅ tạo EntityManagerFactory trực tiếp
+    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("default");
 
     /**
      * Lưu danh sách Transaction vào database
@@ -49,7 +50,10 @@ public class ImportExportDAO {
     public List<Transaction> getTransactionsByAccountAndDate(UUID accountId, LocalDate startDate, LocalDate endDate) {
         EntityManager em = emf.createEntityManager();
         try {
-            String jpql = "SELECT t FROM Transaction t WHERE t.account.id = :accId AND t.transactionDate BETWEEN :start AND :end ORDER BY t.transactionDate DESC";
+            String jpql = "SELECT t FROM Transaction t " +
+                    "WHERE t.account.id = :accId " +
+                    "AND t.transactionDate BETWEEN :start AND :end " +
+                    "ORDER BY t.transactionDate DESC";
             var query = em.createQuery(jpql, Transaction.class);
             query.setParameter("accId", accountId);
             query.setParameter("start", startDate.atStartOfDay());
@@ -66,7 +70,8 @@ public class ImportExportDAO {
     public List<Transaction> getAllTransactions() {
         EntityManager em = emf.createEntityManager();
         try {
-            return em.createQuery("SELECT t FROM Transaction t", Transaction.class).getResultList();
+            return em.createQuery("SELECT t FROM Transaction t", Transaction.class)
+                    .getResultList();
         } finally {
             em.close();
         }

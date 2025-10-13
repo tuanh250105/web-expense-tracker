@@ -5,6 +5,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -77,7 +78,7 @@ public class XLSXUtil {
                 row.createCell(1).setCellValue(t.getAccount() != null ? t.getAccount().getId().toString() : "");
                 row.createCell(2).setCellValue(t.getType());
                 row.createCell(3).setCellValue(t.getCategory() != null ? t.getCategory().getId().toString() : "");
-                row.createCell(4).setCellValue(t.getAmount());
+                row.createCell(4).setCellValue(t.getAmount() != null ? t.getAmount().doubleValue() : 0.0);
                 row.createCell(5).setCellValue(t.getNote());
                 row.createCell(6).setCellValue(formatDateTime(t.getTransactionDate()));
                 row.createCell(7).setCellValue(formatDateTime(t.getCreate_at()));
@@ -110,10 +111,10 @@ public class XLSXUtil {
                 String rawCreateAt = text(fmt, row.getCell(7));
                 String rawUpdateAt = text(fmt, row.getCell(8));
 
-                int amount = parseAmountToInt(rawAmount);
-                String type = normalizeType(rawType, amount);
+                BigDecimal amount = parseAmountToBigDecimal(rawAmount);
+                String type = normalizeType(rawType, amount.signum());
 
-                if (type == null) {
+                if (type == null && amount.signum() != 0) {
                     throw new IllegalArgumentException("type không hợp lệ: '" + rawType + "'");
                 }
 
@@ -138,35 +139,43 @@ public class XLSXUtil {
         return (cell == null) ? "" : fmt.formatCellValue(cell).trim();
     }
 
-    private static String normalizeType(String raw, int amount) {
+    private static String normalizeType(String raw, int amountSign) {
         if (raw == null) raw = "";
         String s = raw.trim().toLowerCase(Locale.ROOT);
 
-        if (s.isEmpty()) return amount < 0 ? "expense" : "income";
+        if (s.isEmpty()) {
+            if (amountSign < 0) return "expense";
+            if (amountSign > 0) return "income";
+            return null; // Không xác định nếu amount là 0
+        }
 
         if (s.matches("(?i)(thu|income|in|credit|deposit|nạp|+|\\+)")) return "income";
         if (s.matches("(?i)(chi|expense|out|debit|withdraw|rút|\\-|–)")) return "expense";
 
         if (s.contains("thu") || s.contains("income")) return "income";
         if (s.contains("chi") || s.contains("expense") || s.contains("spend") || s.contains("out")) return "expense";
-
-        return amount < 0 ? "expense" : (amount > 0 ? "income" : null);
+        
+        if (amountSign < 0) return "expense";
+        if (amountSign > 0) return "income";
+        return null;
     }
 
-    private static int parseAmountToInt(String raw) {
-        if (raw == null) return 0;
-        String s = raw.trim();
+    private static BigDecimal parseAmountToBigDecimal(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return BigDecimal.ZERO;
+        }
+        String s = raw.trim().replaceAll("\"", "");
 
         boolean bracketNegative = s.startsWith("(") && s.endsWith(")");
-        s = s.replaceAll("[^0-9,\\.\\-]", "").replace(",", "").replace(".", "");
+        // Chuẩn hóa: thay thế dấu phẩy thập phân bằng dấu chấm
+        s = s.replaceAll("[^0-9,\\.\\-]", "").replace(",", ".");
 
-        if (s.isEmpty() || s.equals("-")) return 0;
+        if (s.isEmpty() || s.equals("-")) return BigDecimal.ZERO;
         try {
-            int val = Integer.parseInt(s);
-            if (bracketNegative) val = -Math.abs(val);
-            return val;
+            BigDecimal val = new BigDecimal(s);
+            return bracketNegative ? val.abs().negate() : val;
         } catch (Exception e) {
-            return 0;
+            return BigDecimal.ZERO;
         }
     }
 

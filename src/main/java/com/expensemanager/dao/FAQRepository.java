@@ -18,7 +18,7 @@ public class FAQRepository {
             synchronized (FAQRepository.class) {  // Đảm bảo thread-safe
                 if (emf == null) {
                     try {
-                        emf = Persistence.createEntityManagerFactory("BugetBuddyUnit");
+                        emf = Persistence.createEntityManagerFactory("default");
                         System.out.println("lazy init EntityManagerFactory thành công");
                     } catch (Exception e) {
                         System.err.println("Lỗi lazy init EMF " + e.getMessage());
