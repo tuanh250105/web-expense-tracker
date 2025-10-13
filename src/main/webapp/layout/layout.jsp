@@ -68,7 +68,7 @@
 
 <nav class="sidebar">
     <ul>
-        <li class="active"><a href="#"><i class="fa-solid fa-chart-line"></i> <span>Overallview</span></a></li>
+        <li class="active"><a href="${pageContext.request.contextPath}/overview" data-page="overview"><i class="fa-solid fa-chart-line"></i> <span>Overview</span></a></li>
         <li><a href="#"><i class="fa-solid fa-receipt"></i> <span>Giao dịch</span></a></li>
         <li><a href="${pageContext.request.contextPath}/scheduled_transactions?action=list"><i class="fa-solid fa-calendar-days"></i> <span>Giao dịch định kì</span></a></li>
         <li><a href="${pageContext.request.contextPath}/transaction"><i class="fa-solid fa-receipt"></i> <span>Giao dịch</span></a></li>
@@ -82,7 +82,7 @@
         <hr>
         <li><a href="${pageContext.request.contextPath}/analytics"><i class="fa-solid fa-chart-pie"></i> <span>Tổng hợp biểu đồ</span></a></li>
         <li><a href="#"><i class="fa-solid fa-calendar"></i> <span>Lịch</span></a></li>
-        <li><a href="#"><i class="fa-solid fa-people-group"></i> <span>Chi tiêu nhóm</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/group_expense"><i class="fa-solid fa-people-group"></i> <span>Chi tiêu nhóm</span></a></li>
         <li><a href="${pageContext.request.contextPath}/import-export"><i class="fa-solid fa-file-import"></i> <span>Import / Export file</span></a></li>
         <li><a href="${pageContext.request.contextPath}/top-categories"><i class="fa-solid fa-list-ul"></i> <span>Thống kê Top Categories</span></a></li>
         <li><a href="${pageContext.request.contextPath}/bank-history"><i class="fa-solid fa-clock-rotate-left"></i> <span>Lịch sử Ngân hàng</span></a></li>
@@ -102,6 +102,6 @@
 </main>
 <!-- JS layout -->
 <script src="${pageContext.request.contextPath}/layout/layout.js"></script>
-        <jsp:include page="${view}" />
+
 </body>
 </html>
