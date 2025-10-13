@@ -101,6 +101,5 @@
 </main>
 <!-- JS layout -->
 <script src="${pageContext.request.contextPath}/layout/layout.js"></script>
-        <jsp:include page="${view}" />
 </body>
 </html>

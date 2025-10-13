@@ -5,35 +5,24 @@ import java.util.UUID;
 
 import com.expensemanager.model.Account;
 import com.expensemanager.model.User;
+import com.expensemanager.util.JpaUtil; // ✅ thêm import này
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.Persistence;
 import jakarta.persistence.TypedQuery;
 
 /**
  * AccountDAO - Data Access Object cho Account entity
- * Tự quản lý EntityManagerFactory, không dùng JpaUtil
+ * ✅ Dùng EntityManagerFactory từ JpaUtil để tránh lỗi JDBC connection
  */
 public class AccountDAO {
 
-    private final EntityManagerFactory emf;
-
-    // Khởi tạo EntityManagerFactory khi tạo DAO
-    public AccountDAO() {
-        this.emf = Persistence.createEntityManagerFactory("default"); // tên persistence-unit
-    }
+    // ✅ Dùng chung EntityManagerFactory từ JpaUtil
+    private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
 
     private EntityManager getEntityManager() {
         return emf.createEntityManager();
-    }
-
-    // Đóng EMF khi không dùng nữa
-    public void close() {
-        if (emf.isOpen()) {
-            emf.close();
-        }
     }
 
     // ======================== SAVE ========================
@@ -62,7 +51,8 @@ public class AccountDAO {
             tx.commit();
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
-            throw e;
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi khi lưu Account: " + e.getMessage(), e);
         } finally {
             em.close();
         }
@@ -110,7 +100,8 @@ public class AccountDAO {
             tx.commit();
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
-            throw e;
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi khi cập nhật Account: " + e.getMessage(), e);
         } finally {
             em.close();
         }
@@ -129,7 +120,7 @@ public class AccountDAO {
             tx.commit();
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
-            throw e;
+            e.printStackTrace();
         } finally {
             em.close();
         }
