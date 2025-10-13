@@ -28,13 +28,33 @@ public class StatementEmailController extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // Simulate current logged-in user (later replace with session-based user)
         String userEmail = "test@user.com";
         String username = "Test User";
-        int userId = 123; // placeholder, until user IDs are UUID-based in session
 
-        // ✅ Convert int userId → UUID for service compatibility
-        UUID userUUID = UUID.nameUUIDFromBytes(String.valueOf(userId).getBytes());
+        UUID userUUID;
+
+        try {
+            // Try to load real UserDAO (only if available in this branch)
+            Class<?> userDAOClass = Class.forName("com.expensemanager.dao.UserDAO");
+            Object userDAO = userDAOClass.getDeclaredConstructor().newInstance();
+
+            var findByEmailMethod = userDAOClass.getMethod("findByEmail", String.class);
+            Object user = findByEmailMethod.invoke(userDAO, userEmail);
+            var getIdMethod = user.getClass().getMethod("getId");
+            userUUID = (UUID) getIdMethod.invoke(user);
+
+            System.out.println("[StatementEmailController] ✅ Loaded real user UUID: " + userUUID);
+
+        } catch (ClassNotFoundException e) {
+            // Fallback if UserDAO doesn't exist in this branch
+            userUUID = UUID.fromString("6b4d3a2e-baa5-4b5e-9d3a-8a9cc27b4ad3");
+            System.out.println("[StatementEmailController] ⚠️ UserDAO not found — using fallback UUID: " + userUUID);
+        } catch (Exception e) {
+            // Any reflection or DAO issues also use fallback
+            userUUID = UUID.fromString("6b4d3a2e-baa5-4b5e-9d3a-8a9cc27b4ad3");
+            System.out.println("[StatementEmailController] ⚠️ Failed to fetch real user, using fallback UUID: " + userUUID);
+            e.printStackTrace();
+        }
 
         try {
             statementEmailService.sendMonthlyStatement(userEmail, username, userUUID);
