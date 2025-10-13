@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             version="3.0"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
+
+    <persistence-unit name="default" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+        <class>com.expensemanager.model.User</class>
+        <class>com.expensemanager.model.PasswordResetToken</class>
+        <class>com.expensemanager.model.FAQ</class>
+        <class>com.expensemanager.model.ScheduledTransaction</class>
+        <class>com.expensemanager.model.Account</class>  <!-- ← Thêm để fix ScheduledTransaction.account -->
+        <class>com.expensemanager.model.Category</class>  <!-- ← Thêm cho category_id -->
+        <class>com.expensemanager.model.Transaction</class>
+        <!-- ← Thêm cho kiểm tra paid -->
+        <properties>
+            <!-- Kết nối tới Supabase (PostgreSQL) -->
+            <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?prepareThreshold=0&amp;ApplicationName=BudgetBuddy"/>
+            <property name="jakarta.persistence.jdbc.user" value="postgres.bgbaeuehewyxditjnncg"/>
+            <property name="jakarta.persistence.jdbc.password" value="web_database@pass"/>
+
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+        </properties>
+    </persistence-unit>
+</persistence>
