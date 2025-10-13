@@ -2,6 +2,7 @@ package com.expensemanager.dao;
 
 import com.expensemanager.model.Group;
 import com.expensemanager.model.GroupMember;
+import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 
@@ -16,7 +17,7 @@ import java.util.UUID;
  */
 public class GroupDAO {
 
-    private final EntityManager em;
+    private EntityManager em = JpaUtil.getEntityManager();
 
     public GroupDAO(EntityManager em) {
         this.em = em;

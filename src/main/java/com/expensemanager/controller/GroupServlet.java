@@ -4,18 +4,20 @@ import com.expensemanager.dao.AccountDAO;
 import com.expensemanager.dao.GroupDAO;
 import com.expensemanager.dao.TransactionDAO;
 import com.expensemanager.dao.UserDAO;
+import com.expensemanager.model.User;
 import com.expensemanager.service.DashboardService;
+import com.expensemanager.util.JpaUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -32,11 +34,16 @@ public class GroupServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         gson = new Gson();
-        emf = Persistence.createEntityManagerFactory("default");
+        emf = JpaUtil.getEntityManagerFactory();
     }
 
     // --- BỘ ĐỊNH TUYẾN (ROUTER) ---
 
+    /**
+     * Xử lý các yêu cầu POST:
+     * - POST /api/groups : Tạo nhóm mới
+     * - POST /api/groups/{groupId}/members : Thêm thành viên vào nhóm
+     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String pathInfo = req.getPathInfo();
@@ -49,6 +56,11 @@ public class GroupServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Xử lý các yêu cầu DELETE:
+     * - DELETE /api/groups/{groupId} : Xóa một nhóm
+     * - DELETE /api/groups/{groupId}/members/{userId} : Xóa thành viên khỏi nhóm
+     */
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String pathInfo = req.getPathInfo();
@@ -61,6 +73,10 @@ public class GroupServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Xử lý các yêu cầu GET:
+     * - GET /api/users/search?name={nameQuery} : Tìm kiếm người dùng theo tên
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String pathInfo = req.getPathInfo();
@@ -75,16 +91,20 @@ public class GroupServlet extends HttpServlet {
 
     private void handleCreateGroup(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
+            // Kiểm tra session user
+            UUID userId = getUserIdFromSession(req, resp);
+            if (userId == null) return; // Error đã được gửi trong getUserIdFromSession
+
             JsonObject jsonBody = gson.fromJson(req.getReader(), JsonObject.class);
-            String name = jsonBody.get("name").getAsString();
-            String description = jsonBody.get("description").getAsString();
+            String name = jsonBody.has("name") ? jsonBody.get("name").getAsString() : null;
+            String description = jsonBody.has("description") ? jsonBody.get("description").getAsString() : "";
 
             if (name == null || name.trim().isEmpty()) {
                 sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Tên nhóm không được để trống.");
                 return;
             }
-            // Gọi helper để thực thi logic trong một transaction
-            executeInTransaction(resp, service -> {
+
+            executeInTransaction(userId, resp, service -> {
                 Map<String, Object> newGroup = service.createGroup(name, description);
                 sendResponse(resp, HttpServletResponse.SC_CREATED, newGroup);
             });
@@ -97,8 +117,11 @@ public class GroupServlet extends HttpServlet {
 
     private void handleDeleteGroup(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
+            UUID userId = getUserIdFromSession(req, resp);
+            if (userId == null) return;
+
             UUID groupId = UUID.fromString(req.getPathInfo().split("/")[2]);
-            executeInTransaction(resp, service -> {
+            executeInTransaction(userId, resp, service -> {
                 service.deleteGroup(groupId);
                 sendResponse(resp, HttpServletResponse.SC_OK, Map.of("message", "Xóa nhóm thành công."));
             });
@@ -111,13 +134,15 @@ public class GroupServlet extends HttpServlet {
 
     private void handleAddMember(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
+            UUID userId = getUserIdFromSession(req, resp);
+            if (userId == null) return;
+
             UUID groupId = UUID.fromString(req.getPathInfo().split("/")[2]);
             JsonObject jsonBody = gson.fromJson(req.getReader(), JsonObject.class);
-            UUID userId = UUID.fromString(jsonBody.get("userId").getAsString());
+            UUID memberId = UUID.fromString(jsonBody.get("userId").getAsString());
 
-            executeInTransaction(resp, service -> {
-                // SỬA LỖI: Tên phương thức đúng là "addMember"
-                service.addMember(groupId, userId);
+            executeInTransaction(userId, resp, service -> {
+                service.addMember(groupId, memberId);
                 sendResponse(resp, HttpServletResponse.SC_OK, Map.of("message", "Thêm thành viên thành công."));
             });
         } catch (Exception e) {
@@ -127,13 +152,15 @@ public class GroupServlet extends HttpServlet {
 
     private void handleRemoveMember(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
+            UUID currentUserId = getUserIdFromSession(req, resp);
+            if (currentUserId == null) return;
+
             String[] parts = req.getPathInfo().split("/");
             UUID groupId = UUID.fromString(parts[2]);
-            UUID userId = UUID.fromString(parts[4]);
+            UUID memberIdToRemove = UUID.fromString(parts[4]);
 
-            executeInTransaction(resp, service -> {
-                // SỬA LỖI: Tên phương thức đúng là "removeMember"
-                service.removeMember(groupId, userId);
+            executeInTransaction(currentUserId, resp, service -> {
+                service.removeMember(groupId, memberIdToRemove);
                 sendResponse(resp, HttpServletResponse.SC_OK, Map.of("message", "Xóa thành viên thành công."));
             });
         } catch (Exception e) {
@@ -150,15 +177,11 @@ public class GroupServlet extends HttpServlet {
 
         EntityManager em = null;
         try {
+            UUID userId = getUserIdFromSession(req, resp);
+            if (userId == null) return;
+
             em = emf.createEntityManager();
-            UserDAO userDAO = new UserDAO(em);
-            GroupDAO groupDAO = new GroupDAO(em);
-            TransactionDAO transactionDAO = new TransactionDAO();
-            // SỬA LỖI: AccountDAO cần EntityManager khi khởi tạo
-            AccountDAO accountDAO = new AccountDAO();
-
-            DashboardService service = new DashboardService(transactionDAO, groupDAO, userDAO, accountDAO);
-
+            DashboardService service = createDashboardService(userId, em);
             List<Map<String, String>> users = service.searchUsersByName(nameQuery);
             sendResponse(resp, HttpServletResponse.SC_OK, users);
         } catch (Exception e) {
@@ -170,32 +193,56 @@ public class GroupServlet extends HttpServlet {
         }
     }
 
-    // --- HELPERS ---
+    // --- CÁC PHƯƠNG THỨC HỖ TRỢ (HELPERS) ---
 
-    private void executeInTransaction(HttpServletResponse resp, TransactionalOperation operation) throws IOException {
+    /**
+     * Lấy userId từ session với kiểm tra null
+     * @return userId nếu hợp lệ, null nếu không có session hoặc user
+     */
+    private UUID getUserIdFromSession(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        HttpSession session = req.getSession(false); // false = không tạo session mới
+        if (session == null) {
+            sendError(resp, HttpServletResponse.SC_UNAUTHORIZED, "Phiên đăng nhập không tồn tại.");
+            return null;
+        }
+
+        User user = (User) session.getAttribute("user");
+        if (user == null || user.getId() == null) {
+            sendError(resp, HttpServletResponse.SC_UNAUTHORIZED, "Vui lòng đăng nhập để tiếp tục.");
+            return null;
+        }
+
+        return user.getId();
+    }
+
+    /**
+     * Phương thức helper để khởi tạo các DAO và Service.
+     */
+    private DashboardService createDashboardService(UUID userId, EntityManager em) {
+        UserDAO userDAO = new UserDAO(em);
+        GroupDAO groupDAO = new GroupDAO(em);
+        TransactionDAO transactionDAO = new TransactionDAO();
+        AccountDAO accountDAO = new AccountDAO();
+        return new DashboardService(userId, transactionDAO, groupDAO, userDAO, accountDAO);
+    }
+
+    /**
+     * Thực thi một hành động nghiệp vụ trong một transaction an toàn.
+     */
+    private void executeInTransaction(UUID userId, HttpServletResponse resp, TransactionalOperation operation) throws IOException {
         EntityManager em = null;
         try {
             em = emf.createEntityManager();
-
-            // Khởi tạo các DAO cần thiết
-            UserDAO userDAO = new UserDAO(em);
-            GroupDAO groupDAO = new GroupDAO(em);
-            TransactionDAO transactionDAO = new TransactionDAO();
-            // SỬA LỖI: AccountDAO cần EntityManager khi khởi tạo
-            AccountDAO accountDAO = new AccountDAO();
-
-            // Khởi tạo Service và "tiêm" các DAO vào
-            DashboardService service = new DashboardService(transactionDAO, groupDAO, userDAO, accountDAO);
+            DashboardService service = createDashboardService(userId, em);
 
             em.getTransaction().begin();
-            operation.execute(service); // Thực thi hành động nghiệp vụ
+            operation.execute(service);
             em.getTransaction().commit();
 
         } catch (Exception e) {
             if (em != null && em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
-            // Ném lại lỗi để có thể bắt ở các handler và gửi thông báo lỗi phù hợp
             throw new IOException(e.getMessage(), e);
         } finally {
             if (em != null && em.isOpen()) {

@@ -8,6 +8,7 @@ import com.expensemanager.model.Group;
 import com.expensemanager.model.GroupMember;
 import com.expensemanager.model.Transaction; // QUAN TRỌNG: Đảm bảo import Transaction
 import com.expensemanager.model.User;
+import jakarta.servlet.http.HttpSession;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -31,12 +32,14 @@ public class DashboardService {
     private final AccountDAO accountDAO;
 
     // ========== Constant values ==========
-    private static final UUID CURRENT_USER_ID = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
+
+    private static UUID CURRENT_USER_ID;
     private static final BigDecimal ONE_UNIT = new BigDecimal("1");
     private static final DateTimeFormatter DAY_FORMAT = DateTimeFormatter.ofPattern("dd/MM");
     private static final DateTimeFormatter MONTH_FORMAT = DateTimeFormatter.ofPattern("MM");
 
-    public DashboardService(TransactionDAO transactionDAO, GroupDAO groupDAO, UserDAO userDAO, AccountDAO accountDAO) {
+    public DashboardService(UUID user_id, TransactionDAO transactionDAO, GroupDAO groupDAO, UserDAO userDAO, AccountDAO accountDAO) {
+        this.CURRENT_USER_ID = user_id;
         this.transactionDAO = transactionDAO;
         this.groupDAO = groupDAO;
         this.userDAO = userDAO;
@@ -186,7 +189,6 @@ public class DashboardService {
 
             incomeList.add(income.divide(ONE_UNIT, 2, RoundingMode.HALF_UP));
             expenseList.add(expense.divide(ONE_UNIT, 2, RoundingMode.HALF_UP));
-
             runningBalance = runningBalance.add(income).subtract(expense);
             balanceList.add(runningBalance.divide(ONE_UNIT, 2, RoundingMode.HALF_UP).max(BigDecimal.ZERO));
         }
@@ -241,7 +243,6 @@ public class DashboardService {
                 "previousMonth", Map.of("income", prevIncome.divide(ONE_UNIT, 2, RoundingMode.HALF_UP), "expense", prevExpense.divide(ONE_UNIT, 2, RoundingMode.HALF_UP))
         );
     }
-
     private Map<String, Object> getCategoriesPieDataFromList(List<Transaction> allTransactions) {
         List<Transaction> expenseTransactions = allTransactions.stream()
                 .filter(t -> "expense".equalsIgnoreCase(t.getType()))

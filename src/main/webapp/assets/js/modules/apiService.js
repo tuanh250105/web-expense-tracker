@@ -8,7 +8,7 @@
  * @returns {Promise<any>} - Dữ liệu JSON từ response.
  */
 export async function apiFetch(url, options = {}) {
-    const ctxPath = window.contextPath || '';
+    const ctxPath = window.BB_CTX || '';
     const defaultHeaders = {
         'Content-Type': 'application/json',
         'Accept': 'application/json'

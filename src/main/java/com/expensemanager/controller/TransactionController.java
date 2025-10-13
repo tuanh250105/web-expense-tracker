@@ -4,6 +4,7 @@ import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
 import com.expensemanager.model.User;
+import com.expensemanager.service.AccountService;
 import com.expensemanager.service.TransactionService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -22,6 +23,7 @@ import java.util.*;
 @WebServlet("/transaction")
 public class TransactionController extends HttpServlet {
     private final TransactionService transactionService = new TransactionService();
+    private final AccountService accountService = new AccountService();
     private static final String transaction_cache = "transactionCache";
     private static final int cache_size = 6;
 
@@ -294,7 +296,8 @@ public class TransactionController extends HttpServlet {
     private List<Account> getAccountList(HttpSession session, UUID userId) {
         List<Account> accountList = (List<Account>) session.getAttribute("accountList");
         if (accountList == null) {
-            accountList = transactionService.getAllAccountByUserId(userId);
+            accountList = accountService.getAccountsByUser(userId);
+            //accountList = transactionService.getAllAccountByUserId(userId);
             session.setAttribute("accountList", accountList);
         }
         return accountList;
