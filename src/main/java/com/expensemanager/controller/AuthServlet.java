@@ -33,21 +33,19 @@ public class AuthServlet extends HttpServlet {
       req.getRequestDispatcher("/views/auth/login.jsp").forward(req, resp);
     } else {
       req.getSession(true).setAttribute("user", u);
-      req.setAttribute("view", "/views/dashboard/dashboard.jsp");
-      req.getRequestDispatcher("/layout/layout.jsp").forward(req, resp);
+      resp.sendRedirect(req.getContextPath() + "/layout/layout.jsp");
     }
   }
 
   private void register(HttpServletRequest req, HttpServletResponse resp)
       throws IOException, ServletException {
     try {
-      User u = service.register(
+      service.register(
         req.getParameter("fullName"),
         req.getParameter("email"),
         req.getParameter("password"));
-  req.getSession(true).setAttribute("user", u);
-  req.setAttribute("view", "/views/dashboard/dashboard.jsp");
-  req.getRequestDispatcher("/layout/layout.jsp").forward(req, resp);
+      req.setAttribute("success", "Tạo tài khoản thành công! Vui lòng đăng nhập.");
+      req.getRequestDispatcher("/views/auth/login.jsp").forward(req, resp);
     } catch (IllegalArgumentException e) {
       req.setAttribute("error", e.getMessage());
       req.getRequestDispatcher("/views/auth/register.jsp").forward(req, resp);

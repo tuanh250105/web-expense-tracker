@@ -106,6 +106,6 @@ public class GoogleOAuthServlet extends HttpServlet {
     var payload = idToken.getPayload();
     User user = service.loginOrCreateGoogle(payload.getEmail(), (String) payload.get("name"));
     req.getSession(true).setAttribute("user", user);
-    resp.sendRedirect(req.getContextPath()+"/views/dashboard/dashboard.jsp");
+    resp.sendRedirect(req.getContextPath()+"/layout/layout.jsp");
   }
 }

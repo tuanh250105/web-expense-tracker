@@ -41,7 +41,13 @@
         <i class="fa-regular fa-bell notification">
             <span class="badge">3</span>
         </i>
-        <button class="btn-login"><i class="fa-solid fa-right-to-bracket"></i> Login / Sign up</button>
+        <% if (session.getAttribute("user") != null) { %>
+            <form method="get" action="<%=request.getContextPath()%>/auth/logout" style="display:inline;">
+                <button class="btn-login" type="submit"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            </form>
+        <% } else { %>
+            <a href="<%=request.getContextPath()%>/views/auth/login.jsp" class="btn-login"><i class="fa-solid fa-right-to-bracket"></i> Login / Sign up</a>
+        <% } %>
         <label class="switch">
             <input type="checkbox" id="darkModeToggle">
             <span class="slider"></span>
