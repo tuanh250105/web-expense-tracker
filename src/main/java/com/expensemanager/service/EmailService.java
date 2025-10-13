@@ -6,7 +6,6 @@ import jakarta.mail.internet.MimeMessage;
 import java.util.Properties;
 
 public class EmailService {
-<<<<<<< HEAD
     private static final String SMTP_HOST = "smtp.gmail.com";
     private static final String SMTP_PORT = "587";
     private static final String USERNAME = "hoangdu31.claude@gmail.com";
@@ -39,7 +38,6 @@ public class EmailService {
             System.err.println("Failed to send email: " + e.getMessage());
         }
     }
-=======
 	public boolean send(String to, String subject, String html) {
 		try {
 			Properties props = new Properties();
@@ -67,5 +65,4 @@ public class EmailService {
 			return false;
 		}
 	}
->>>>>>> 14ad5cc8000a1004f85b9762e0f1c1397356e0bb
 }
