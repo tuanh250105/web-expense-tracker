@@ -33,7 +33,11 @@ public class AuthServlet extends HttpServlet {
       req.getRequestDispatcher("/views/auth/login.jsp").forward(req, resp);
     } else {
       req.getSession(true).setAttribute("user", u);
-      resp.sendRedirect(req.getContextPath() + "/layout/layout.jsp");
+      if ("ADMIN".equalsIgnoreCase(u.getRole())) {
+        resp.sendRedirect(req.getContextPath() + "/admin");
+      } else {
+        resp.sendRedirect(req.getContextPath() + "/layout/layout.jsp");
+      }
     }
   }
 

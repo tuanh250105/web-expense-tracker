@@ -13,6 +13,21 @@ public class AuthService {
   private final PasswordResetTokenRepository tokenRepo = new PasswordResetTokenRepository();
   private final EmailService emailService = new EmailService();
 
+  // Khởi tạo tài khoản admin@example.com nếu chưa tồn tại
+  static {
+    UserRepository repo = new UserRepository();
+    if (repo.findByEmail("admin@example.com") == null) {
+      User admin = new User();
+      admin.setFullName("Admin");
+      admin.setEmail("admin@example.com");
+      admin.setUsername("admin");
+      admin.setPasswordHash(PasswordUtil.hash("123"));
+      admin.setRole("ADMIN");
+      admin.setProvider("LOCAL");
+      repo.save(admin);
+    }
+  }
+
   public User register(String fullName, String email, String password) {
     if (repo.findByEmail(email) != null)
       throw new IllegalArgumentException("Email đã tồn tại");
@@ -38,9 +53,15 @@ public class AuthService {
   }
 
   public User login(String email, String password) {
-    User u = repo.findByEmail(email);
-    if (u != null && PasswordUtil.verify(password, u.getPasswordHash())) return u;
-    return null;
+  User u = repo.findByEmail(email);
+  if (u != null && PasswordUtil.verify(password, u.getPasswordHash())) {
+    // Nếu là tài khoản admin|admin thì set role ADMIN
+    if ("admin".equalsIgnoreCase(u.getUsername()) && "admin".equals(password)) {
+      u.setRole("ADMIN");
+    }
+    return u;
+  }
+  return null;
   }
 
   public User loginOrCreateGoogle(String email, String name) {

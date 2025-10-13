@@ -79,7 +79,7 @@
       transition: all 0.3s;
     }
     .msg.error { color: #ef4444; animation: shake 0.4s; }
-    .msg.success { color: #22c55e; animation: fadeIn 0.7s; }
+    .msg.success { color: #00461a; animation: fadeIn 0.7s; }
     @keyframes shake {
       0% { transform: translateX(0); }
       25% { transform: translateX(-6px); }
@@ -125,8 +125,8 @@
       display: block;
     }
     input:focus {
-      border: 1.5px solid #6366f1;
-      box-shadow: 0 0 0 2px #6366f133;
+      border: 2px solid #3436a7;
+      box-shadow: 0 0 0 4px #6366f133;
       outline: none;
     }
     button {
@@ -179,7 +179,7 @@
       transition: color 0.2s;
     }
     .links a:hover {
-      color: #60a5fa;
+      color: #192f49;
       text-decoration: underline;
     }
     @media (max-width: 500px) {

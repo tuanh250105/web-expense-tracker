@@ -16,7 +16,7 @@ public class JPAUtil {
     if (url != null) props.put("jakarta.persistence.jdbc.url", url);
     if (user != null) props.put("jakarta.persistence.jdbc.user", user);
     if (pass != null) props.put("jakarta.persistence.jdbc.password", pass);
-    emf = Persistence.createEntityManagerFactory("expensePU", props);
+    emf = Persistence.createEntityManagerFactory("default", props);
   }
   public static EntityManager em() { return emf.createEntityManager(); }
 }

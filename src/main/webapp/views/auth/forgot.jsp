@@ -80,7 +80,7 @@
       transition: all 0.3s;
     }
     .msg.error { color: #ef4444; animation: shake 0.4s; }
-    .msg.success { color: #22c55e; animation: fadeIn 0.7s; }
+    .msg.success { color: #00461a; animation: fadeIn 0.7s; }
     @keyframes shake {
       0% { transform: translateX(0); }
       25% { transform: translateX(-6px); }
@@ -126,8 +126,8 @@
       display: block;
     }
     input:focus {
-      border: 1.5px solid #6366f1;
-      box-shadow: 0 0 0 2px #6366f133;
+      border: 2px solid #3436a7;
+      box-shadow: 0 0 0 4px #6366f133;
       outline: none;
     }
     button {
@@ -150,20 +150,23 @@
       transform: translateY(-2px) scale(1.03);
     }
     .links {
-      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
       margin-top: 16px;
       animation: fadeIn 1.2s;
-    }
+      flex-wrap: wrap;
+	}
     .links a {
-      color: #6366f1;
-      text-decoration: none;
-      margin: 0 10px;
-      font-size: 1rem;
-      font-weight: 500;
-      transition: color 0.2s;
+	color: #6366f1;
+	text-decoration: none;
+	font-size: 1rem;
+	font-weight: 500;
+	transition: color 0.2s;
     }
     .links a:hover {
-      color: #60a5fa;
+      color: #192f49;
       text-decoration: underline;
     }
     @media (max-width: 500px) {
@@ -187,7 +190,7 @@
     </div>
     <button type="submit">Gửi OTP</button>
   </form>
-  <div style="text-align:center; margin-top:8px; font-size:0.98rem; color:#64748b;">Sau khi nhận OTP qua email, hãy truy cập trang đặt lại mật khẩu.</div>
+  <div style="text-align:center; margin-top:8px; font-size:0.98rem; color:#0f3525;">Sau khi nhận OTP qua email, hãy truy cập trang "Đặt lại mật khẩu".</div>
   <div class="links">
     <a href="${pageContext.request.contextPath}/views/auth/reset.jsp">Đặt lại mật khẩu</a>
     <a href="${pageContext.request.contextPath}/views/auth/login.jsp">Quay lại đăng nhập</a>
