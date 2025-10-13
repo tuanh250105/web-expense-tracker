@@ -3,6 +3,7 @@ package com.expensemanager.dao;
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.ScheduledTransaction;
+import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
@@ -17,7 +18,6 @@ import java.util.UUID;
 
 public class ScheduledTransactionDAO {
 
-    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("default");
     public List<ScheduledTransaction> getAll() {
         return getFiltered(null, null, null, null, null, null, null);
     }
@@ -25,7 +25,7 @@ public class ScheduledTransactionDAO {
     public List<ScheduledTransaction> getFiltered(String categoryNameFilter, String account,
                                                   String from, String to, String note,
                                                   String[] types, UUID userId) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaUtil.getEntityManager();
         try {
             StringBuilder jpql = new StringBuilder(
                     "SELECT s FROM ScheduledTransaction s " +
@@ -99,7 +99,7 @@ public class ScheduledTransactionDAO {
     }
 
     public List<Account> getAccountsByUserId(UUID userId) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaUtil.getEntityManager();
         try {
             String jpql = "SELECT a FROM Account a WHERE a.user.id = :userId";
             Query query = em.createQuery(jpql, Account.class);
@@ -111,7 +111,7 @@ public class ScheduledTransactionDAO {
     }
 
     public Account findAccountById(UUID id, UUID userId) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaUtil.getEntityManager();
         try {
             String jpql = "SELECT a FROM Account a WHERE a.id = :id AND a.user.id = :userId";
             Query query = em.createQuery(jpql, Account.class);
@@ -124,7 +124,7 @@ public class ScheduledTransactionDAO {
     }
 
     public void add(ScheduledTransaction t) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaUtil.getEntityManager();
         try {
             em.getTransaction().begin();
             em.persist(t);
@@ -138,7 +138,7 @@ public class ScheduledTransactionDAO {
     }
 
     public void update(ScheduledTransaction t) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaUtil.getEntityManager();
         try {
             em.getTransaction().begin();
             em.merge(t);
@@ -152,7 +152,7 @@ public class ScheduledTransactionDAO {
     }
 
     public void delete(UUID id, UUID userId) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaUtil.getEntityManager();
         try {
             em.getTransaction().begin();
             String jpql = "SELECT s FROM ScheduledTransaction s JOIN s.account a WHERE s.id = :id AND a.user.id = :userId";
@@ -171,7 +171,7 @@ public class ScheduledTransactionDAO {
     }
 
     public List<ScheduledTransaction> getDueTransactions() {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaUtil.getEntityManager();
         try {
             String jpql = "SELECT s FROM ScheduledTransaction s " +
                     "LEFT JOIN FETCH s.category " +
@@ -190,7 +190,7 @@ public class ScheduledTransactionDAO {
     }
 
     public ScheduledTransaction getById(UUID id, UUID userId) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaUtil.getEntityManager();
         try {
             String jpql = "SELECT s FROM ScheduledTransaction s " +
                     "LEFT JOIN FETCH s.category " +
@@ -209,7 +209,7 @@ public class ScheduledTransactionDAO {
     }
 
     public List<ScheduledTransaction> getUpcomingTransactions(int daysAhead) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaUtil.getEntityManager();
         try {
             // Tính toán end timestamp: now + daysAhead ngày
             Timestamp now = new Timestamp(System.currentTimeMillis());
@@ -246,7 +246,7 @@ public class ScheduledTransactionDAO {
     }
 
     public String getUserEmailByAccount(UUID accountId) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaUtil.getEntityManager();
         try {
             String jpql = "SELECT u.email FROM Account a JOIN a.user u WHERE a.id = :accountId";
             Query query = em.createQuery(jpql);
