@@ -1,7 +1,6 @@
 package com.expensemanager.model;
+
 import jakarta.persistence.*;
-import java.sql.Date;
-import java.util.List;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
