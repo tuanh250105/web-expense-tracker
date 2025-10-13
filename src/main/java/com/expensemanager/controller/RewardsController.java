@@ -99,27 +99,25 @@ public class RewardsController extends HttpServlet {
 
     private UUID resolveUserId(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
-        UUID uid = null;
 
-        if (session != null && session.getAttribute("userId") != null) {
-            Object val = session.getAttribute("userId");
-            if (val instanceof UUID u) uid = u;
-            else if (val instanceof String s && !s.isBlank()) {
-                try { uid = UUID.fromString(s); } catch (Exception ignored) {}
+        if (session != null) {
+            // Ưu tiên user thật trong session
+            Object u = session.getAttribute("user");
+            if (u instanceof com.expensemanager.model.User user && user.getId() != null)
+                return user.getId();
+
+            // Nếu chỉ có userId (UUID/String)
+            Object id = session.getAttribute("userId");
+            if (id instanceof UUID uid) return uid;
+            if (id instanceof String s && !s.isBlank()) {
+                try { return UUID.fromString(s); } catch (Exception ignored) {}
             }
         }
 
-        if (uid == null) {
-            try {
-                uid = UUID.fromString(req.getParameter("userId"));
-            } catch (Exception e) {
-                // fallback: user test
-                uid = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
-            }
-        }
-
-        return uid;
+        // fallback chỉ dùng cho localhost test (không phải người dùng thật)
+        return UUID.fromString("60afce1a-f901-4144-8bdc-0b8dd37dd003");
     }
+
 
     private int parseInt(String s, int def) {
         try { return Integer.parseInt(s); }

@@ -32,10 +32,10 @@ public class RewardDAO {
 
     // ====== CỘNG ĐIỂM ======
     public void addPoints(UUID userId, int points) {
-        EntityManager em = em();
-        EntityTransaction tx = em.getTransaction();
+        EntityManager em = EMF.createEntityManager();
         try {
-            tx.begin();
+            em.getTransaction().begin();
+
             RewardPoints rp = em.find(RewardPoints.class, userId);
             if (rp == null) {
                 rp = new RewardPoints();
@@ -48,11 +48,8 @@ public class RewardDAO {
                 rp.setUpdatedAt(OffsetDateTime.now());
                 em.merge(rp);
             }
-            tx.commit();
-        } catch (Exception e) {
-            if (tx.isActive()) tx.rollback();
-            e.printStackTrace();
-            throw new RuntimeException("Lỗi khi cộng điểm Reward: " + e.getMessage(), e);
+
+            em.getTransaction().commit();
         } finally {
             em.close();
         }
@@ -66,6 +63,8 @@ public class RewardDAO {
             tx.begin();
 
             RewardPoints rp = em.find(RewardPoints.class, userId, LockModeType.PESSIMISTIC_WRITE);
+
+            // 🔹 Nếu chưa có record RewardPoints -> tạo mới với 0 điểm
             if (rp == null) {
                 rp = new RewardPoints();
                 rp.setUserId(userId);
@@ -73,7 +72,7 @@ public class RewardDAO {
                 rp.setUpdatedAt(OffsetDateTime.now());
                 em.persist(rp);
                 tx.commit();
-                return false;
+                return false; // chưa có điểm để trừ
             }
 
             int cur = rp.getPoints();
@@ -89,8 +88,7 @@ public class RewardDAO {
             return true;
         } catch (RuntimeException e) {
             if (tx.isActive()) tx.rollback();
-            e.printStackTrace();
-            throw new RuntimeException("Lỗi khi trừ điểm Reward: " + e.getMessage(), e);
+            throw e;
         } finally {
             em.close();
         }
@@ -126,8 +124,7 @@ public class RewardDAO {
             return s;
         } catch (RuntimeException e) {
             if (tx.isActive()) tx.rollback();
-            e.printStackTrace();
-            throw new RuntimeException("Lỗi khi lưu RewardSpin: " + e.getMessage(), e);
+            throw e;
         } finally {
             em.close();
         }
@@ -205,6 +202,8 @@ public class RewardDAO {
                 return 0;
             }
 
+            int totalAdded = remain * perBudget;
+
             RewardPoints rp = em.find(RewardPoints.class, userId, LockModeType.PESSIMISTIC_WRITE);
             if (rp == null) {
                 rp = new RewardPoints();
@@ -213,26 +212,29 @@ public class RewardDAO {
                 em.persist(rp);
             }
 
-            rp.setPoints(rp.getPoints() + perBudget);
+            rp.setPoints(rp.getPoints() + totalAdded);
             rp.setUpdatedAt(OffsetDateTime.now());
             em.merge(rp);
 
-            RewardSpin s = new RewardSpin();
-            s.setUserId(userId);
-            s.setPrizeCode(null);
-            s.setPrizeLabel("BUDGET_AWARD");
-            s.setPointsSpent(-perBudget);
-            s.setCreatedAt(OffsetDateTime.now());
-            em.persist(s);
+            // lưu 1 record cho mỗi ngân sách đạt
+            for (int i = 0; i < remain; i++) {
+                RewardSpin s = new RewardSpin();
+                s.setUserId(userId);
+                s.setPrizeCode(null);
+                s.setPrizeLabel("BUDGET_AWARD");
+                s.setPointsSpent(-perBudget);
+                s.setCreatedAt(OffsetDateTime.now());
+                em.persist(s);
+            }
 
             tx.commit();
-            return perBudget;
+            return totalAdded;
         } catch (RuntimeException e) {
             if (tx.isActive()) tx.rollback();
-            e.printStackTrace();
-            throw new RuntimeException("Lỗi khi cộng thưởng ngân sách: " + e.getMessage(), e);
+            throw e;
         } finally {
             em.close();
         }
     }
+
 }

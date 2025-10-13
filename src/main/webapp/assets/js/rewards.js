@@ -1,6 +1,6 @@
 (() => {
-    const CTX = window.BB_CTX || window.location.pathname.split('/')[1] ? `/${window.location.pathname.split('/')[1]}` : "";
-    const USER_ID = window.BB_USER_ID || "00000000-0000-0000-0000-000000000001";
+    const CTX = window.BB_CTX || (window.location.pathname.split('/')[1] ? `/${window.location.pathname.split('/')[1]}` : "");
+    const USER_ID = window.BB_USER_ID || "60afce1a-f901-4144-8bdc-0b8dd37dd003";
 
     const wheelEl   = document.getElementById("rw-wheel");
     const spinBtn   = document.getElementById("rw-spin");
@@ -28,12 +28,10 @@
 
     function draw(angle = 0) {
         ctx.clearRect(0, 0, wheelEl.width, wheelEl.height);
-
         prizes.forEach((p, i) => {
             ctx.beginPath();
             ctx.moveTo(cx, cy);
             ctx.fillStyle = p.color;
-            // Xoay vòng quay sao cho 0° ở 12h
             ctx.arc(cx, cy, r, angle + i * segRad - Math.PI / 2, angle + (i + 1) * segRad - Math.PI / 2);
             ctx.fill();
 
@@ -49,7 +47,7 @@
 
         ctx.save();
         ctx.translate(cx, cy);
-        ctx.rotate(-Math.PI / 2); //
+        ctx.rotate(-Math.PI / 2);
         ctx.beginPath();
         ctx.moveTo(0, -r - 5);
         ctx.lineTo(0, -r + 25);
@@ -78,9 +76,10 @@
         set(k, v)   { localStorage.setItem(k, JSON.stringify(v)); }
     };
 
+    // ======================== API ========================
     async function apiGetPoints() {
         try {
-            const res = await fetch(`${CTX}/api/rewards/points?userId=${encodeURIComponent(USER_ID)}`);
+            const res = await fetch(`${CTX}/api/rewards/points`);
             if (res.ok) { const j = await res.json(); return (j.points | 0); }
         } catch {}
         return ls.get("rw_points", 40);
@@ -88,7 +87,7 @@
 
     async function apiRecent(limit = 10) {
         try {
-            const res = await fetch(`${CTX}/api/rewards/recent?userId=${encodeURIComponent(USER_ID)}&limit=${limit}`);
+            const res = await fetch(`${CTX}/api/rewards/recent?limit=${limit}`);
             if (res.ok) return await res.json();
         } catch {}
         return (ls.get("rw_hist", [])).map(x => ({
@@ -100,7 +99,7 @@
 
     async function apiClaimable() {
         try {
-            const res = await fetch(`${CTX}/api/rewards/claimable?userId=${encodeURIComponent(USER_ID)}`);
+            const res = await fetch(`${CTX}/api/rewards/claimable`);
             if (res.ok) return await res.json();
         } catch {}
         return null;
@@ -108,7 +107,7 @@
 
     async function apiClaimOne() {
         try {
-            const res = await fetch(`${CTX}/api/rewards/claim-one?userId=${encodeURIComponent(USER_ID)}`, { method: "POST" });
+            const res = await fetch(`${CTX}/api/rewards/claim-one`, { method: "POST" });
             if (res.ok) return await res.json();
         } catch {}
         const cur = await apiGetPoints();
@@ -118,7 +117,7 @@
 
     async function apiSpin() {
         try {
-            const res = await fetch(`${CTX}/api/rewards/spin?userId=${encodeURIComponent(USER_ID)}`, { method: "POST" });
+            const res = await fetch(`${CTX}/api/rewards/spin`, { method: "POST" });
             if (res.ok) return await res.json();
             if (res.status === 400) return { error: "not_enough_points" };
         } catch {}
@@ -130,6 +129,7 @@
         ls.set("rw_hist", hist);
         return { prizeCode: pick.code, prizeLabel: pick.label, spent: 20 };
     }
+    // ====================================================
 
     async function refreshPointsAndHistory() {
         pointsEl.textContent = await apiGetPoints();
@@ -163,11 +163,6 @@
     }
 
     awardBtn.addEventListener("click", async () => {
-        const cur = await apiGetPoints();
-        if (false) {
-            alert("⚠️ Bạn chưa đủ điểm để nhận thưởng. Hãy đạt ngân sách để nhận thêm điểm!");
-            return;
-        }
         awardBtn.disabled = true;
         try {
             const r = await apiClaimOne();
@@ -197,32 +192,24 @@
         }
 
         const segDeg = 360 / prizes.length;
-
-        // 🔧 Đây là công thức đã bù hướng canvas + hướng xoay vòng quay
         const stopAt = 6 * 360 + (360 - (idx * segDeg + segDeg / 2)) - 90;
 
         animateTo(stopAt, 4000, async () => {
             resultEl.textContent = "🎁 Bạn nhận: " + label;
             showToast(`🎉 ${label}`);
-
             const now = new Date().toLocaleString();
             const li = document.createElement("li");
             li.textContent = `${now} – ${label}`;
             historyEl.prepend(li);
-
             let curPoints = parseInt(pointsEl.textContent) || 0;
             pointsEl.textContent = Math.max(0, curPoints - 20);
-
             setTimeout(() => refreshPointsAndHistory(), 2000);
         });
-
-
     });
 
     function animateTo(targetDeg, duration, onDone) {
         const start = performance.now();
         const startDeg = 0;
-
         function frame(t) {
             const p = Math.min(1, (t - start) / duration);
             const ease = 1 - Math.pow(1 - p, 3);

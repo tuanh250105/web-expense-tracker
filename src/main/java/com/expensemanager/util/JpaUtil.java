@@ -3,12 +3,14 @@ package com.expensemanager.util;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 
 /**
- * JpaUtil - tiện ích khởi tạo EntityManagerFactory dùng cho Hibernate + Supabase (PostgreSQL).
+ * JpaUtil - tiện ích khởi tạo EntityManagerFactory dùng cho Hibernate +
+ * Supabase (PostgreSQL).
  * Hỗ trợ lấy cấu hình từ file .env (qua biến môi trường).
  * Tự động thêm các option an toàn cho PgBouncer pooler.
  */
@@ -22,16 +24,28 @@ public class JpaUtil {
             System.out.println("──────────────────────────────────────────────");
             System.out.println("🔗 [JpaUtil] Đang khởi tạo EntityManagerFactory...");
 
-            // 1️⃣ Lấy thông tin cấu hình từ biến môi trường (Tomcat đọc từ system env)
+
+
+            // Lấy từ .env, fallback sang System.getenv nếu không có
             String url = System.getenv("DB_URL");
             String user = System.getenv("DB_USER");
             String pass = System.getenv("DB_PASS");
 
+            // Fallback: đọc từ system property nếu env không có
+            if (url == null) url = System.getProperty("DB_URL");
+            if (user == null) user = System.getProperty("DB_USER");
+            if (pass == null) pass = System.getProperty("DB_PASS");
+
+
+
             // 2️⃣ Gộp vào Map thuộc tính JPA
             Map<String, Object> props = new HashMap<>();
-            if (url != null) props.put("jakarta.persistence.jdbc.url", appendSafeUrlOptions(url));
-            if (user != null) props.put("jakarta.persistence.jdbc.user", user);
-            if (pass != null) props.put("jakarta.persistence.jdbc.password", pass);
+            if (url != null)
+                props.put("jakarta.persistence.jdbc.url", appendSafeUrlOptions(url));
+            if (user != null)
+                props.put("jakarta.persistence.jdbc.user", user);
+            if (pass != null)
+                props.put("jakarta.persistence.jdbc.password", pass);
 
             // 3️⃣ Các thiết lập Hibernate bổ sung (tối ưu cho Supabase)
             props.put("jakarta.persistence.jdbc.driver", "org.postgresql.Driver");
@@ -46,10 +60,10 @@ public class JpaUtil {
             props.put("hibernate.hikari.dataSource.useServerPrepStmts", "false");
 
             props.put("hibernate.connection.provider_class",
-              "org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl");
+                    "org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl");
 
             // 4️⃣ Tên persistence-unit (phải trùng trong persistence.xml)
-            String persistenceUnitName ="default";
+            String persistenceUnitName = "default";
 
             // 5️⃣ Tạo EntityManagerFactory
             if (props.isEmpty()) {
@@ -72,7 +86,8 @@ public class JpaUtil {
     }
 
     /**
-     * Thêm option “prepareThreshold=0” để tránh lỗi Supabase pooler (prepared statement conflict).
+     * Thêm option “prepareThreshold=0” để tránh lỗi Supabase pooler (prepared
+     * statement conflict).
      */
     private static String appendSafeUrlOptions(String url) {
         if (!url.contains("prepareThreshold")) {
@@ -92,7 +107,9 @@ public class JpaUtil {
         return emf;
     }
 
-    public static EntityManager em() { return emf.createEntityManager(); }
+    public static EntityManager em() {
+        return emf.createEntityManager();
+    }
 
     /** Đóng EntityManagerFactory khi tắt ứng dụng. */
     public static void close() {
