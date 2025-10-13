@@ -34,15 +34,15 @@ public class AppContextListener implements ServletContextListener {
             scheduler.start();
             System.out.println("AQuartz Scheduler khởi tạo thành công cho TransactionScheduler!");
 
-            /*
-            try {
-                com.expensemanager.service.TransactionScheduler testRun = new com.expensemanager.service.TransactionScheduler();
-                testRun.execute(null); // Gọi trực tiếp job để test
-                System.out.println("Đã chạy thử TransactionScheduler ngay khi khởi động!");
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            */
+
+//            try {
+//                com.expensemanager.service.TransactionScheduler testRun = new com.expensemanager.service.TransactionScheduler();
+//                testRun.execute(null); // Gọi trực tiếp job để test
+//                System.out.println("Đã chạy thử TransactionScheduler ngay khi khởi động!");
+//            } catch (Exception ex) {
+//                ex.printStackTrace();
+//            }
+
 
         } catch (SchedulerException e) {
             System.err.println("Lỗi khởi tạo Quartz Scheduler: " + e.getMessage());

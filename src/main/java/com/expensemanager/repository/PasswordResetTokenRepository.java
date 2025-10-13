@@ -1,14 +1,14 @@
 package com.expensemanager.repository;
 
 import com.expensemanager.model.PasswordResetToken;
-import com.expensemanager.util.JPAUtil;
+import com.expensemanager.util.JpaUtil;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 
 public class PasswordResetTokenRepository {
 	public void save(PasswordResetToken t) {
-			EntityManager em = JPAUtil.em();
+			EntityManager em = JpaUtil.em();
 			try {
 				em.getTransaction().begin();
 				em.persist(t);
@@ -22,7 +22,7 @@ public class PasswordResetTokenRepository {
 	}
 
 	public PasswordResetToken findValidByEmailAndOtp(String email, String otp) {
-			try (EntityManager em = JPAUtil.em()) {
+			try (EntityManager em = JpaUtil.em()) {
 			return em.createQuery(
 				"SELECT t FROM PasswordResetToken t WHERE t.email = :email AND t.otp = :otp AND t.expiresAt > CURRENT_TIMESTAMP",
 				PasswordResetToken.class)
@@ -35,7 +35,7 @@ public class PasswordResetTokenRepository {
 	}
 
 	public void delete(PasswordResetToken t) {
-			EntityManager em = JPAUtil.em();
+			EntityManager em = JpaUtil.em();
 			try {
 				em.getTransaction().begin();
 				PasswordResetToken managed = em.merge(t);

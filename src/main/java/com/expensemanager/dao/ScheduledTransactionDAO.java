@@ -1,9 +1,8 @@
 package com.expensemanager.dao;
 
 import com.expensemanager.model.Account;
+import com.expensemanager.model.Category;
 import com.expensemanager.model.ScheduledTransaction;
-import com.expensemanager.model.User;
-import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
@@ -119,15 +118,6 @@ public class ScheduledTransactionDAO {
             query.setParameter("id", id);
             query.setParameter("userId", userId);
             return (Account) query.getSingleResult();
-        } finally {
-            em.close();
-        }
-    }
-
-    public Category findCategoryById(UUID id) {
-        EntityManager em = emf.createEntityManager();
-        try {
-            return em.find(Category.class, id);
         } finally {
             em.close();
         }
@@ -255,7 +245,6 @@ public class ScheduledTransactionDAO {
         }
     }
 
-
     public boolean hasTransactionNearDue(UUID categoryId, BigDecimal amount, String type,
                                          Timestamp dueDate, int daysBefore, UUID userId) {
         EntityManager em = emf.createEntityManager();
@@ -278,27 +267,6 @@ public class ScheduledTransactionDAO {
             query.setParameter("end", end);
             query.setParameter("userId", userId);
             return (boolean) query.getSingleResult();
-        } finally {
-            em.close();
-        }
-    }
-
-    public List<Category> getByType(String type) {
-        EntityManager em = emf.createEntityManager();
-        try {
-            Query query = em.createQuery("SELECT c FROM Category c WHERE c.type = :type ORDER BY c.name");
-            query.setParameter("type", type);
-            return query.getResultList();
-        } finally {
-            em.close();
-        }
-    }
-
-    public List<Category> getAllCategories() {
-        EntityManager em = emf.createEntityManager();
-        try {
-            Query query = em.createQuery("SELECT c FROM Category c ORDER BY c.name");
-            return query.getResultList();
         } finally {
             em.close();
         }

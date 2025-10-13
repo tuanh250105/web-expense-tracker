@@ -1,14 +1,14 @@
 package com.expensemanager.repository;
 
 import com.expensemanager.model.User;
-import com.expensemanager.util.JPAUtil;
+import com.expensemanager.util.JpaUtil;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 
 public class UserRepository {
   public User findByEmail(String email) {
-    try (EntityManager em = JPAUtil.em()) {
+    try (EntityManager em = JpaUtil.em()) {
       return em.createQuery("SELECT u FROM User u WHERE u.email = :email", User.class)
         .setParameter("email", email.toLowerCase())
         .getSingleResult();
@@ -18,7 +18,7 @@ public class UserRepository {
   }
 
   public User save(User u) {
-    EntityManager em = JPAUtil.em();
+    EntityManager em = JpaUtil.em();
     try {
       em.getTransaction().begin();
       User managed;
@@ -39,7 +39,7 @@ public class UserRepository {
   }
 
   public boolean existsByEmail(String email) {
-    try (EntityManager em = JPAUtil.em()) {
+    try (EntityManager em = JpaUtil.em()) {
       Long count = em.createQuery("SELECT COUNT(u) FROM User u WHERE u.email = :email", Long.class)
         .setParameter("email", email.toLowerCase())
         .getSingleResult();
@@ -48,7 +48,7 @@ public class UserRepository {
   }
 
   public boolean existsByUsername(String username) {
-    try (EntityManager em = JPAUtil.em()) {
+    try (EntityManager em = JpaUtil.em()) {
       Long count = em.createQuery("SELECT COUNT(u) FROM User u WHERE u.username = :username", Long.class)
         .setParameter("username", username)
         .getSingleResult();

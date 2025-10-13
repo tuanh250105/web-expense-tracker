@@ -21,8 +21,8 @@ public class SupabaseUserService {
             conn.setDoOutput(true);
 
             String json = String.format(
-                "{\"username\":\"%s\",\"email\":\"%s\",\"full_name\":\"%s\",\"provider\":\"%s\"}",
-                username, email, fullName, provider
+                    "{\"username\":\"%s\",\"email\":\"%s\",\"full_name\":\"%s\",\"provider\":\"%s\"}",
+                    username, email, fullName, provider
             );
             try (OutputStream os = conn.getOutputStream()) {
                 os.write(json.getBytes(StandardCharsets.UTF_8));

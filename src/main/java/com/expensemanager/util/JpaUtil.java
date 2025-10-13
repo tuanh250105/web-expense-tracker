@@ -17,7 +17,7 @@ public class JpaUtil {
     if (url != null) props.put("jakarta.persistence.jdbc.url", url);
     if (user != null) props.put("jakarta.persistence.jdbc.user", user);
     if (pass != null) props.put("jakarta.persistence.jdbc.password", pass);
-    emf = Persistence.createEntityManagerFactory("expensePU", props);
+    emf = Persistence.createEntityManagerFactory("default", props);
   }
   public static EntityManager em() { return emf.createEntityManager(); }
 
@@ -31,14 +31,14 @@ public class JpaUtil {
         }
   }
 
-    public static EntityManager getEntityManager() {
-        return entityManagerFactory.createEntityManager();
-    }
-
-    public static void close() {
-        if (entityManagerFactory != null && entityManagerFactory.isOpen()) {
-            entityManagerFactory.close();
-            System.out.println("✅ JpaUtil: EntityManagerFactory closed!");
-        }
-    }
+//    public static EntityManager getEntityManager() {
+//        return entityManagerFactory.createEntityManager();
+//    }
+//
+//    public static void close() {
+//        if (entityManagerFactory != null && entityManagerFactory.isOpen()) {
+//            entityManagerFactory.close();
+//            System.out.println("✅ JpaUtil: EntityManagerFactory closed!");
+//        }
+//    }
 }
