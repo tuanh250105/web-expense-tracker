@@ -85,7 +85,7 @@ header {
 .header-actions {
     display: flex; align-items: center; gap: 15px;
 }
-.btn-login {
+.btn-logout {
     background: linear-gradient(135deg, #00c6ff, #0072ff);
     color: white;
     border: none;
@@ -98,13 +98,13 @@ header {
     transition: transform 0.2s;
 }
 
-.btn-login:hover {
+.btn-logout:hover {
     transform: scale(1.05);
     box-shadow: 0 0 10px rgba(0, 198, 255, 0.6);
 }
 
 /* Ripple effect */
-.btn-login:after {
+.btn-logout:after {
     content: "";
     position: absolute;
     width: 100%;
@@ -115,7 +115,7 @@ header {
     transform: rotate(25deg);
     transition: left 0.5s;
 }
-.btn-login:hover:after {
+.btn-logout:hover:after {
     left: 100%;
 }
 
@@ -251,4 +251,4 @@ body.dark {
 }
 body.dark .sidebar { background: #1b2430; }
 body.dark .sidebar ul li a { color: #eee; }
-body.dark .btn-login { background: #333; color: #fff; }
+body.dark .btn-logout { background: #333; color: #fff; }

@@ -61,7 +61,9 @@
         <i class="fa-regular fa-bell notification">
             <span class="badge">3</span>
         </i>
-        <button class="btn-login"><i class="fa-solid fa-right-to-bracket"></i> Login / Sign up</button>
+        <form action="${pageContext.request.contextPath}/view/auth/login.jsp" method="post" style="display:inline;">
+            <button type="submit" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </form>
         <label class="switch">
             <input type="checkbox" id="darkModeToggle">
             <span class="slider"></span>
@@ -82,7 +84,7 @@
         <li><a href="#"><i class="fa-solid fa-wallet"></i> <span>Ngân sách</span></a></li>
         <li><a href="${pageContext.request.contextPath}/debt"><i class="fa-solid fa-hand-holding-dollar"></i> <span>Quản lý nợ</span></a></li>
         <hr>
-        <li><a href="${pageContext.request.contextPath}/analytics"><i class="fa-solid fa-chart-pie"></i> <span>Tổng hợp biểu đồ</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/analytics"><i class="fa-solid fa-chart-pie"></i> <span>Thống kê biểu đồ</span></a></li>
         <li><a href="#"><i class="fa-solid fa-calendar"></i> <span>Lịch</span></a></li>
         <li><a href="${pageContext.request.contextPath}/group_expense"><i class="fa-solid fa-people-group"></i> <span>Chi tiêu nhóm</span></a></li>
         <li><a href="${pageContext.request.contextPath}/import-export"><i class="fa-solid fa-file-import"></i> <span>Import / Export file</span></a></li>

@@ -4,7 +4,7 @@
 
 <div class="bb-ana">
     <div class="bb-ana-hero">
-        <h1>📊 Tổng hợp biểu đồ</h1>
+        <h1>📊 Thống kê biểu đồ</h1>
         <p class="bb-note">Chọn khoảng thời gian, loại, nhóm dữ liệu và kiểu biểu đồ</p>
     </div>
 
