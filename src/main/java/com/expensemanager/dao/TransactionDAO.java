@@ -4,7 +4,6 @@ import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
 import com.expensemanager.util.JpaUtil;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.TypedQuery;

@@ -1,126 +1,119 @@
 package com.expensemanager.service;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import com.expensemanager.dao.TransactionDAOstart;
 import com.expensemanager.model.Transaction;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
 /**
- * TransactionService - Business logic cho Transaction
- * Tính toán Top Categories dựa trên Transaction data
+ * TransactionServicestart - Lớp service xử lý nghiệp vụ cho Transaction
+ * Gọi DAO và tổng hợp thống kê theo tháng
  */
 public class TransactionServicestart {
 
-    private final TransactionDAOstart transactionDAO;
+    private static final Logger LOGGER = Logger.getLogger(TransactionServicestart.class.getName());
+    private final TransactionDAOstart dao;
 
     public TransactionServicestart() {
-        this.transactionDAO = new TransactionDAOstart();
+        this.dao = new TransactionDAOstart();
     }
 
     /**
-     * Lấy Top Categories theo tháng/năm
-     * @param userId ID của user
-     * @param startOfMonth Ngày bắt đầu tháng
-     * @param endOfMonth Ngày kết thúc tháng
-     * @return List<CategoryStats> - Danh sách thống kê theo category
+     * CategoryStats - DTO chứa thống kê tổng chi tiêu theo danh mục
      */
-    public List<CategoryStats> getTopCategoriesByMonth(UUID userId, LocalDateTime startOfMonth, LocalDateTime endOfMonth) {
-        // Lấy tất cả transactions trong tháng
-        List<Transaction> transactions = transactionDAO.getAllTransactionsByMonthAndYear(userId, startOfMonth, endOfMonth);
+    public static class CategoryStats {
+        private UUID categoryId;
+        private String categoryName;
+        private String type;
+        private BigDecimal totalAmount;
 
-        // Group by category và tính tổng
-        Map<String, CategoryStats> categoryMap = new HashMap<>();
-
-        for (Transaction t : transactions) {
-            String categoryName = t.getCategory().getName();
-            String categoryType = t.getCategory().getType();
-
-            CategoryStats stats = categoryMap.getOrDefault(categoryName,
-                    new CategoryStats(categoryName, categoryType));
-
-            stats.addAmount(t.getAmount());
-            stats.incrementCount();
-
-            categoryMap.put(categoryName, stats);
+        public CategoryStats(UUID categoryId, String categoryName, String type, BigDecimal totalAmount) {
+            this.categoryId = categoryId;
+            this.categoryName = categoryName;
+            this.type = type;
+            this.totalAmount = totalAmount;
         }
 
-        // Sắp xếp theo tổng tiền giảm dần
-        return categoryMap.values().stream()
-                .sorted((a, b) -> Long.compare(b.getTotalAmount(), a.getTotalAmount()))
+        public UUID getCategoryId() { return categoryId; }
+        public String getCategoryName() { return categoryName; }
+        public String getType() { return type; }
+        public BigDecimal getTotalAmount() { return totalAmount; }
+    }
+
+    /**
+     * Lấy danh sách top categories của 1 user trong 1 tháng/năm
+     */
+    public List<CategoryStats> getTopCategoriesByMonth(UUID userId, LocalDateTime startOfMonth, LocalDateTime endOfMonth) {
+        List<Transaction> transactions = dao.getAllTransactionsByMonthAndYear(userId, startOfMonth, endOfMonth);
+
+        // Nhóm theo category và tính tổng
+        Map<UUID, BigDecimal> totals = new HashMap<>();
+        Map<UUID, String> names = new HashMap<>();
+        Map<UUID, String> types = new HashMap<>();
+
+        for (Transaction t : transactions) {
+            if (t.getCategory() == null || t.getAmount() == null) continue;
+
+            UUID categoryId = t.getCategory().getId();
+            totals.merge(categoryId, t.getAmount(), BigDecimal::add);
+            names.put(categoryId, t.getCategory().getName());
+            types.put(categoryId, t.getCategory().getType());
+        }
+
+        // Chuyển thành list CategoryStats
+        return totals.entrySet().stream()
+                .map(e -> new CategoryStats(
+                        e.getKey(),
+                        names.get(e.getKey()),
+                        types.get(e.getKey()),
+                        e.getValue()
+                ))
+                .sorted(Comparator.comparing(CategoryStats::getTotalAmount).reversed())
                 .collect(Collectors.toList());
     }
 
     /**
-     * Lấy tất cả transactions theo tháng
-     */
-    public List<Transaction> getTransactionsByMonth(UUID userId, LocalDateTime startOfMonth, LocalDateTime endOfMonth) {
-        return transactionDAO.getAllTransactionsByMonthAndYear(userId, startOfMonth, endOfMonth);
-    }
-
-    /**
-     * Thêm transaction mới
+     * Thêm mới một giao dịch
      */
     public void addTransaction(Transaction transaction) {
-        if (transaction.getTransactionDate() == null) {
-            transaction.setTransactionDate(LocalDateTime.now());
+        try {
+            dao.save(transaction);
+            LOGGER.log(Level.INFO, "✅ Đã thêm transaction: {0}", transaction.getDescription());
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "❌ Lỗi khi thêm transaction:", e);
         }
-        transactionDAO.save(transaction);
     }
 
     /**
-     * Xóa transaction
+     * Xóa một giao dịch theo ID
      */
     public void deleteTransaction(UUID transactionId) {
-        transactionDAO.delete(transactionId);
+        try {
+            dao.delete(transactionId);
+            LOGGER.log(Level.INFO, "✅ Đã xóa transaction ID: {0}", transactionId);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "❌ Lỗi khi xóa transaction:", e);
+        }
     }
 
     /**
-     * Lấy transactions có lọc theo account
+     * Lấy danh sách giao dịch đã lọc theo account ID và user ID
      */
-    public List<Transaction> getFilteredTransactions(String accountIdFilter) {
+    public List<Transaction> getFilteredTransactions(UUID userId, String accountIdFilter) {
         if (accountIdFilter != null && !accountIdFilter.isEmpty()) {
-            UUID accountId = UUID.fromString(accountIdFilter);
-            return transactionDAO.findByAccountId(accountId);
-        }
-        return transactionDAO.findAll();
-    }
-
-    /**
-     * Inner class để chứa thống kê category
-     */
-    public static class CategoryStats {
-        private String categoryName;
-        private String categoryType;
-        private long totalAmount;
-        private int transactionCount;
-
-        public CategoryStats(String categoryName, String categoryType) {
-            this.categoryName = categoryName;
-            this.categoryType = categoryType;
-            this.totalAmount = 0;
-            this.transactionCount = 0;
-        }
-
-        public void addAmount(BigDecimal amount) {
-            if (amount != null) {
-                this.totalAmount += amount.longValue();
+            try {
+                UUID accountId = UUID.fromString(accountIdFilter);
+                return dao.findByAccountIdAndUserId(userId, accountId);
+            } catch (IllegalArgumentException e) {
+                LOGGER.log(Level.WARNING, "Invalid accountId format: {0}", accountIdFilter);
+                return Collections.emptyList(); // Return empty if ID is invalid
             }
         }
-
-        public void incrementCount() {
-            this.transactionCount++;
-        }
-
-        // Getters
-        public String getCategoryName() { return categoryName; }
-        public String getCategoryType() { return categoryType; }
-        public long getTotalAmount() { return totalAmount; }
-        public int getTransactionCount() { return transactionCount; }
+        return dao.findAllByUserId(userId);
     }
 }

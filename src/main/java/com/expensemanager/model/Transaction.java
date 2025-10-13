@@ -68,6 +68,10 @@ public class Transaction {
         return note;
     }
 
+    public String getDescription() {
+        return note;
+    }
+
     public LocalDateTime getTransactionDate() {
         return transactionDate;
     }

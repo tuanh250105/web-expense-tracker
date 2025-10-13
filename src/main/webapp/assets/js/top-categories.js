@@ -33,9 +33,9 @@ class TopCategoriesManager {
 
     async loadCategoriesData() {
         try {
-            console.log('🌐 Loading categories data from:', `${this.API_BASE}/top-categories`);
+            console.log('🌐 Loading categories data from:', `${this.API_BASE}/api/top-categories`);
             
-            const response = await fetch(`${this.API_BASE}/top-categories`);
+            const response = await fetch(`${this.API_BASE}/api/top-categories`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }

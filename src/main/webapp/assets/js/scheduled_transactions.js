@@ -1,3 +1,4 @@
+var contextPath = window.BB_CTX || '${pageContext.request.contextPath}';
 var isLoading = false;
 var clickDebounce = {};
 

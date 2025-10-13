@@ -11,13 +11,18 @@
         <class>com.expensemanager.model.PasswordResetToken</class>
         <class>com.expensemanager.model.FAQ</class>
         <class>com.expensemanager.model.ScheduledTransaction</class>
-        <class>com.expensemanager.model.Account</class>  <!-- ← Thêm để fix ScheduledTransaction.account -->
-        <class>com.expensemanager.model.Category</class>  <!-- ← Thêm cho category_id -->
+        <class>com.expensemanager.model.Account</class>
+        <class>com.expensemanager.model.Category</class>
         <class>com.expensemanager.model.Transaction</class>
         <class>com.expensemanager.model.RewardPrize</class>
         <class>com.expensemanager.model.RewardPoints</class>
         <class>com.expensemanager.model.RewardSpin</class>
         <class>com.expensemanager.model.Debt</class>
+        <class>com.expensemanager.model.CategoryStats</class>
+        <class>com.expensemanager.model.TopTransaction</class>
+        <class>com.expensemanager.model.Group</class>
+        <class>com.expensemanager.model.GroupExpense</class>
+        <class>com.expensemanager.model.GroupMember</class>
         <!-- ← Thêm cho kiểm tra paid -->
         <properties>
             <!-- Kết nối tới Supabase (PostgreSQL) -->

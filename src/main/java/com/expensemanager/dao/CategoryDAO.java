@@ -84,7 +84,9 @@ public class CategoryDAO {
     public List<Category> findByType(String type, UUID userId) {
         EntityManager em = emf.createEntityManager();
         try {
-            String jpql = "SELECT c FROM Category c WHERE c.type = :type AND c.user.id = :userId ORDER BY c.name ASC";
+            String jpql = "SELECT c FROM Category c " +
+                    "WHERE c.type = :type AND c.user.id = :userId " +
+                    "ORDER BY c.name ASC";
             TypedQuery<Category> query = em.createQuery(jpql, Category.class);
             query.setParameter("type", type);
             query.setParameter("userId", userId);

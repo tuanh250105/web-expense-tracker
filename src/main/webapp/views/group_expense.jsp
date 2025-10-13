@@ -2,7 +2,9 @@
 <%-- Nạp file CSS cho trang và modal --%>
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/group.css">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/modal.css">
-
+<script>
+    window.contextPath = '${pageContext.request.contextPath}';
+</script>
 <div class="group-expense-page">
     <div class="group-expense-container">
         <div class="group-expense-header">

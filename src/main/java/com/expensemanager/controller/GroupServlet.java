@@ -32,7 +32,7 @@ public class GroupServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         gson = new Gson();
-        emf = Persistence.createEntityManagerFactory("supabase-pu");
+        emf = Persistence.createEntityManagerFactory("default");
     }
 
     // --- BỘ ĐỊNH TUYẾN (ROUTER) ---

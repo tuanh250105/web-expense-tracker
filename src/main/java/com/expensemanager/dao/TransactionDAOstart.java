@@ -1,59 +1,87 @@
 package com.expensemanager.dao;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Transaction;
+import jakarta.persistence.*;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.Persistence;
-import jakarta.persistence.TypedQuery;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * TransactionDAOstart - Data Access Object cho Transaction entity
- * Dùng static EntityManagerFactory, không dùng JpaUtil
+ * Đồng bộ với persistence.xml (persistence-unit name="default")
+ * Dùng static EntityManagerFactory khởi tạo 1 lần cho toàn app
  */
 public class TransactionDAOstart {
 
-    // Static EMF, tạo 1 lần cho toàn bộ ứng dụng
-    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("default");
+    private static final EntityManagerFactory emf;
+
+    static {
+        EntityManagerFactory tmp = null;
+        try {
+            System.out.println("🚀 Initializing EntityManagerFactory...");
+
+            // Programmatically read environment variables
+            Map<String, String> properties = new HashMap<>();
+            String dbUrl = System.getenv("DB_URL");
+            String dbUser = System.getenv("DB_USER");
+            String dbPass = System.getenv("DB_PASS");
+
+            if (dbUrl == null || dbUser == null || dbPass == null) {
+                throw new IllegalStateException("Database environment variables (DB_URL, DB_USER, DB_PASS) are not set.");
+            }
+
+            properties.put("jakarta.persistence.jdbc.url", dbUrl);
+            properties.put("jakarta.persistence.jdbc.user", dbUser);
+            properties.put("jakarta.persistence.jdbc.password", dbPass);
+
+            tmp = Persistence.createEntityManagerFactory("default", properties);
+            System.out.println("✅ EntityManagerFactory initialized successfully!");
+        } catch (Exception e) {
+            System.err.println("❌ Critical Error initializing EntityManagerFactory:");
+            e.printStackTrace();
+            // Re-throw the exception to make the root cause visible
+            throw new ExceptionInInitializerError(e);
+        }
+        emf = tmp;
+    }
 
     private EntityManager getEntityManager() {
+        if (emf == null) {
+            // This should ideally not be reached if ExceptionInInitializerError is thrown above
+            throw new IllegalStateException("EntityManagerFactory is not initialized. Check server logs for root cause.");
+        }
         return emf.createEntityManager();
     }
 
-    // Đóng EMF khi app shutdown
     public static void closeFactory() {
-        if (emf.isOpen()) {
+        if (emf != null && emf.isOpen()) {
             emf.close();
         }
     }
 
-    // ======================== SAVE ========================
     public void save(Transaction transaction) {
         EntityManager em = getEntityManager();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
             if (transaction.getId() == null) {
-                em.persist(transaction);   // Thêm mới
+                em.persist(transaction);
             } else {
-                em.merge(transaction);     // Cập nhật nếu có ID
+                em.merge(transaction);
             }
             tx.commit();
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
-            throw e;
+            e.printStackTrace();
         } finally {
             em.close();
         }
     }
 
-    // ======================== DELETE ========================
     public void delete(UUID transactionId) {
         EntityManager em = getEntityManager();
         EntityTransaction tx = em.getTransaction();
@@ -61,22 +89,17 @@ public class TransactionDAOstart {
             tx.begin();
             Transaction transaction = em.find(Transaction.class, transactionId);
             if (transaction != null) {
-                if (em.contains(transaction)) {
-                    em.remove(transaction);
-                } else {
-                    em.remove(em.merge(transaction));
-                }
+                em.remove(em.contains(transaction) ? transaction : em.merge(transaction));
             }
             tx.commit();
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
-            throw e;
+            e.printStackTrace();
         } finally {
             em.close();
         }
     }
 
-    // ======================== FIND ========================
     public Transaction findById(UUID transactionId) {
         EntityManager em = getEntityManager();
         try {
@@ -96,6 +119,18 @@ public class TransactionDAOstart {
         }
     }
 
+    public List<Transaction> findAllByUserId(UUID userId) {
+        EntityManager em = getEntityManager();
+        try {
+            String jpql = "SELECT t FROM Transaction t JOIN t.account a WHERE a.user.id = :userId ORDER BY t.transactionDate DESC";
+            TypedQuery<Transaction> query = em.createQuery(jpql, Transaction.class);
+            query.setParameter("userId", userId);
+            return query.getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
     public List<Transaction> findByAccountId(UUID accountId) {
         EntityManager em = getEntityManager();
         try {
@@ -108,16 +143,33 @@ public class TransactionDAOstart {
         }
     }
 
-    public List<Transaction> getAllTransactionsByMonthAndYear(UUID userId, LocalDateTime startOfMonth, LocalDateTime endOfMonth) {
+    public List<Transaction> findByAccountIdAndUserId(UUID userId, UUID accountId) {
         EntityManager em = getEntityManager();
         try {
-            String jpql = "SELECT t FROM Transaction t " +
-                    "JOIN FETCH t.category c " +
-                    "JOIN FETCH t.account a " +
-                    "WHERE a.user.id = :userId " +
-                    "AND t.transactionDate >= :startOfMonth " +
-                    "AND t.transactionDate < :endOfMonth " +
-                    "ORDER BY t.transactionDate DESC";
+            String jpql = "SELECT t FROM Transaction t WHERE t.account.user.id = :userId AND t.account.id = :accountId ORDER BY t.transactionDate DESC";
+            TypedQuery<Transaction> query = em.createQuery(jpql, Transaction.class);
+            query.setParameter("userId", userId);
+            query.setParameter("accountId", accountId);
+            return query.getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    public List<Transaction> getAllTransactionsByMonthAndYear(UUID userId,
+                                                              LocalDateTime startOfMonth,
+                                                              LocalDateTime endOfMonth) {
+        EntityManager em = getEntityManager();
+        try {
+            String jpql = """
+                    SELECT t FROM Transaction t
+                    JOIN FETCH t.category c
+                    JOIN FETCH t.account a
+                    WHERE a.user.id = :userId
+                    AND t.transactionDate >= :startOfMonth
+                    AND t.transactionDate < :endOfMonth
+                    ORDER BY t.transactionDate DESC
+                    """;
             TypedQuery<Transaction> query = em.createQuery(jpql, Transaction.class);
             query.setParameter("userId", userId);
             query.setParameter("startOfMonth", startOfMonth);

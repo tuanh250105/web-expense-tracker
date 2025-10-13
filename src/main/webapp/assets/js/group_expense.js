@@ -242,3 +242,14 @@ function handleViewGroup(groupId) {
     showModal("Chi tiết nhóm", content);
 }
 window.initGroupPage = initGroupPage;
+// ✅ Gọi tự động khi trang được load hoàn tất
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("🔹 Layout loaded, context:", window.contextPath);
+    const groupContainer = document.querySelector('.group-expense-container');
+    if (groupContainer) {
+        // Chỉ chạy nếu phần group tồn tại
+        initGroupPage();
+    } else {
+        console.warn("⚠️ Không tìm thấy phần group-expense-container trên trang này");
+    }
+});

@@ -1,55 +1,27 @@
 package com.expensemanager.dao;
 
 import com.expensemanager.model.FAQ;
+import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 import jakarta.persistence.Query;
 
 import java.util.List;
 import java.util.UUID;
 
 public class FAQRepository {
-    private static EntityManagerFactory emf;  // Không init static nữa, lazy
-
-    // Method private để lấy emf an toàn (thread-safe)
-    private EntityManagerFactory getEntityManagerFactory() {
-        if (emf == null) {
-            synchronized (FAQRepository.class) {  // Đảm bảo thread-safe
-                if (emf == null) {
-                    try {
-                        emf = Persistence.createEntityManagerFactory("default");
-                        System.out.println("lazy init EntityManagerFactory thành công");
-                    } catch (Exception e) {
-                        System.err.println("Lỗi lazy init EMF " + e.getMessage());
-                        e.printStackTrace();
-                        throw new RuntimeException("JPA lazy init thất bại", e);
-                    }
-                }
-            }
-        }
-        return emf;
-    }
-
-    // Sử dụng getEntityManager() trong tất cả method
-    private EntityManager getEntityManager() {
-        return getEntityManagerFactory().createEntityManager();
-    }
 
     public List<FAQ> getAll() {
-        EntityManager em = getEntityManager();
+        EntityManager em = JpaUtil.getEntityManager();
         try {
-            Query query = em.createQuery("SELECT f FROM FAQ f ORDER BY f.createdAt ASC");
+            Query query = em.createQuery("SELECT f FROM FAQ f ORDER BY f.createdAt ASC", FAQ.class);
             return query.getResultList();
         } finally {
-            if (em != null && em.isOpen()) {
-                em.close();
-            }
+            em.close();
         }
     }
 
     public void add(FAQ faq) {
-        EntityManager em = getEntityManager();
+        EntityManager em = JpaUtil.getEntityManager();
         try {
             em.getTransaction().begin();
             em.persist(faq);
@@ -58,16 +30,14 @@ public class FAQRepository {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
-            throw new RuntimeException("Lỗi add FAQ", e);
+            throw new RuntimeException("Lỗi khi thêm FAQ", e);
         } finally {
-            if (em != null && em.isOpen()) {
-                em.close();
-            }
+            em.close();
         }
     }
 
     public void delete(UUID id) {
-        EntityManager em = getEntityManager();
+        EntityManager em = JpaUtil.getEntityManager();
         try {
             em.getTransaction().begin();
             FAQ faq = em.find(FAQ.class, id);
@@ -79,11 +49,18 @@ public class FAQRepository {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
-            throw new RuntimeException("Lỗi delete FAQ", e);
+            throw new RuntimeException("Lỗi khi xóa FAQ", e);
         } finally {
-            if (em != null && em.isOpen()) {
-                em.close();
-            }
+            em.close();
+        }
+    }
+
+    public FAQ getById(UUID id) {
+        EntityManager em = JpaUtil.getEntityManager();
+        try {
+            return em.find(FAQ.class, id);
+        } finally {
+            em.close();
         }
     }
 }

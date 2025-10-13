@@ -8,15 +8,21 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-@WebServlet(name = "groupExpenseServlet", value = "/group_expense")
+/**
+ * Servlet này xử lý yêu cầu hiển thị trang "Chi tiêu nhóm".
+ * Nó hoạt động theo kiến trúc layout chung.
+ */
+@WebServlet(name = "groupExpenseViewServlet", value = "/group_expense")
 public class GroupExpenseViewServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Trả trực tiếp fragment JSP, KHÔNG đi qua layout
-        request.getRequestDispatcher("/views/group_expense.jsp").forward(request, response);
+        // 1. Gán biến "view" để layout.jsp biết file nội dung cần include
+        request.setAttribute("view", "/views/group_expense.jsp");
+
+        // 2. Chuyển tiếp (forward) tới file layout chính để render toàn bộ trang
+        request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
     }
 }
-
