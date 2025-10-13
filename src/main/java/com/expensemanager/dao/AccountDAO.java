@@ -4,81 +4,82 @@ import java.util.List;
 import java.util.UUID;
 
 import com.expensemanager.model.Account;
-import com.expensemanager.util.JpaUtil;
+import com.expensemanager.model.User;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.Persistence;
 import jakarta.persistence.TypedQuery;
 
 /**
- * AccountDAO - Data Access Object for Account entity
+ * AccountDAO - Data Access Object cho Account entity
+ * Tự quản lý EntityManagerFactory, không dùng JpaUtil
  */
 public class AccountDAO {
-    
+
+    private final EntityManagerFactory emf;
+
+    // Khởi tạo EntityManagerFactory khi tạo DAO
+    public AccountDAO() {
+        this.emf = Persistence.createEntityManagerFactory("default"); // tên persistence-unit
+    }
+
+    private EntityManager getEntityManager() {
+        return emf.createEntityManager();
+    }
+
+    // Đóng EMF khi không dùng nữa
+    public void close() {
+        if (emf.isOpen()) {
+            emf.close();
+        }
+    }
+
+    // ======================== SAVE ========================
     public void save(Account account) {
-        EntityManager em = JpaUtil.getEntityManager();
+        EntityManager em = getEntityManager();
+        EntityTransaction tx = em.getTransaction();
         try {
-            System.out.println("🔵 AccountDAO.save() starting transaction");
-            em.getTransaction().begin();
-            
-            // If account has a user with ID but not managed, fetch it from database
-            if (account.getUser() != null && account.getUser().getId() != null) {
-                System.out.println("👤 Account has user with ID: " + account.getUser().getId());
-                
-                // Check if user is detached (has ID but not managed)
-                if (!em.contains(account.getUser())) {
-                    System.out.println("⚠️ User is detached, fetching from database...");
-                    
-                    // Fetch the managed user from database
-                    com.expensemanager.model.User managedUser = em.find(com.expensemanager.model.User.class, account.getUser().getId());
-                    
-                    if (managedUser != null) {
-                        System.out.println("✅ Found managed user with ID: " + managedUser.getId());
-                        account.setUser(managedUser);
-                    } else {
-                        System.err.println("❌ User not found in database with ID: " + account.getUser().getId());
-                        throw new IllegalArgumentException("User not found with ID: " + account.getUser().getId());
-                    }
+            tx.begin();
+
+            // Nếu account có user nhưng chưa managed, fetch từ DB
+            if (account.getUser() != null && account.getUser().getId() != null && !em.contains(account.getUser())) {
+                User managedUser = em.find(User.class, account.getUser().getId());
+                if (managedUser != null) {
+                    account.setUser(managedUser);
+                } else {
+                    throw new IllegalArgumentException("User not found with ID: " + account.getUser().getId());
                 }
-            } else {
-                System.out.println("⚠️ Account has no user set!");
             }
-            
+
             if (account.getId() == null) {
-                System.out.println("💾 Persisting new account: " + account.getName());
-                em.persist(account);
+                em.persist(account);  // thêm mới
             } else {
-                System.out.println("🔄 Merging existing account: " + account.getName());
-                em.merge(account);
+                em.merge(account);    // cập nhật nếu có ID
             }
-            
-            em.getTransaction().commit();
-            System.out.println("✅ Transaction committed successfully");
-            
+
+            tx.commit();
         } catch (Exception e) {
-            System.err.println("❌ Error in AccountDAO.save(): " + e.getClass().getName() + " - " + e.getMessage());
-            e.printStackTrace();
-            
-            if (em.getTransaction().isActive()) {
-                System.err.println("🔴 Rolling back transaction");
-                em.getTransaction().rollback();
-            }
+            if (tx.isActive()) tx.rollback();
             throw e;
         } finally {
             em.close();
         }
     }
-    
+
+    // ======================== FIND ========================
     public Account findById(UUID id) {
-        EntityManager em = JpaUtil.getEntityManager();
+        EntityManager em = getEntityManager();
         try {
             return em.find(Account.class, id);
         } finally {
             em.close();
         }
     }
-    
+
     public List<Account> findAllByUser(UUID userId) {
-        EntityManager em = JpaUtil.getEntityManager();
+        EntityManager em = getEntityManager();
         try {
             String jpql = "SELECT a FROM Account a WHERE a.user.id = :userId ORDER BY a.name ASC";
             TypedQuery<Account> query = em.createQuery(jpql, Account.class);
@@ -88,9 +89,9 @@ public class AccountDAO {
             em.close();
         }
     }
-    
+
     public List<Account> findAll() {
-        EntityManager em = JpaUtil.getEntityManager();
+        EntityManager em = getEntityManager();
         try {
             String jpql = "SELECT a FROM Account a ORDER BY a.name ASC";
             return em.createQuery(jpql, Account.class).getResultList();
@@ -98,37 +99,50 @@ public class AccountDAO {
             em.close();
         }
     }
-    
+
+    // ======================== UPDATE ========================
     public void update(Account account) {
-        EntityManager em = JpaUtil.getEntityManager();
+        EntityManager em = getEntityManager();
+        EntityTransaction tx = em.getTransaction();
         try {
-            em.getTransaction().begin();
+            tx.begin();
             em.merge(account);
-            em.getTransaction().commit();
+            tx.commit();
         } catch (Exception e) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
+            if (tx.isActive()) tx.rollback();
             throw e;
         } finally {
             em.close();
         }
     }
-    
+
+    // ======================== DELETE ========================
     public void delete(UUID id) {
-        EntityManager em = JpaUtil.getEntityManager();
+        EntityManager em = getEntityManager();
+        EntityTransaction tx = em.getTransaction();
         try {
-            em.getTransaction().begin();
+            tx.begin();
             Account account = em.find(Account.class, id);
             if (account != null) {
                 em.remove(account);
             }
-            em.getTransaction().commit();
+            tx.commit();
         } catch (Exception e) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
+            if (tx.isActive()) tx.rollback();
             throw e;
+        } finally {
+            em.close();
+        }
+    }
+
+    // ======================== STATISTICS ========================
+    public java.math.BigDecimal getTotalBalanceByUser(UUID userId) {
+        EntityManager em = getEntityManager();
+        try {
+            String jpql = "SELECT COALESCE(SUM(a.balance), 0) FROM Account a WHERE a.user.id = :userId";
+            return em.createQuery(jpql, java.math.BigDecimal.class)
+                    .setParameter("userId", userId)
+                    .getSingleResult();
         } finally {
             em.close();
         }

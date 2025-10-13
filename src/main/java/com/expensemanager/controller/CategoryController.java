@@ -25,9 +25,9 @@ public class CategoryController extends HttpServlet {
         UUID userId = null;
         boolean isGuest = false;
 
-        // 🔹 Nếu chưa đăng nhập → cho xem giao diện nhưng không thao tác
+        // 🔹 Nếu chưa đăng nhập → tạo user test (fakeUser)
         if (session == null || session.getAttribute("user") == null) {
-            System.out.println("⚠️ Chưa đăng nhập — hiển thị chế độ khách (readonly).");
+            System.out.println("⚠️ Chưa đăng nhập — bật chế độ test với user mặc định.");
             isGuest = true;
         } else {
             user = (User) session.getAttribute("user");
@@ -36,10 +36,7 @@ public class CategoryController extends HttpServlet {
 
         String action = request.getParameter("action");
 
-        // ⚠️ Nếu là khách thì không cho thao tác
-        if (isGuest && ("delete".equals(action) || "edit".equals(action))) {
-            request.setAttribute("error", "⚠️ Bạn cần đăng nhập để thao tác chỉnh sửa danh mục!");
-        } else if ("delete".equals(action)) {
+        if ("delete".equals(action)) {
             UUID id = UUID.fromString(request.getParameter("id"));
             categoryService.deleteCategory(id);
             response.sendRedirect(request.getContextPath() + "/categories");
@@ -50,14 +47,13 @@ public class CategoryController extends HttpServlet {
             request.setAttribute("editCategory", editCategory);
         }
 
-        // 📋 Nếu có user → lấy danh mục theo user
-        // nếu không có user → có thể hiển thị danh mục chung (hoặc trống)
+        // 📋 Lấy danh mục của user (test hoặc thật)
         List<Category> categories = (userId != null)
                 ? categoryService.getCategoriesByUser(userId)
-                : List.of(); // khách thì không có danh mục riêng
+                : List.of();
 
         request.setAttribute("categories", categories);
-        request.setAttribute("readonly", isGuest); // ⚠️ Gửi flag ra JSP để disable nút
+        request.setAttribute("readonly", isGuest);
         request.setAttribute("view", "/views/categories.jsp");
         request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
     }
@@ -69,15 +65,13 @@ public class CategoryController extends HttpServlet {
         HttpSession session = request.getSession(false);
         User user = (session != null) ? (User) session.getAttribute("user") : null;
 
-        // ⚠️ Nếu chưa đăng nhập thì chỉ hiển thị cảnh báo, không thêm được
+        // ⚠️ Nếu chưa đăng nhập thì báo lỗi
         if (user == null) {
             request.setAttribute("error", "⚠️ Bạn cần đăng nhập để thêm hoặc chỉnh sửa danh mục!");
             request.setAttribute("view", "/views/categories.jsp");
             request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
             return;
         }
-
-        UUID userId = user.getId();
 
         // 🔹 Lấy dữ liệu form
         String idParam = request.getParameter("id");
@@ -87,23 +81,48 @@ public class CategoryController extends HttpServlet {
         String color = request.getParameter("color");
         String parentId = request.getParameter("parentId");
 
-        Category category = new Category();
+        Category category;
+        boolean isNew = (idParam == null || idParam.isEmpty());
+
+        if (isNew) {
+            // ✅ Tạo mới category
+            category = new Category();
+            category.setUser(user);
+        } else {
+            // ✅ Cập nhật category đã có
+            UUID categoryId = UUID.fromString(idParam);
+            category = categoryService.getCategoryById(categoryId);
+
+            // Nếu category không tồn tại hoặc khác user → báo lỗi
+            if (category == null || category.getUser() == null ||
+                    !category.getUser().getId().equals(user.getId())) {
+                request.setAttribute("error", "❌ Không tìm thấy danh mục hoặc bạn không có quyền chỉnh sửa.");
+                List<Category> categories = categoryService.getCategoriesByUser(user.getId());
+                request.setAttribute("categories", categories);
+                request.setAttribute("view", "/views/categories.jsp");
+                request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
+                return;
+            }
+        }
+
+        // ✅ Cập nhật thông tin từ form
         category.setName(name);
         category.setType(type);
         category.setIconPath(iconPath);
         category.setColor(color);
-        category.setUser(user);
 
         if (parentId != null && !parentId.isEmpty()) {
             Category parent = categoryService.getCategoryById(UUID.fromString(parentId));
             category.setParent(parent);
+        } else {
+            category.setParent(null);
         }
 
-        if (idParam == null || idParam.isEmpty()) {
+        // ✅ Lưu hoặc cập nhật
+        if (isNew) {
             categoryService.saveCategory(category, user);
         } else {
-            category.setId(UUID.fromString(idParam));
-            categoryService.updateCategory(category);
+            categoryService.updateCategory(category, user); // 👈 gắn lại user khi cập nhật
         }
 
         response.sendRedirect(request.getContextPath() + "/categories");

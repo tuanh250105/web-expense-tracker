@@ -18,10 +18,14 @@ public class BankHistoryServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         System.out.println("✅ BankHistoryServlet - Loading bank history page");
-        
+
         // Forward to bank history view
-        request.getRequestDispatcher("/views/bank-history-content.jsp").forward(request, response);
+        // 1. Đặt đường dẫn của trang con vào thuộc tính "view"
+        request.setAttribute("view", "/views/bank-history-content.jsp");
+
+        // 2. Forward đến file layout chính
+        request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
     }
 }

@@ -9,11 +9,11 @@ import jakarta.persistence.Persistence;
  * Singleton class để quản lý EntityManagerFactory và EntityManager
  */
 public class JPAService {
-    
+
     private static final String PERSISTENCE_UNIT = "BudgetBuddyUnit";
     private static JPAService instance;
     private EntityManagerFactory entityManagerFactory;
-    
+
     private JPAService() {
         try {
             this.entityManagerFactory = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT);
@@ -22,7 +22,7 @@ public class JPAService {
             throw new RuntimeException("Failed to initialize JPA", e);
         }
     }
-    
+
     /**
      * Get singleton instance
      */
@@ -32,7 +32,7 @@ public class JPAService {
         }
         return instance;
     }
-    
+
     /**
      * Get new EntityManager
      */
@@ -42,7 +42,7 @@ public class JPAService {
         }
         return entityManagerFactory.createEntityManager();
     }
-    
+
     /**
      * Close EntityManagerFactory
      */
@@ -51,7 +51,7 @@ public class JPAService {
             entityManagerFactory.close();
         }
     }
-    
+
     /**
      * Check if JPA is ready
      */
