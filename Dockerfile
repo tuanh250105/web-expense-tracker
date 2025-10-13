@@ -15,6 +15,10 @@ RUN mvn -B -DskipTests package
 ### Stage 2: runtime image with Tomcat
 FROM tomcat:10.1-jdk21
 
+# Disable Tomcat shutdown port (Render health checks confuse it)
+RUN sed -i 's/port="8005"/port="-1"/' /usr/local/tomcat/conf/server.xml
+
+
 ENV CATALINA_OPTS="-Xms256m -Xmx512m -Djava.security.egd=file:/dev/urandom"
 
 RUN rm -rf /usr/local/tomcat/webapps/*
