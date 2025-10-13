@@ -18,9 +18,6 @@
         };
     </script>
 </c:if>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/transaction.css">
 <div class="transaction-wrapper">
     <div class="transaction-container">
         <!-- Filter Panel -->
@@ -348,7 +345,3 @@
         });
     });
 </script>
-<script defer src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js"></script>
-
-<%--Transaction--%>
-<script defer src="${pageContext.request.contextPath}/assets/js/transaction.js"></script>

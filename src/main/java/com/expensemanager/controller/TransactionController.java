@@ -3,6 +3,7 @@ package com.expensemanager.controller;
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
+import com.expensemanager.model.User;
 import com.expensemanager.service.TransactionService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -29,14 +30,15 @@ public class TransactionController extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession(true);
+        User user = (User) session.getAttribute("user");
         UUID userId;
-
-        if (session.getAttribute("user_id") == null) {
+        if (user != null) {
+            userId = user.getId();
+        }else{
             response.sendRedirect(request.getContextPath() + "/login");
             return;
-        } else {
-            userId = (UUID) session.getAttribute("user_id");
         }
+
 
         String action = request.getParameter("action");
         String transactionId = request.getParameter("transactionId");
@@ -113,6 +115,8 @@ public class TransactionController extends HttpServlet {
 
         BigDecimal totalBalance = totalIncome.subtract(totalExpense);
 
+        request.setAttribute("pageJs", "transaction.js");
+        request.setAttribute("pageCss", "transaction.css");
         request.setAttribute("transList", transList);
         request.setAttribute("categoryList", categoryList);
         request.setAttribute("accountList", accountList);
@@ -164,6 +168,8 @@ public class TransactionController extends HttpServlet {
             List<Category> categoryList = getCategoryList(session, userId);
             List<Account> accountList = getAccountList(session, userId);
 
+            request.setAttribute("pageJs", "transaction.js");
+            request.setAttribute("pageCss", "transaction.css");
             request.setAttribute("dateRangeLabel", dateRangeLabel);
             request.setAttribute("transList", transactionList);
             request.setAttribute("categoryList", categoryList);

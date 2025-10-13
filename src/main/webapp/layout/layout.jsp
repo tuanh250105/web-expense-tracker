@@ -28,6 +28,12 @@
     <!-- CSS layout -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/layout/layout.css">
 
+
+    <c:if test="${not empty pageCss}">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/${pageCss}">
+    </c:if>
+
     <script>
         window.BB_CTX = "${pageContext.request.contextPath}";
         console.log("Layout loaded, context:", window.BB_CTX);
@@ -91,7 +97,7 @@
         <li><a href="#"><i class="fa-solid fa-calendar-check"></i> <span>Quản lý sự kiện tài chính</span></a></li>
         <hr>
         <li><a href="${pageContext.request.contextPath}/faq"><i class="fa-solid fa-circle-question"></i> <span>Help - Hỏi đáp</span></a></li>
-        <li><a href="#"><i class="fa-solid fa-message"></i> <span>Góp ý - Liên hệ</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/report"><i class="fa-solid fa-message"></i> <span>Góp ý - Liên hệ</span></a></li>
     </ul>
 </nav>
 
@@ -99,7 +105,14 @@
     <!-- Trang con set thuộc tính request.setAttribute("view", "...jsp") -->
     <jsp:include page="${view}" />
 </main>
+
 <!-- JS layout -->
 <script src="${pageContext.request.contextPath}/layout/layout.js"></script>
+
+<!-- JS riêng cho từng trang -->
+    <c:if test="${not empty pageJs}">
+        <script defer src="${pageContext.request.contextPath}/assets/js/${pageJs}"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js"></script>
+    </c:if>
 </body>
 </html>

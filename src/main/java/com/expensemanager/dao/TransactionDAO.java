@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class TransactionDAO {
 
-    // ✅ Dùng EntityManagerFactory chung từ JpaUtil (đã cấu hình DB_URL, DB_USER, DB_PASS)
+
     private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
 
     private EntityManager em() {
