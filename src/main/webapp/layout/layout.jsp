@@ -56,7 +56,7 @@
             <span class="badge">3</span>
         </i>
         <form action="${pageContext.request.contextPath}/logout" method="post" style="display:inline;">
-            <button type="submit" class="btn-login" style="background:#ef4444;color:#fff;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            <a href="${pageContext.request.contextPath}/views/auth/login.jsp" class="btn-login" style="background:#ef4444;color:#fff;display:inline-block;padding:8px 18px;border-radius:8px;text-decoration:none;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         </form>
         <label class="switch">
             <input type="checkbox" id="darkModeToggle">
