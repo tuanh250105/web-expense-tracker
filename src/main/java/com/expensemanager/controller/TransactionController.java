@@ -32,7 +32,8 @@ public class TransactionController extends HttpServlet {
         UUID userId;
 
         if (session.getAttribute("user_id") == null) {
-            userId = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
         } else {
             userId = (UUID) session.getAttribute("user_id");
         }
