@@ -25,10 +25,17 @@ public class JpaUtil {
       System.out.println("🔗 [JpaUtil] Đang khởi tạo EntityManagerFactory...");
 
 
-        // Lấy từ .env, fallback sang System.getenv nếu không có
-        String url = System.getenv("DB_URL");
-        String user = System.getenv("DB_USER");
-        String pass = System.getenv("DB_PASS");
+      // ✅ Explicitly tell Dotenv to look in project root - Vân
+      Dotenv dotenv = Dotenv.configure()
+              .directory(System.getProperty("user.dir")) // Project root where .env resides
+              .ignoreIfMissing()
+              .load();
+
+      // ✅ Load from .env or system vars
+      String url  = dotenv.get("DB_URL",  System.getenv("DB_URL"));
+      String user = dotenv.get("DB_USER", System.getenv("DB_USER"));
+      String pass = dotenv.get("DB_PASS", System.getenv("DB_PASS"));
+
 
 
       // 2️⃣ Gộp vào Map thuộc tính JPA
