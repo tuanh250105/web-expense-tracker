@@ -55,7 +55,9 @@
         <i class="fa-regular fa-bell notification">
             <span class="badge">3</span>
         </i>
-        <button class="btn-login"><i class="fa-solid fa-right-to-bracket"></i> Login / Sign up</button>
+        <form action="${pageContext.request.contextPath}/logout" method="post" style="display:inline;">
+            <button type="submit" class="btn-login" style="background:#ef4444;color:#fff;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </form>
         <label class="switch">
             <input type="checkbox" id="darkModeToggle">
             <span class="slider"></span>
