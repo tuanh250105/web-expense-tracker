@@ -1,26 +1,33 @@
 package com.expensemanager.service;
 
 import com.expensemanager.dao.ImportExportDAO;
+import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
-import com.expensemanager.util.*;
 import com.expensemanager.util.CSVUtil;
-import com.expensemanager.util.JPAUtil;
 import com.expensemanager.util.XLSXUtil;
 import com.expensemanager.util.PDFUtil;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 
+/**
+ * Service xử lý logic Import & Export dữ liệu giao dịch
+ */
 public class ImportExportService {
 
     private final ImportExportDAO dao;
     private final AccountService accountService;
-    private final EntityManagerFactory emf = JPAUtil.getEntityManagerFactory();
+
+    private static final EntityManagerFactory emf =
+            Persistence.createEntityManagerFactory("default");
 
     public ImportExportService() {
         dao = new ImportExportDAO();
@@ -42,22 +49,19 @@ public class ImportExportService {
         }
 
         EntityManager em = emf.createEntityManager();
-        Account acc = null; // Khởi tạo account là null
+        Account acc = null;
 
-        // Chỉ lấy account nếu ID được cung cấp
         if (accountId != null) {
             acc = accountService.getAccountById(accountId);
-            // Nếu ID được cung cấp nhưng không hợp lệ, báo lỗi
             if (acc == null) {
                 em.close();
-                throw new IllegalArgumentException("Tài khoản với ID cung cấp không tồn tại: " + accountId);
+                throw new IllegalArgumentException("Tài khoản không tồn tại với ID: " + accountId);
             }
         }
 
         List<Transaction> result = new ArrayList<>();
 
         for (Map<String, String> raw : rawData) {
-            // normalize key (bảo vệ khi header không đúng)
             Map<String, String> row = new HashMap<>();
             for (Map.Entry<String, String> e : raw.entrySet()) {
                 String k = (e.getKey() == null)
@@ -72,34 +76,37 @@ public class ImportExportService {
 
                 // Type
                 String typeStr = row.getOrDefault("type", "");
-                if (!typeStr.equalsIgnoreCase("income") && !typeStr.equalsIgnoreCase("expense"))
+                if (!typeStr.equalsIgnoreCase("income") && !typeStr.equalsIgnoreCase("expense")) {
                     throw new IllegalArgumentException("type không hợp lệ: " + typeStr);
+                }
                 t.setType(typeStr);
 
-                // Amount
-                String amountStr = row.getOrDefault("amount", "");
-                amountStr = amountStr.replaceAll("[^0-9\\-]", "");
-                t.setAmount(amountStr.isEmpty() ? 0 : Integer.parseInt(amountStr));
+                // Amount (Sửa thành BigDecimal)
+                String amountStr = row.getOrDefault("amount", "").replaceAll("[^0-9.\\-]", "");
+                t.setAmount(amountStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(amountStr));
 
                 // Note
                 t.setNote(row.getOrDefault("note", ""));
 
-                // Dates (transaction_date, create_at, update_at)
+                // Dates
                 t.setTransactionDate(parseDateTime(row.get("transaction_date")));
                 t.setCreate_at(parseDateTime(row.get("create_at")));
                 t.setUpdate_at(parseDateTime(row.get("update_at")));
-                
-                // Gán account (có thể là null nếu không được chọn)
+
+                // Account
                 t.setAccount(acc);
 
-                // ✅ Category (UUID)
+                // Category
                 String catIdStr = row.getOrDefault("category_id", "");
-                if (catIdStr.isEmpty())
+                if (catIdStr.isEmpty()) {
                     throw new IllegalArgumentException("Thiếu category_id");
+                }
+
                 UUID catId = UUID.fromString(catIdStr);
                 Category c = em.find(Category.class, catId);
-                if (c == null)
+                if (c == null) {
                     throw new IllegalArgumentException("Category ID không tồn tại: " + catIdStr);
+                }
                 t.setCategory(c);
 
                 result.add(t);

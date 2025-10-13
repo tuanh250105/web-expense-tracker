@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * AccountsManagementServlet - Servlet để hiển thị trang Accounts Management
- * Chỉ forward đến JSP view
+ * Sử dụng layout chung để hiển thị view.
  */
 @WebServlet("/accounts-management")
 public class AccountsManagementServlet extends HttpServlet {
@@ -18,10 +18,13 @@ public class AccountsManagementServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         System.out.println("✅ AccountsManagementServlet - Loading accounts management page");
-        
-        // Forward to accounts management view
-        request.getRequestDispatcher("/views/accounts-management.jsp").forward(request, response);
+
+        // Đặt view cụ thể cho layout
+        request.setAttribute("view", "/views/accounts-management.jsp");
+
+        // Forward tới layout chính để render trang hoàn chỉnh
+        request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
     }
 }

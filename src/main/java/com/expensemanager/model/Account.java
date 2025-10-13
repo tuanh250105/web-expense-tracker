@@ -36,8 +36,7 @@ public class Account {
     @Column(name = "name", nullable = false, length = 255)
     private String name;
 
-
-    @Column(name = "balance")
+    @Column(name = "balance", precision = 15, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO;
 
     @Column(name = "currency", length = 3)

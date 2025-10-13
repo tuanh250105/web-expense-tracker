@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TransactionDAO {
@@ -270,5 +271,75 @@ public class TransactionDAO {
         } finally {
             em.close();
         }
+    }
+    //My
+    public Map<String, Double> calculateSummary(List<Transaction> list) {
+        double income = list.stream()
+                .filter(t -> "income".equalsIgnoreCase(t.getType()))
+                .mapToDouble(t -> t.getAmount() != null ? t.getAmount().doubleValue() : 0.0)
+                .sum();
+
+        double expense = list.stream()
+                .filter(t -> "expense".equalsIgnoreCase(t.getType()))
+                .mapToDouble(t -> t.getAmount() != null ? t.getAmount().doubleValue() : 0.0)
+                .sum();
+
+        double balance = income - expense;
+
+        Map<String, Double> summary = new LinkedHashMap<>();
+        summary.put("income", income);
+        summary.put("expense", expense);
+        summary.put("balance", balance);
+        return summary;
+    }
+
+    //My
+    public List<Map<String, Object>> groupTransactionsByTime(List<Transaction> list, String group) {
+        Map<String, Double> grouped = new TreeMap<>();
+
+        for (Transaction t : list) {
+            if (t.getTransactionDate() == null) continue;
+
+            String key;
+            switch (group.toLowerCase()) {
+                case "month" -> key = String.format("%d-%02d", t.getTransactionDate().getYear(), t.getTransactionDate().getMonthValue());
+                case "year" -> key = String.valueOf(t.getTransactionDate().getYear());
+                default -> key = t.getTransactionDate().toLocalDate().toString();
+            }
+
+            double amt = (t.getAmount() != null ? t.getAmount().doubleValue() : 0.0);
+            if ("expense".equalsIgnoreCase(t.getType())) amt = -amt;
+            grouped.merge(key, amt, Double::sum);
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map.Entry<String, Double> e : grouped.entrySet()) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("label", e.getKey());
+            item.put("value", e.getValue());
+            result.add(item);
+        }
+        return result;
+    }
+    //My
+    public List<Map<String, Object>> groupTransactionsByCategory(List<Transaction> list, int topN) {
+        Map<String, Double> grouped = list.stream()
+                .collect(Collectors.groupingBy(
+                        t -> (t.getCategory() != null && t.getCategory().getName() != null)
+                                ? t.getCategory().getName()
+                                : "Không xác định",
+                        Collectors.summingDouble(t -> t.getAmount() != null ? t.getAmount().doubleValue() : 0.0)
+                ));
+
+        return grouped.entrySet().stream()
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                .limit(topN)
+                .map(e -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("categoryName", e.getKey());
+                    item.put("total", e.getValue());
+                    return item;
+                })
+                .collect(Collectors.toList());
     }
 }

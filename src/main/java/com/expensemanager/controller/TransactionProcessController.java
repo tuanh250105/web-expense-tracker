@@ -23,32 +23,32 @@ import jakarta.servlet.http.HttpSession;
  */
 @WebServlet("/api/transaction-process")
 public class TransactionProcessController extends HttpServlet {
-    
+
     private Gson gson;
-    
+
     @Override
     public void init() throws ServletException {
         try {
             gson = new GsonBuilder()
-                .setDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-                .create();
+                    .setDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+                    .create();
             System.out.println("✅ TransactionProcessController initialized!");
         } catch (Exception e) {
             System.err.println("❌ Failed to initialize TransactionProcessController: " + e.getMessage());
             throw new ServletException("Failed to initialize TransactionProcessController", e);
         }
     }
-    
+
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        
+
         try {
             String action = request.getParameter("action");
-            
+
             if ("save".equals(action)) {
                 // Lưu 1 transaction cụ thể
                 saveTransaction(request, response);
@@ -59,30 +59,30 @@ public class TransactionProcessController extends HttpServlet {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.getWriter().write("{\"error\":\"Invalid action\"}");
             }
-            
+
         } catch (Exception e) {
             System.err.println("❌ TransactionProcessController error: " + e.getMessage());
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
         }
     }
-    
+
     /**
      * Lưu 1 transaction với category được chọn
      */
-    private void saveTransaction(HttpServletRequest request, HttpServletResponse response) 
+    private void saveTransaction(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        
+
         String referenceNumber = request.getParameter("reference");
         String categoryIdStr = request.getParameter("categoryId");
         String note = request.getParameter("note");
-        
+
         if (referenceNumber == null || categoryIdStr == null) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().write("{\"error\":\"Missing reference or categoryId\"}");
             return;
         }
-        
+
         int categoryId;
         try {
             categoryId = Integer.parseInt(categoryIdStr);
@@ -91,19 +91,19 @@ public class TransactionProcessController extends HttpServlet {
             response.getWriter().write("{\"error\":\"Invalid categoryId\"}");
             return;
         }
-        
+
         // Lấy pending transaction từ session
         HttpSession session = request.getSession();
         @SuppressWarnings("unchecked")
-        List<SepayTransaction> pendingTransactions = 
-            (List<SepayTransaction>) session.getAttribute("pendingBankTransactions");
-        
+        List<SepayTransaction> pendingTransactions =
+                (List<SepayTransaction>) session.getAttribute("pendingBankTransactions");
+
         if (pendingTransactions == null) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().write("{\"error\":\"No pending transactions found\"}");
             return;
         }
-        
+
         // Tìm transaction với reference number
         SepayTransaction targetTransaction = null;
         for (SepayTransaction tx : pendingTransactions) {
@@ -112,16 +112,16 @@ public class TransactionProcessController extends HttpServlet {
                 break;
             }
         }
-        
+
         if (targetTransaction == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             response.getWriter().write("{\"error\":\"Transaction not found\"}");
             return;
         }
-        
+
         // Lưu vào database
         boolean success = saveTransactionToDatabase(targetTransaction, categoryId, note);
-        
+
         if (success) {
             // Đánh dấu là đã xử lý
             targetTransaction.setProcessed(true);
@@ -131,23 +131,23 @@ public class TransactionProcessController extends HttpServlet {
             response.getWriter().write("{\"error\":\"Failed to save transaction\"}");
         }
     }
-    
+
     /**
      * Lưu tất cả pending transactions
      */
-    private void saveAllTransactions(HttpServletRequest request, HttpServletResponse response) 
+    private void saveAllTransactions(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        
+
         HttpSession session = request.getSession();
         @SuppressWarnings("unchecked")
-        List<SepayTransaction> pendingTransactions = 
-            (List<SepayTransaction>) session.getAttribute("pendingBankTransactions");
-        
+        List<SepayTransaction> pendingTransactions =
+                (List<SepayTransaction>) session.getAttribute("pendingBankTransactions");
+
         if (pendingTransactions == null || pendingTransactions.isEmpty()) {
             response.getWriter().write("{\"status\":\"success\", \"message\":\"No transactions to save\", \"count\":0}");
             return;
         }
-        
+
         int savedCount = 0;
         for (SepayTransaction tx : pendingTransactions) {
             if (!tx.isProcessed()) {
@@ -158,42 +158,42 @@ public class TransactionProcessController extends HttpServlet {
                 }
             }
         }
-        
+
         response.getWriter().write("{\"status\":\"success\", \"message\":\"Saved " + savedCount + " transactions\", \"count\":" + savedCount + "}");
     }
-    
+
     /**
      * Lưu transaction vào database
      */
     private boolean saveTransactionToDatabase(SepayTransaction sepayTx, int categoryId, String note) {
         EntityManager em = JpaUtil.getEntityManager();
-        
+
         try {
             em.getTransaction().begin();
-            
+
             // Tạo SQL native để insert vào transactions table
             String sql = """
                 INSERT INTO transactions (amount, note, transaction_date, category_id, account_id, created_at, updated_at)
                 VALUES (?, ?, ?, ?, 1, ?, ?)
                 """;
-            
+
             LocalDateTime now = LocalDateTime.now();
             String noteToSave = note != null ? note : sepayTx.getContent();
-            
+
             em.createNativeQuery(sql)
-                .setParameter(1, sepayTx.getAmount())
-                .setParameter(2, noteToSave)
-                .setParameter(3, sepayTx.getTransactionDate())
-                .setParameter(4, categoryId)
-                .setParameter(5, now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-                .setParameter(6, now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-                .executeUpdate();
-            
+                    .setParameter(1, sepayTx.getAmount())
+                    .setParameter(2, noteToSave)
+                    .setParameter(3, sepayTx.getTransactionDate())
+                    .setParameter(4, categoryId)
+                    .setParameter(5, now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                    .setParameter(6, now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                    .executeUpdate();
+
             em.getTransaction().commit();
-            
+
             System.out.println("✅ Saved transaction: " + sepayTx.getReferenceNumber() + " - " + sepayTx.getAmount());
             return true;
-            
+
         } catch (Exception e) {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
@@ -204,7 +204,7 @@ public class TransactionProcessController extends HttpServlet {
             em.close();
         }
     }
-    
+
     @Override
     public void destroy() {
         // JpaUtil sẽ tự quản lý EntityManagerFactory

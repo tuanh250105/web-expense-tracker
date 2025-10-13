@@ -38,8 +38,8 @@ public class AccountController extends HttpServlet {
         String pathInfo = request.getPathInfo();
         String acceptHeader = request.getHeader("Accept");
         boolean isApiCall = (acceptHeader != null && acceptHeader.contains("application/json")) ||
-                           (pathInfo != null && !pathInfo.isEmpty());
-        
+                (pathInfo != null && !pathInfo.isEmpty());
+
         if (isApiCall) {
             // Handle API call - return JSON
             handleApiRequest(request, response);
@@ -78,10 +78,10 @@ public class AccountController extends HttpServlet {
         loadAllAccounts(request);
 
         // ✅ Chuyển tiếp đến view để hiển thị trang
-        request.setAttribute("view", "/views/accounts.jsp");
+        request.setAttribute("view", "/views/account-transactions.jsp");
         request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
     }
-    
+
     /**
      * Handle API requests that expect JSON response
      */
@@ -89,46 +89,46 @@ public class AccountController extends HttpServlet {
             throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        
+
         try {
             System.out.println("🔍 AccountController API Request");
-            
+
             // Check if this is a stats request
             String pathInfo = request.getPathInfo();
             System.out.println("📍 Path info: " + pathInfo);
-            
+
             if (pathInfo != null && pathInfo.contains("stats")) {
                 // Handle stats endpoint for accounts-management page
                 handleStatsRequest(request, response);
                 return;
             }
-            
+
             // Get all accounts
             List<Account> accounts = accountService.getAllAccounts();
-            
+
             System.out.println("✅ Found " + accounts.size() + " accounts");
-            
+
             // Build JSON response
             StringBuilder json = new StringBuilder();
             json.append("{\"success\":true,\"data\":[");
-            
+
             for (int i = 0; i < accounts.size(); i++) {
                 Account acc = accounts.get(i);
                 if (i > 0) json.append(",");
-                
+
                 json.append("{")
-                    .append("\"id\":\"").append(acc.getId()).append("\",")
-                    .append("\"name\":\"").append(escapeJson(acc.getName())).append("\",")
-                    .append("\"balance\":").append(acc.getBalance()).append(",")
-                    .append("\"currency\":\"").append(escapeJson(acc.getCurrency())).append("\"")
-                    .append("}");
+                        .append("\"id\":\"").append(acc.getId()).append("\",")
+                        .append("\"name\":\"").append(escapeJson(acc.getName())).append("\",")
+                        .append("\"balance\":").append(acc.getBalance()).append(",")
+                        .append("\"currency\":\"").append(escapeJson(acc.getCurrency())).append("\"")
+                        .append("}");
             }
-            
+
             json.append("]}");
-            
+
             response.getWriter().write(json.toString());
             System.out.println("✅ JSON response sent successfully");
-            
+
         } catch (Exception e) {
             System.err.println("❌ Error in AccountController API: " + e.getMessage());
             e.printStackTrace();
@@ -136,7 +136,7 @@ public class AccountController extends HttpServlet {
             response.getWriter().write("{\"success\":false,\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
         }
     }
-    
+
     /**
      * Handle stats request for accounts-management page
      */
@@ -144,31 +144,31 @@ public class AccountController extends HttpServlet {
             throws IOException {
         try {
             System.out.println("📊 Handling stats request");
-            
+
             // Get all accounts with full details
             List<Account> accounts = accountService.getAllAccounts();
-            
+
             // Build JSON array (not wrapped in success/data)
             StringBuilder json = new StringBuilder();
             json.append("[");
-            
+
             for (int i = 0; i < accounts.size(); i++) {
                 Account acc = accounts.get(i);
                 if (i > 0) json.append(",");
-                
+
                 json.append("{")
-                    .append("\"id\":\"").append(acc.getId()).append("\",")
-                    .append("\"name\":\"").append(escapeJson(acc.getName())).append("\",")
-                    .append("\"balance\":").append(acc.getBalance()).append(",")
-                    .append("\"currency\":\"").append(escapeJson(acc.getCurrency())).append("\"")
-                    .append("}");
+                        .append("\"id\":\"").append(acc.getId()).append("\",")
+                        .append("\"name\":\"").append(escapeJson(acc.getName())).append("\",")
+                        .append("\"balance\":").append(acc.getBalance()).append(",")
+                        .append("\"currency\":\"").append(escapeJson(acc.getCurrency())).append("\"")
+                        .append("}");
             }
-            
+
             json.append("]");
-            
+
             response.getWriter().write(json.toString());
             System.out.println("✅ Stats response sent: " + accounts.size() + " accounts");
-            
+
         } catch (Exception e) {
             System.err.println("❌ Error in stats request: " + e.getMessage());
             e.printStackTrace();
@@ -176,17 +176,17 @@ public class AccountController extends HttpServlet {
             response.getWriter().write("[]");
         }
     }
-    
+
     /**
      * Escape special characters for JSON
      */
     private String escapeJson(String str) {
         if (str == null) return "";
         return str.replace("\\", "\\\\")
-                  .replace("\"", "\\\"")
-                  .replace("\n", "\\n")
-                  .replace("\r", "\\r")
-                  .replace("\t", "\\t");
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 
     /**
@@ -200,8 +200,8 @@ public class AccountController extends HttpServlet {
         String contentType = request.getContentType();
         String acceptHeader = request.getHeader("Accept");
         boolean isApiCall = (contentType != null && contentType.contains("application/json")) ||
-                           (acceptHeader != null && acceptHeader.contains("application/json"));
-        
+                (acceptHeader != null && acceptHeader.contains("application/json"));
+
         if (isApiCall) {
             handleApiPost(request, response);
             return;
@@ -242,7 +242,7 @@ public class AccountController extends HttpServlet {
         } catch (Exception e) {
             System.err.println("Lỗi trong AccountController doPost: " + e.getMessage());
             request.setAttribute("error", "Không thể lưu tài khoản. Vui lòng kiểm tra lại dữ liệu.");
-            
+
             // Nếu có lỗi, tải lại dữ liệu và hiển thị lại form với thông báo lỗi
             loadAllAccounts(request);
             request.setAttribute("view", "/views/accounts.jsp");
@@ -253,7 +253,7 @@ public class AccountController extends HttpServlet {
         // ✅ Chuyển hướng về trang danh sách sau khi lưu thành công (Post-Redirect-Get)
         response.sendRedirect(request.getContextPath() + "/accounts");
     }
-    
+
     /**
      * Handle API POST request (JSON)
      */
@@ -261,7 +261,7 @@ public class AccountController extends HttpServlet {
             throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        
+
         try {
             // Read JSON from request body
             StringBuilder sb = new StringBuilder();
@@ -270,25 +270,25 @@ public class AccountController extends HttpServlet {
                 sb.append(line);
             }
             String jsonString = sb.toString();
-            
+
             System.out.println("📥 Received JSON: " + jsonString);
-            
+
             // Parse JSON using Gson
             Gson gson = new Gson();
             @SuppressWarnings("unchecked")
             Map<String, Object> jsonMap = gson.fromJson(jsonString, Map.class);
-            
+
             String name = (String) jsonMap.get("name");
             Object balanceObj = jsonMap.get("balance");
             String currency = (String) jsonMap.get("currency");
-            
+
             System.out.println("📝 Parsed: name=" + name + ", balance=" + balanceObj + ", currency=" + currency);
-            
+
             // Create new account
             Account account = new Account();
             account.setName(name);
             account.setCurrency(currency != null && !currency.isEmpty() ? currency : "VND");
-            
+
             // Handle balance (can be Number or String)
             if (balanceObj != null) {
                 if (balanceObj instanceof Number) {
@@ -299,15 +299,15 @@ public class AccountController extends HttpServlet {
             } else {
                 account.setBalance(BigDecimal.ZERO);
             }
-            
+
             // Set user (hardcoded for testing - TODO: get from session)
             User user = new User();
             user.setId(UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0")); // testuser from database
             account.setUser(user);
-            
+
             System.out.println("💾 Attempting to save account: " + account.getName());
             System.out.println("👤 User ID: " + user.getId());
-            
+
             // Save account
             try {
                 accountService.addAccount(account);
@@ -317,50 +317,50 @@ public class AccountController extends HttpServlet {
                 saveEx.printStackTrace();
                 throw saveEx; // Re-throw to outer catch
             }
-            
+
             // Return success response
             String jsonResponse = "{\"success\":true,\"message\":\"Tài khoản đã được thêm thành công\",\"id\":\"" + account.getId() + "\"}";
             response.getWriter().write(jsonResponse);
             System.out.println("✅ Account created successfully with ID: " + account.getId());
-            
+
         } catch (Exception e) {
             System.err.println("❌ Error in API POST: " + e.getClass().getName() + " - " + e.getMessage());
             e.printStackTrace();
-            
+
             // Print full stack trace
             System.err.println("=== Full Stack Trace ===");
             for (StackTraceElement ste : e.getStackTrace()) {
                 System.err.println("  at " + ste.toString());
             }
-            
+
             // Build detailed error message for debugging
             StringBuilder errorDetails = new StringBuilder();
             errorDetails.append(e.getClass().getSimpleName()).append(": ").append(e.getMessage());
-            
+
             // Add cause if exists
             if (e.getCause() != null) {
                 errorDetails.append(" | Cause: ").append(e.getCause().getClass().getSimpleName())
-                          .append(" - ").append(e.getCause().getMessage());
+                        .append(" - ").append(e.getCause().getMessage());
             }
-            
+
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("{\"success\":false,\"error\":\"" + escapeJson(errorDetails.toString()) + "\"}");
         }
     }
-    
+
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // PUT requests are handled as POST for now
         handleApiPost(request, response);
     }
-    
+
     @Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        
+
         try {
             String pathInfo = request.getPathInfo();
             if (pathInfo == null || pathInfo.length() <= 1) {
@@ -368,15 +368,15 @@ public class AccountController extends HttpServlet {
                 response.getWriter().write("{\"success\":false,\"error\":\"Account ID is required\"}");
                 return;
             }
-            
+
             String accountId = pathInfo.substring(1); // Remove leading "/"
             System.out.println("🗑️ Deleting account: " + accountId);
-            
+
             accountService.deleteAccount(UUID.fromString(accountId));
-            
+
             response.getWriter().write("{\"success\":true,\"message\":\"Tài khoản đã được xóa thành công\"}");
             System.out.println("✅ Account deleted successfully");
-            
+
         } catch (Exception e) {
             System.err.println("❌ Error in DELETE: " + e.getMessage());
             e.printStackTrace();

@@ -12,6 +12,9 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
+
 
 
 public class TransactionService {
@@ -72,6 +75,8 @@ public class TransactionService {
     public List<Category> getAllCategory(UUID userId){
          List<Category> category = transactionDAO.findAllCategoryOfUser(userId);
          return category;
+
+
     }
 
     public Transaction getTransactionById(UUID transactionId) {
@@ -145,5 +150,17 @@ public class TransactionService {
 
         return transactionDAO.hasTransactionNearDue(categoryId, amount, type, start, end, userId);
     }
-}
 
+    //my
+    public Map<String, Double> calculateSummary(List<Transaction> list) {
+        return transactionDAO.calculateSummary(list);
+    }
+
+    public List<Map<String, Object>> groupTransactionsByTime(List<Transaction> list, String group) {
+        return transactionDAO.groupTransactionsByTime(list, group);
+    }
+
+    public List<Map<String, Object>> groupTransactionsByCategory(List<Transaction> list, int topN) {
+        return transactionDAO.groupTransactionsByCategory(list, topN);
+    }
+}
