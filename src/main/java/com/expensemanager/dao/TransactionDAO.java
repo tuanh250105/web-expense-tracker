@@ -11,6 +11,10 @@ import jakarta.persistence.TypedQuery;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -259,6 +263,7 @@ public class TransactionDAO {
     }
 
     // ========================= THỐNG KÊ =========================
+    //My
     public Map<String, Double> calculateSummary(List<Transaction> list) {
         double income = list.stream()
                 .filter(t -> "income".equalsIgnoreCase(t.getType()))

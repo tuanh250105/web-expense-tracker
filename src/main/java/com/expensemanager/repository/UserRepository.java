@@ -2,103 +2,114 @@ package com.expensemanager.repository;
 
 import com.expensemanager.model.User;
 import com.expensemanager.util.JpaUtil;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 
+import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.List;
+
 public class UserRepository {
-  public java.util.List<User> findAll() {
-    try (EntityManager em = JpaUtil.em()) {
-      return em.createQuery("SELECT u FROM User u ORDER BY u.createdAt DESC", User.class).getResultList();
-    }
-  }
-  public long countAllUsers() {
-    try (EntityManager em = JpaUtil.em()) {
-      return em.createQuery("SELECT COUNT(u) FROM User u", Long.class).getSingleResult();
-    }
-  }
 
-  public long countNewUsersToday() {
-    try (EntityManager em = JpaUtil.em()) {
-      return em.createQuery("SELECT COUNT(u) FROM User u WHERE u.createdAt >= CURRENT_DATE", Long.class).getSingleResult();
+    // Tìm user theo email
+    public User findByEmail(String email) {
+        try (EntityManager em = JpaUtil.em()) {
+            return em.createQuery("SELECT u FROM User u WHERE u.email = :email", User.class)
+                    .setParameter("email", email.toLowerCase())
+                    .getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
     }
-  }
 
-  public long countNewUsersThisWeek() {
-  try (EntityManager em = JpaUtil.em()) {
-      // Lấy ngày đầu tuần (thứ 2) và cuối tuần (chủ nhật)
-      java.time.LocalDate today = java.time.LocalDate.now();
-      java.time.DayOfWeek dow = today.getDayOfWeek();
-      java.time.LocalDate startOfWeek = today.minusDays(dow.getValue() - 1);
-      java.time.LocalDate endOfWeek = startOfWeek.plusDays(6);
-      java.time.Instant start = startOfWeek.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
-      java.time.Instant end = endOfWeek.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
-      return em.createQuery("SELECT COUNT(u) FROM User u WHERE u.createdAt >= :start AND u.createdAt < :end", Long.class)
-        .setParameter("start", start)
-        .setParameter("end", end)
-        .getSingleResult();
+    // Lưu hoặc cập nhật user
+    public User save(User u) {
+        EntityManager em = JpaUtil.em();
+        try {
+            em.getTransaction().begin();
+            User managed;
+            if (u.getId() == null) {
+                em.persist(u);
+                managed = u;
+            } else {
+                managed = em.merge(u);
+            }
+            em.getTransaction().commit();
+            return managed;
+        } catch (RuntimeException ex) {
+            if (em.getTransaction().isActive()) em.getTransaction().rollback();
+            throw ex;
+        } finally {
+            em.close();
+        }
     }
-  }
 
-  public java.util.List<UserStat> getUserStatsByPeriod() {
-  try (EntityManager em = JpaUtil.em()) {
-      // Lấy mốc thời gian 14 ngày gần nhất bằng Java
-      java.time.LocalDate today = java.time.LocalDate.now();
-      java.time.LocalDate startDate = today.minusDays(13);
-      java.time.Instant start = startDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
-      return em.createQuery(
-        "SELECT NEW com.expensemanager.repository.UserStat(FUNCTION('TO_CHAR', u.createdAt, 'YYYY-MM-DD'), COUNT(u)) " +
-        "FROM User u WHERE u.createdAt >= :start GROUP BY FUNCTION('TO_CHAR', u.createdAt, 'YYYY-MM-DD') ORDER BY 1 DESC",
-        UserStat.class
-      ).setParameter("start", start).getResultList();
+    // Kiểm tra email đã tồn tại chưa
+    public boolean existsByEmail(String email) {
+        try (EntityManager em = JpaUtil.em()) {
+            Long count = em.createQuery("SELECT COUNT(u) FROM User u WHERE u.email = :email", Long.class)
+                    .setParameter("email", email.toLowerCase())
+                    .getSingleResult();
+            return count > 0;
+        }
     }
-  }
-  public User findByEmail(String email) {
-  try (EntityManager em = JpaUtil.em()) {
-      return em.createQuery("SELECT u FROM User u WHERE u.email = :email", User.class)
-        .setParameter("email", email.toLowerCase())
-        .getSingleResult();
-    } catch (NoResultException e) {
-      return null;
-    }
-  }
 
-  public User save(User u) {
-  EntityManager em = JpaUtil.em();
-    try {
-      em.getTransaction().begin();
-      User managed;
-      if (u.getId() == null) {
-        em.persist(u);
-        managed = u;
-      } else {
-        managed = em.merge(u);
-      }
-      em.getTransaction().commit();
-      return managed;
-    } catch (RuntimeException ex) {
-      if (em.getTransaction().isActive()) em.getTransaction().rollback();
-      throw ex;
-    } finally {
-      em.close();
+    // Kiểm tra username đã tồn tại chưa
+    public boolean existsByUsername(String username) {
+        try (EntityManager em = JpaUtil.em()) {
+            Long count = em.createQuery("SELECT COUNT(u) FROM User u WHERE u.username = :username", Long.class)
+                    .setParameter("username", username)
+                    .getSingleResult();
+            return count > 0;
+        }
     }
-  }
 
-  public boolean existsByEmail(String email) {
-  try (EntityManager em = JpaUtil.em()) {
-      Long count = em.createQuery("SELECT COUNT(u) FROM User u WHERE u.email = :email", Long.class)
-        .setParameter("email", email.toLowerCase())
-        .getSingleResult();
-      return count > 0;
+    // Đếm tất cả user
+    public long countAllUsers() {
+        try (EntityManager em = JpaUtil.em()) {
+            return em.createQuery("SELECT COUNT(u) FROM User u", Long.class)
+                    .getSingleResult();
+        }
     }
-  }
 
-  public boolean existsByUsername(String username) {
-  try (EntityManager em = JpaUtil.em()) {
-      Long count = em.createQuery("SELECT COUNT(u) FROM User u WHERE u.username = :username", Long.class)
-        .setParameter("username", username)
-        .getSingleResult();
-      return count > 0;
+    // Đếm user tạo hôm nay
+    public long countNewUsersToday() {
+        try (EntityManager em = JpaUtil.em()) {
+            LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
+            return em.createQuery("SELECT COUNT(u) FROM User u WHERE u.createdAt >= :startOfDay", Long.class)
+                    .setParameter("startOfDay", startOfDay)
+                    .getSingleResult();
+        }
     }
-  }
+
+    // Đếm user tạo tuần này
+    public long countNewUsersThisWeek() {
+        try (EntityManager em = JpaUtil.em()) {
+            LocalDateTime startOfWeek = LocalDateTime.now()
+                    .with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
+                    .toLocalDate().atStartOfDay();
+            return em.createQuery("SELECT COUNT(u) FROM User u WHERE u.createdAt >= :startOfWeek", Long.class)
+                    .setParameter("startOfWeek", startOfWeek)
+                    .getSingleResult();
+        }
+    }
+
+    // Lấy thống kê user theo thời gian (ví dụ: số user theo ngày)
+    public List<UserStat> getUserStatsByPeriod() {
+        try (EntityManager em = JpaUtil.em()) {
+            return em.createQuery(
+                            "SELECT NEW com.expensemanager.repository.UserStat(FUNCTION('DATE', u.createdAt), COUNT(u)) " +
+                                    "FROM User u GROUP BY FUNCTION('DATE', u.createdAt) ORDER BY FUNCTION('DATE', u.createdAt)",
+                            UserStat.class)
+                    .getResultList();
+        }
+    }
+
+    // Lấy tất cả user
+    public List<User> findAll() {
+        try (EntityManager em = JpaUtil.em()) {
+            return em.createQuery("SELECT u FROM User u ORDER BY u.username", User.class)
+                    .getResultList();
+        }
+    }
 }

@@ -61,9 +61,7 @@
         <i class="fa-regular fa-bell notification">
             <span class="badge">3</span>
         </i>
-        <form action="${pageContext.request.contextPath}/logout" method="post" style="display:inline;">
-            <a href="${pageContext.request.contextPath}/views/auth/login.jsp" class="btn-login" style="background:#ef4444;color:#fff;display:inline-block;padding:8px 18px;border-radius:8px;text-decoration:none;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-        </form>
+        <button class="btn-login"><i class="fa-solid fa-right-to-bracket"></i> Login / Sign up</button>
         <label class="switch">
             <input type="checkbox" id="darkModeToggle">
             <span class="slider"></span>

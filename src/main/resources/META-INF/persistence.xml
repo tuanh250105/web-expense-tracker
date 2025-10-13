@@ -14,14 +14,10 @@
         <class>com.expensemanager.model.Account</class>  <!-- ← Thêm để fix ScheduledTransaction.account -->
         <class>com.expensemanager.model.Category</class>  <!-- ← Thêm cho category_id -->
         <class>com.expensemanager.model.Transaction</class>
-
-
-
         <class>com.expensemanager.model.RewardPrize</class>
         <class>com.expensemanager.model.RewardPoints</class>
         <class>com.expensemanager.model.RewardSpin</class>
-
-
+        <class>com.expensemanager.model.Debt</class>
         <!-- ← Thêm cho kiểm tra paid -->
         <properties>
             <!-- Kết nối tới Supabase (PostgreSQL) -->
