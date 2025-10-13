@@ -9,7 +9,6 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
-
 public class RewardDAO {
 
     private static final EntityManagerFactory EMF =
@@ -19,6 +18,7 @@ public class RewardDAO {
         return EMF.createEntityManager();
     }
 
+    // ====== LẤY ĐIỂM NGƯỜI DÙNG ======
     public int getUserScore(UUID userId) {
         EntityManager em = em();
         try {
@@ -29,19 +29,20 @@ public class RewardDAO {
         }
     }
 
+    // ====== CỘNG ĐIỂM ======
     public void addPoints(UUID userId, int points) {
         EntityManager em = EMF.createEntityManager();
         try {
             em.getTransaction().begin();
 
-            var rp = em.createQuery(
-                            "SELECT r FROM RewardPoints r WHERE r.user.id = :uid", RewardPoints.class)
-                    .setParameter("uid", userId)
-                    .getResultStream()
-                    .findFirst()
-                    .orElse(null);
-
-            if (rp != null) {
+            RewardPoints rp = em.find(RewardPoints.class, userId);
+            if (rp == null) {
+                rp = new RewardPoints();
+                rp.setUserId(userId);
+                rp.setPoints(points);
+                rp.setUpdatedAt(OffsetDateTime.now());
+                em.persist(rp);
+            } else {
                 rp.setPoints(rp.getPoints() + points);
                 rp.setUpdatedAt(OffsetDateTime.now());
                 em.merge(rp);
@@ -53,22 +54,32 @@ public class RewardDAO {
         }
     }
 
-
+    // ====== TRỪ ĐIỂM (KHI QUAY THƯỞNG) ======
     public boolean trySpendPoints(UUID userId, int cost) {
         EntityManager em = em();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
+
             RewardPoints rp = em.find(RewardPoints.class, userId, LockModeType.PESSIMISTIC_WRITE);
+
+            // 🔹 Nếu chưa có record RewardPoints -> tạo mới với 0 điểm
+            if (rp == null) {
+                rp = new RewardPoints();
+                rp.setUserId(userId);
+                rp.setPoints(0);
+                rp.setUpdatedAt(OffsetDateTime.now());
+                em.persist(rp);
+                tx.commit();
+                return false; // chưa có điểm để trừ
+            }
+
             int cur = rp.getPoints();
             if (cur < cost) {
                 tx.rollback();
                 return false;
             }
-            if (rp == null) {
-                rp = new RewardPoints();
-                rp.setUserId(userId);
-            }
+
             rp.setPoints(cur - cost);
             rp.setUpdatedAt(OffsetDateTime.now());
             em.merge(rp);
@@ -82,7 +93,7 @@ public class RewardDAO {
         }
     }
 
-    // ======= PHẦN THƯỞNG =======
+    // ====== PHẦN THƯỞNG KHẢ DỤNG ======
     public List<RewardPrize> getActivePrizes() {
         EntityManager em = em();
         try {
@@ -95,6 +106,7 @@ public class RewardDAO {
         }
     }
 
+    // ====== LƯU LỊCH SỬ QUAY ======
     public RewardSpin saveSpin(UUID userId, String prizeCode, String prizeLabel, int pointsSpent) {
         EntityManager em = em();
         EntityTransaction tx = em.getTransaction();
@@ -117,6 +129,7 @@ public class RewardDAO {
         }
     }
 
+    // ====== LỊCH SỬ QUAY GẦN ĐÂY ======
     public List<RewardSpin> recentSpins(UUID userId, int limit) {
         EntityManager em = em();
         try {
@@ -132,14 +145,16 @@ public class RewardDAO {
         }
     }
 
-    /** Số ngân sách đã đạt mục tiêu */
+    // ====== ĐẾM NGÂN SÁCH ĐẠT MỤC TIÊU ======
     public int countAchievedBudgets(UUID userId) {
         EntityManager em = em();
         try {
             Query q = em.createNativeQuery("""
                 SELECT COUNT(*) 
                 FROM budgets b
-                WHERE b.user_id = ?1
+                WHERE b.category_id IN (
+                    SELECT c.id FROM categories c WHERE c.user_id = ?1
+                )
                   AND b.end_date < now()::date
                   AND COALESCE(b.spent_amount,0) <= COALESCE(b.limit_amount,0)
             """);
@@ -151,6 +166,7 @@ public class RewardDAO {
         }
     }
 
+    // ====== ĐẾM SỐ LẦN NHẬN THƯỞNG NGÂN SÁCH ======
     public int countBudgetClaims(UUID userId, int perBudget) {
         EntityManager em = em();
         try {
@@ -170,6 +186,7 @@ public class RewardDAO {
         }
     }
 
+    // ====== CỘNG THƯỞNG NGÂN SÁCH ======
     public int claimOneBudgetAward(UUID userId, int perBudget) {
         EntityManager em = em();
         EntityTransaction tx = em.getTransaction();
@@ -191,7 +208,8 @@ public class RewardDAO {
                 rp.setPoints(0);
                 em.persist(rp);
             }
-            rp.setPoints( rp.getPoints() + perBudget);
+
+            rp.setPoints(rp.getPoints() + perBudget);
             rp.setUpdatedAt(OffsetDateTime.now());
             em.merge(rp);
 

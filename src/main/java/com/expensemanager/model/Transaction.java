@@ -1,11 +1,11 @@
 package com.expensemanager.model;
-
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "transactions")
@@ -24,7 +24,9 @@ public class Transaction {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    private int amount;
+    @Column(name = "amount", precision = 15, scale = 2)
+    private BigDecimal amount;
+
     private String note;
 
     @Column(name = "transaction_date")
@@ -36,20 +38,11 @@ public class Transaction {
     @UpdateTimestamp // Tự động gán thời gian khi tạo mới
     private LocalDateTime update_at;
 
+
     public Transaction(){
+
     }
 
-    public Transaction(UUID id, Account account, String type, Category category, int amount, String note, LocalDateTime transactionDate, LocalDateTime create_at, LocalDateTime update_at) {
-        this.id = id;
-        this.account = account;
-        this.type = type;
-        this.category = category;
-        this.amount = amount;
-        this.note = note;
-        this.transactionDate = transactionDate;
-        this.create_at = create_at;
-        this.update_at = update_at;
-    }
 
     public UUID getId() {
         return id;
@@ -67,7 +60,7 @@ public class Transaction {
         return category;
     }
 
-    public int getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
@@ -103,7 +96,7 @@ public class Transaction {
         this.category = category;
     }
 
-    public void setAmount(int amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 

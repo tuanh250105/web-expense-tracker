@@ -7,12 +7,13 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 import jakarta.persistence.TypedQuery;
-import jakarta.transaction.Transactional;
 
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class TransactionDAO {
 
@@ -168,7 +169,7 @@ public class TransactionDAO {
         }
     }
 
-    public List<Transaction> filter(UUID userId, String fromDate, String toDate, String notes, String type) {
+    public List<Transaction> filter(UUID userId, String fromDate, String toDate, String notes, String[] types) {
         EntityManager em = emf.createEntityManager();
         try {
             StringBuilder jpql = new StringBuilder(
@@ -178,17 +179,17 @@ public class TransactionDAO {
                             "WHERE a.user.id = :userId"
             );
 
-            if (fromDate != null) {
+            if (fromDate != null && !fromDate.isEmpty()) {
                 jpql.append(" AND t.transactionDate >= :fromDate");
             }
-            if (toDate != null) {
+            if (toDate != null && !toDate.isEmpty()) {
                 jpql.append(" AND t.transactionDate < :toDate");
             }
             if (notes != null && !notes.isEmpty()) {
                 jpql.append(" AND LOWER(t.note) LIKE LOWER(:notes)");
             }
-            if (type != null && !type.isEmpty()) {
-                jpql.append(" AND t.type LIKE :type");
+            if (types != null && types.length > 0) {
+                jpql.append(" AND LOWER(t.type) IN :types");
             }
 
             jpql.append(" ORDER BY t.transactionDate DESC");
@@ -196,23 +197,146 @@ public class TransactionDAO {
             TypedQuery<Transaction> query = em.createQuery(jpql.toString(), Transaction.class);
             query.setParameter("userId", userId);
 
-            if (fromDate != null) {
+            if (fromDate != null && !fromDate.isEmpty()) {
                 query.setParameter("fromDate", LocalDate.parse(fromDate).atStartOfDay());
             }
-            if (toDate != null) {
+            if (toDate != null && !toDate.isEmpty()) {
                 query.setParameter("toDate", LocalDate.parse(toDate).plusDays(1).atStartOfDay());
             }
             if (notes != null && !notes.isEmpty()) {
                 query.setParameter("notes", "%" + notes + "%");
             }
-            if (type != null && !type.isEmpty()) {
-                query.setParameter("type", "%" + type + "%");
+            if (types != null && types.length > 0) {
+                List<String> normalized = Arrays.stream(types)
+                        .filter(s -> s != null && !s.isEmpty())
+                        // dùng lambda rõ ràng + Locale để tránh mơ hồ
+                        .map(s -> s.toLowerCase(Locale.ENGLISH))
+                        .collect(Collectors.toList());
+
+                if (!normalized.isEmpty()) {
+                    query.setParameter("types", normalized);
+                }
             }
 
             return query.getResultList();
         } finally {
             em.close();
         }
+    }
+
+    //Nhi; Budgets
+    public List<Transaction> findTransactionByCategoryIdAndDate(UUID categoryId, LocalDate fromDate, LocalDate toDate){
+        EntityManager em = emf.createEntityManager();
+
+        try {
+            String jpql = "SELECT t FROM Transaction t " +
+                    "JOIN FETCH t.category c " +
+                    "WHERE t.category.id = :categoryId " +
+                    "AND t.transactionDate >= :fromDate " +
+                    "AND t.transactionDate < :toDate";
+
+            return em.createQuery(jpql, Transaction.class)
+                    .setParameter("categoryId", categoryId)
+                    .setParameter("fromDate", fromDate.atStartOfDay())
+                    .setParameter("toDate", toDate.plusDays(1).atStartOfDay())
+                    .getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    //Dư; Schelduled_Transaction
+    public boolean hasTransactionNearDue(UUID categoryId, BigDecimal amount, String type, LocalDateTime start, LocalDateTime end, UUID userId) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            String jpql = "SELECT COUNT(t) > 0 FROM Transaction t " +
+                    "JOIN t.account a " +
+                    "WHERE t.category.id = :categoryId " +
+                    "AND t.amount = :amount " +
+                    "AND LOWER(t.type) = LOWER(:type) " +
+                    "AND t.transactionDate BETWEEN :start AND :end " +
+                    "AND a.user.id = :userId";
+            return (boolean) em.createQuery(jpql)
+                    .setParameter("categoryId", categoryId)
+                    .setParameter("amount", amount)
+                    .setParameter("type", type)
+                    .setParameter("start", start)
+                    .setParameter("end", end)
+                    .setParameter("userId", userId)
+                    .getSingleResult();
+        } finally {
+            em.close();
+        }
+    }
+    //My
+    public Map<String, Double> calculateSummary(List<Transaction> list) {
+        double income = list.stream()
+                .filter(t -> "income".equalsIgnoreCase(t.getType()))
+                .mapToDouble(t -> t.getAmount() != null ? t.getAmount().doubleValue() : 0.0)
+                .sum();
+
+        double expense = list.stream()
+                .filter(t -> "expense".equalsIgnoreCase(t.getType()))
+                .mapToDouble(t -> t.getAmount() != null ? t.getAmount().doubleValue() : 0.0)
+                .sum();
+
+        double balance = income - expense;
+
+        Map<String, Double> summary = new LinkedHashMap<>();
+        summary.put("income", income);
+        summary.put("expense", expense);
+        summary.put("balance", balance);
+        return summary;
+    }
+
+    //My
+    public List<Map<String, Object>> groupTransactionsByTime(List<Transaction> list, String group) {
+        Map<String, Double> grouped = new TreeMap<>();
+
+        for (Transaction t : list) {
+            if (t.getTransactionDate() == null) continue;
+
+            String key;
+            switch (group.toLowerCase()) {
+                case "month" -> key = String.format("%d-%02d", t.getTransactionDate().getYear(), t.getTransactionDate().getMonthValue());
+                case "year" -> key = String.valueOf(t.getTransactionDate().getYear());
+                default -> key = t.getTransactionDate().toLocalDate().toString();
+            }
+
+            double amt = (t.getAmount() != null ? t.getAmount().doubleValue() : 0.0);
+            if ("expense".equalsIgnoreCase(t.getType())) amt = -amt;
+            grouped.merge(key, amt, Double::sum);
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map.Entry<String, Double> e : grouped.entrySet()) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("label", e.getKey());
+            item.put("value", e.getValue());
+            result.add(item);
+        }
+        return result;
+    }
+    //My
+    public List<Map<String, Object>> groupTransactionsByCategory(List<Transaction> list, int topN) {
+        Map<String, Double> grouped = list.stream()
+                .collect(Collectors.groupingBy(
+                        t -> (t.getCategory() != null && t.getCategory().getName() != null)
+                                ? t.getCategory().getName()
+                                : "Không xác định",
+                        Collectors.summingDouble(t -> t.getAmount() != null ? t.getAmount().doubleValue() : 0.0)
+                ));
+
+        return grouped.entrySet().stream()
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                .limit(topN)
+                .map(e -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("categoryName", e.getKey());
+                    item.put("total", e.getValue());
+                    return item;
+                })
+                .collect(Collectors.toList());
     }
 
 }
