@@ -43,7 +43,7 @@
     <!-- Thông báo -->
     <c:if test="${not empty error}">
         <div style="background-color:#ffe6e6; color:#b30000; padding:10px; border-radius:6px; margin-bottom:10px;">
-            ${error}
+                ${error}
         </div>
     </c:if>
     <c:if test="${not empty success}">

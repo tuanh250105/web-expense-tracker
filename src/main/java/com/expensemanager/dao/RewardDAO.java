@@ -3,16 +3,17 @@ package com.expensemanager.dao;
 import com.expensemanager.model.RewardPoints;
 import com.expensemanager.model.RewardPrize;
 import com.expensemanager.model.RewardSpin;
-import jakarta.persistence.*;
+import com.expensemanager.util.JpaUtil; // ✅ thêm dòng này
 
+import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
 public class RewardDAO {
 
-    private static final EntityManagerFactory EMF =
-            Persistence.createEntityManagerFactory("default");
+    // ✅ Dùng chung EntityManagerFactory từ JpaUtil
+    private static final EntityManagerFactory EMF = JpaUtil.getEntityManagerFactory();
 
     private EntityManager em() {
         return EMF.createEntityManager();
@@ -201,6 +202,8 @@ public class RewardDAO {
                 return 0;
             }
 
+            int totalAdded = remain * perBudget;
+
             RewardPoints rp = em.find(RewardPoints.class, userId, LockModeType.PESSIMISTIC_WRITE);
             if (rp == null) {
                 rp = new RewardPoints();
@@ -209,20 +212,23 @@ public class RewardDAO {
                 em.persist(rp);
             }
 
-            rp.setPoints(rp.getPoints() + perBudget);
+            rp.setPoints(rp.getPoints() + totalAdded);
             rp.setUpdatedAt(OffsetDateTime.now());
             em.merge(rp);
 
-            RewardSpin s = new RewardSpin();
-            s.setUserId(userId);
-            s.setPrizeCode(null);
-            s.setPrizeLabel("BUDGET_AWARD");
-            s.setPointsSpent(-perBudget);
-            s.setCreatedAt(OffsetDateTime.now());
-            em.persist(s);
+            // lưu 1 record cho mỗi ngân sách đạt
+            for (int i = 0; i < remain; i++) {
+                RewardSpin s = new RewardSpin();
+                s.setUserId(userId);
+                s.setPrizeCode(null);
+                s.setPrizeLabel("BUDGET_AWARD");
+                s.setPointsSpent(-perBudget);
+                s.setCreatedAt(OffsetDateTime.now());
+                em.persist(s);
+            }
 
             tx.commit();
-            return perBudget;
+            return totalAdded;
         } catch (RuntimeException e) {
             if (tx.isActive()) tx.rollback();
             throw e;
@@ -230,4 +236,5 @@ public class RewardDAO {
             em.close();
         }
     }
+
 }

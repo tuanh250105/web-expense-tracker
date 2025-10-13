@@ -1,9 +1,10 @@
 package com.expensemanager.dao;
 
 import com.expensemanager.model.Transaction;
+import com.expensemanager.util.JpaUtil;  // ✅ thêm import này
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -11,8 +12,8 @@ import java.util.UUID;
 
 public class ImportExportDAO {
 
-    // ✅ tạo EntityManagerFactory trực tiếp
-    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("default");
+    // ✅ Dùng EntityManagerFactory từ JpaUtil (đã cấu hình DB_URL, DB_USER, DB_PASS)
+    private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
 
     /**
      * Lưu danh sách Transaction vào database
@@ -22,7 +23,7 @@ public class ImportExportDAO {
         em.getTransaction().begin();
         try {
             for (Transaction t : transactions) {
-                // Merge các đối tượng detached (Account, Category) vào persistence context hiện tại
+                // Merge các đối tượng detached (Account, Category)
                 if (t.getAccount() != null && t.getAccount().getId() != null) {
                     t.setAccount(em.merge(t.getAccount()));
                 }
@@ -36,7 +37,6 @@ public class ImportExportDAO {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
-            // In ra lỗi gốc để dễ debug
             e.printStackTrace();
             throw new RuntimeException("Lỗi khi lưu dữ liệu: " + e.getMessage(), e);
         } finally {

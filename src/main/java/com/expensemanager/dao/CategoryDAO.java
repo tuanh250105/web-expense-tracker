@@ -1,10 +1,10 @@
 package com.expensemanager.dao;
 
 import com.expensemanager.model.Category;
+import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.Persistence;
 import jakarta.persistence.TypedQuery;
 
 import java.util.List;
@@ -13,8 +13,8 @@ import java.util.UUID;
 
 public class CategoryDAO {
 
-    // ✅ Theo hướng dẫn nhóm trưởng
-    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("default");
+    // ✅ Dùng EntityManagerFactory từ JpaUtil để tái sử dụng kết nối có DB_URL, DB_USER, DB_PASS
+    private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
 
     // ======================== SAVE ========================
     public void save(Category category) {
@@ -23,9 +23,9 @@ public class CategoryDAO {
         try {
             tx.begin();
             if (category.getId() == null) {
-                em.persist(category);   // Thêm mới
+                em.persist(category);
             } else {
-                em.merge(category);     // Cập nhật nếu có ID
+                em.merge(category);
             }
             tx.commit();
         } catch (Exception e) {
@@ -72,9 +72,7 @@ public class CategoryDAO {
     public List<Category> findAll(UUID userId) {
         EntityManager em = emf.createEntityManager();
         try {
-            String jpql = "SELECT c FROM Category c " +
-                    "WHERE c.user.id = :userId " +
-                    "ORDER BY c.name ASC";
+            String jpql = "SELECT c FROM Category c WHERE c.user.id = :userId ORDER BY c.name ASC";
             return em.createQuery(jpql, Category.class)
                     .setParameter("userId", userId)
                     .getResultList();
@@ -83,13 +81,10 @@ public class CategoryDAO {
         }
     }
 
-
     public List<Category> findByType(String type, UUID userId) {
         EntityManager em = emf.createEntityManager();
         try {
-            String jpql = "SELECT c FROM Category c " +
-                    "WHERE c.type = :type AND c.user = :userId " +
-                    "ORDER BY c.name ASC";
+            String jpql = "SELECT c FROM Category c WHERE c.type = :type AND c.user.id = :userId ORDER BY c.name ASC";
             TypedQuery<Category> query = em.createQuery(jpql, Category.class);
             query.setParameter("type", type);
             query.setParameter("userId", userId);
@@ -98,7 +93,6 @@ public class CategoryDAO {
             em.close();
         }
     }
-
 
     public List<Category> findByName(String name) {
         EntityManager em = emf.createEntityManager();
@@ -139,7 +133,6 @@ public class CategoryDAO {
         }
     }
 
-    // ======================== HIERARCHY ========================
     public List<Category> findMainCategories() {
         EntityManager em = emf.createEntityManager();
         try {
@@ -162,7 +155,6 @@ public class CategoryDAO {
         }
     }
 
-    // ======================== UPDATE ========================
     public void update(Category category) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
@@ -179,7 +171,6 @@ public class CategoryDAO {
         }
     }
 
-    // ======================== DELETE ========================
     public void delete(Category category) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
@@ -209,7 +200,6 @@ public class CategoryDAO {
         categoryOpt.ifPresent(this::delete);
     }
 
-    // ======================== COUNT & STATS ========================
     public long countByUserId(UUID userId) {
         EntityManager em = emf.createEntityManager();
         try {

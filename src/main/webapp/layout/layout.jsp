@@ -28,6 +28,12 @@
     <!-- CSS layout -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/layout/layout.css">
 
+
+    <c:if test="${not empty pageCss}">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/${pageCss}">
+    </c:if>
+
     <script>
         window.BB_CTX = "${pageContext.request.contextPath}";
         console.log("Layout loaded, context:", window.BB_CTX);
@@ -55,9 +61,7 @@
         <i class="fa-regular fa-bell notification">
             <span class="badge">3</span>
         </i>
-        <form action="${pageContext.request.contextPath}/logout" method="post" style="display:inline;">
-            <a href="${pageContext.request.contextPath}/views/auth/login.jsp" class="btn-login" style="background:#ef4444;color:#fff;display:inline-block;padding:8px 18px;border-radius:8px;text-decoration:none;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-        </form>
+        <button class="btn-login"><i class="fa-solid fa-right-to-bracket"></i> Login / Sign up</button>
         <label class="switch">
             <input type="checkbox" id="darkModeToggle">
             <span class="slider"></span>
@@ -68,10 +72,13 @@
 
 <nav class="sidebar">
     <ul>
+
         <li class="active"><a href="${pageContext.request.contextPath}/overview" data-page="overview"><i class="fa-solid fa-chart-line"></i> <span>Overview</span></a></li>
         <li><a href="#"><i class="fa-solid fa-receipt"></i> <span>Giao dịch</span></a></li>
         <li><a href="${pageContext.request.contextPath}/scheduled_transactions?action=list"><i class="fa-solid fa-calendar-days"></i> <span>Giao dịch định kì</span></a></li>
+
         <li><a href="${pageContext.request.contextPath}/transaction"><i class="fa-solid fa-receipt"></i> <span>Giao dịch</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/scheduled_transactions?action=list"><i class="fa-solid fa-calendar-days"></i> <span>Giao dịch định kì</span></a></li>
         <li><a href="#"><i class="fa-solid fa-calendar-days"></i> <span>Giao dịch hằng tháng</span></a></li>
         <li><a href="#"><i class="fa-solid fa-building-columns"></i> <span>Tài khoản</span></a></li>
         <li><a href="${pageContext.request.contextPath}/scheduled_transactions?action=list"><i class="fa-solid fa-calendar-days"></i> <span>Giao dịch định kỳ</span></a></li>
@@ -92,7 +99,7 @@
         <li><a href="#"><i class="fa-solid fa-calendar-check"></i> <span>Quản lý sự kiện tài chính</span></a></li>
         <hr>
         <li><a href="${pageContext.request.contextPath}/faq"><i class="fa-solid fa-circle-question"></i> <span>Help - Hỏi đáp</span></a></li>
-        <li><a href="#"><i class="fa-solid fa-message"></i> <span>Góp ý - Liên hệ</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/report"><i class="fa-solid fa-message"></i> <span>Góp ý - Liên hệ</span></a></li>
     </ul>
 </nav>
 
@@ -100,8 +107,16 @@
     <!-- Trang con set thuộc tính request.setAttribute("view", "...jsp") -->
     <jsp:include page="${view}" />
 </main>
+
 <!-- JS layout -->
 <script src="${pageContext.request.contextPath}/layout/layout.js"></script>
+
+
+<!-- JS riêng cho từng trang -->
+    <c:if test="${not empty pageJs}">
+        <script defer src="${pageContext.request.contextPath}/assets/js/${pageJs}"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js"></script>
+    </c:if>
 
 </body>
 </html>

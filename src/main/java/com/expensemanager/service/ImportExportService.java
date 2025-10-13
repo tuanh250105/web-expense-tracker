@@ -4,15 +4,10 @@ import com.expensemanager.dao.ImportExportDAO;
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
-import com.expensemanager.util.CSVUtil;
-import com.expensemanager.util.XLSXUtil;
-import com.expensemanager.util.PDFUtil;
-
+import com.expensemanager.util.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 import jakarta.servlet.http.HttpServletResponse;
-
 import java.io.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,8 +21,8 @@ public class ImportExportService {
     private final ImportExportDAO dao;
     private final AccountService accountService;
 
-    private static final EntityManagerFactory emf =
-            Persistence.createEntityManagerFactory("default");
+    // ✅ Dùng EntityManagerFactory từ JpaUtil để lấy kết nối đã cấu hình sẵn (DB_URL, DB_USER, DB_PASS)
+    private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
 
     public ImportExportService() {
         dao = new ImportExportDAO();
@@ -81,7 +76,7 @@ public class ImportExportService {
                 }
                 t.setType(typeStr);
 
-                // Amount (Sửa thành BigDecimal)
+                // Amount (BigDecimal)
                 String amountStr = row.getOrDefault("amount", "").replaceAll("[^0-9.\\-]", "");
                 t.setAmount(amountStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(amountStr));
 

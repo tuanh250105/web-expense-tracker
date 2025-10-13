@@ -1,9 +1,8 @@
 package com.expensemanager.dao;
 
 import com.expensemanager.model.Debt;
+import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 import jakarta.persistence.TypedQuery;
 
 import java.math.BigDecimal;
@@ -12,44 +11,43 @@ import java.util.List;
 import java.util.UUID;
 
 public class DebtDAO {
-    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("default");
+
+    private final EntityManager em;
+
+    // Constructor nhận EntityManager
+    public DebtDAO(EntityManager em) {
+        this.em = em;
+    }
+
+    // Constructor mặc định (tạo EntityManager từ JpaUtil)
+    public DebtDAO() {
+        this.em = JpaUtil.getEntityManager();
+    }
+
+    private EntityManager getEm() {
+        return em;
+    }
 
     public List<Debt> findAll() {
-        EntityManager em = emf.createEntityManager();
-        try {
-            TypedQuery<Debt> q = em.createQuery("SELECT d FROM Debt d ORDER BY d.dueDate NULLS LAST", Debt.class);
-            return q.getResultList();
-        } finally {
-            em.close();
-        }
+        TypedQuery<Debt> q = em.createQuery("SELECT d FROM Debt d ORDER BY d.dueDate NULLS LAST", Debt.class);
+        return q.getResultList();
     }
 
     public List<Debt> findAllByUser(UUID userId) {
         if (userId == null) return findAll();
-        EntityManager em = emf.createEntityManager();
-        try {
-            TypedQuery<Debt> q = em.createQuery(
-                    "SELECT d FROM Debt d WHERE d.userId = :uid ORDER BY d.dueDate NULLS LAST", Debt.class);
-            q.setParameter("uid", userId);
-            return q.getResultList();
-        } finally {
-            em.close();
-        }
+        TypedQuery<Debt> q = em.createQuery(
+                "SELECT d FROM Debt d WHERE d.userId = :uid ORDER BY d.dueDate NULLS LAST", Debt.class);
+        q.setParameter("uid", userId);
+        return q.getResultList();
     }
 
     public Debt findById(UUID id) {
         if (id == null) return null;
-        EntityManager em = emf.createEntityManager();
-        try {
-            return em.find(Debt.class, id);
-        } finally {
-            em.close();
-        }
+        return em.find(Debt.class, id);
     }
 
     public Debt saveOrUpdate(Debt debt) {
         if (debt == null) return null;
-        EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
             if (debt.getId() == null) {
@@ -62,14 +60,11 @@ public class DebtDAO {
         } catch (RuntimeException ex) {
             if (em.getTransaction().isActive()) em.getTransaction().rollback();
             throw ex;
-        } finally {
-            em.close();
         }
     }
 
     public boolean delete(UUID id) {
         if (id == null) return false;
-        EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
             Debt d = em.find(Debt.class, id);
@@ -79,21 +74,15 @@ public class DebtDAO {
         } catch (RuntimeException ex) {
             if (em.getTransaction().isActive()) em.getTransaction().rollback();
             throw ex;
-        } finally {
-            em.close();
         }
     }
 
     public boolean markAsPaid(UUID id) {
         if (id == null) return false;
-        EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
             Debt d = em.find(Debt.class, id);
-            if (d == null) {
-                em.getTransaction().commit();
-                return false;
-            }
+            if (d == null) return false;
             d.setStatus(Debt.STATUS_PAID);
             em.merge(d);
             em.getTransaction().commit();
@@ -101,132 +90,129 @@ public class DebtDAO {
         } catch (RuntimeException ex) {
             if (em.getTransaction().isActive()) em.getTransaction().rollback();
             throw ex;
-        } finally {
-            em.close();
         }
     }
 
-    public List<Debt> findOverdue() {
-        EntityManager em = emf.createEntityManager();
+    public BigDecimal getTotalOverdueByUser(UUID userId) {
+        if (userId == null) return BigDecimal.ZERO;
         try {
-            TypedQuery<Debt> q = em.createQuery(
-                    "SELECT d FROM Debt d WHERE d.dueDate < :today AND (d.status IS NULL OR d.status <> :paid) ORDER BY d.dueDate",
-                    Debt.class);
-            q.setParameter("today", LocalDate.now());
-            q.setParameter("paid", Debt.STATUS_PAID);
-            return q.getResultList();
-        } finally {
-            em.close();
+            TypedQuery<BigDecimal> query = em.createQuery(
+                    "SELECT COALESCE(SUM(d.amount), 0) FROM Debt d " +
+                            "WHERE d.userId = :userId AND (d.status = 'OVERDUE' OR d.dueDate < CURRENT_DATE)",
+                    BigDecimal.class
+            );
+            query.setParameter("userId", userId);
+            return query.getSingleResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return BigDecimal.ZERO;
+        }
+    }
+
+    // Ví dụ thêm method getTotalUnpaidByUser
+    public BigDecimal getTotalUnpaidByUser(UUID userId) {
+        if (userId == null) return BigDecimal.ZERO;
+        try {
+            TypedQuery<BigDecimal> query = em.createQuery(
+                    "SELECT COALESCE(SUM(d.amount), 0) FROM Debt d " +
+                            "WHERE d.userId = :userId AND d.status != 'PAID'",
+                    BigDecimal.class
+            );
+            query.setParameter("userId", userId);
+            return query.getSingleResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return BigDecimal.ZERO;
+        }
+    }
+    // Tìm các khoản nợ quá hạn
+    public List<Debt> findOverdue() {
+        try {
+            TypedQuery<Debt> query = em.createQuery(
+                    "SELECT d FROM Debt d WHERE d.status = 'OVERDUE' OR d.dueDate < CURRENT_DATE ORDER BY d.dueDate",
+                    Debt.class
+            );
+            return query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
         }
     }
 
     public List<Debt> findOverdueByUser(UUID userId) {
         if (userId == null) return findOverdue();
-        EntityManager em = emf.createEntityManager();
         try {
-            TypedQuery<Debt> q = em.createQuery(
-                    "SELECT d FROM Debt d WHERE d.userId = :uid AND d.dueDate < :today AND (d.status IS NULL OR d.status <> :paid) ORDER BY d.dueDate",
-                    Debt.class);
-            q.setParameter("uid", userId);
-            q.setParameter("today", LocalDate.now());
-            q.setParameter("paid", Debt.STATUS_PAID);
-            return q.getResultList();
-        } finally {
-            em.close();
+            TypedQuery<Debt> query = em.createQuery(
+                    "SELECT d FROM Debt d WHERE d.userId = :userId AND (d.status = 'OVERDUE' OR d.dueDate < CURRENT_DATE) ORDER BY d.dueDate",
+                    Debt.class
+            );
+            query.setParameter("userId", userId);
+            return query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
         }
     }
 
+    // Tìm các khoản nợ sắp đến hạn
     public List<Debt> findNearDue(int daysThreshold) {
-        EntityManager em = emf.createEntityManager();
         try {
-            LocalDate today = LocalDate.now();
-            LocalDate max = today.plusDays(daysThreshold);
-            TypedQuery<Debt> q = em.createQuery(
-                    "SELECT d FROM Debt d WHERE d.dueDate IS NOT NULL AND d.dueDate >= :today AND d.dueDate <= :max AND (d.status IS NULL OR d.status <> :paid) ORDER BY d.dueDate",
-                    Debt.class);
-            q.setParameter("today", today);
-            q.setParameter("max", max);
-            q.setParameter("paid", Debt.STATUS_PAID);
-            return q.getResultList();
-        } finally {
-            em.close();
+            TypedQuery<Debt> query = em.createQuery(
+                    "SELECT d FROM Debt d WHERE d.status != 'PAID' AND d.dueDate BETWEEN CURRENT_DATE AND CURRENT_DATE + :days ORDER BY d.dueDate",
+                    Debt.class
+            );
+            query.setParameter("days", daysThreshold);
+            return query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
         }
     }
 
     public List<Debt> findNearDueByUser(UUID userId, int daysThreshold) {
         if (userId == null) return findNearDue(daysThreshold);
-        EntityManager em = emf.createEntityManager();
         try {
-            LocalDate today = LocalDate.now();
-            LocalDate max = today.plusDays(daysThreshold);
-            TypedQuery<Debt> q = em.createQuery(
-                    "SELECT d FROM Debt d WHERE d.userId = :uid AND d.dueDate IS NOT NULL AND d.dueDate >= :today AND d.dueDate <= :max AND (d.status IS NULL OR d.status <> :paid) ORDER BY d.dueDate",
-                    Debt.class);
-            q.setParameter("uid", userId);
-            q.setParameter("today", today);
-            q.setParameter("max", max);
-            q.setParameter("paid", Debt.STATUS_PAID);
-            return q.getResultList();
-        } finally {
-            em.close();
+            TypedQuery<Debt> query = em.createQuery(
+                    "SELECT d FROM Debt d WHERE d.userId = :userId AND d.status != 'PAID' AND d.dueDate BETWEEN CURRENT_DATE AND CURRENT_DATE + :days ORDER BY d.dueDate",
+                    Debt.class
+            );
+            query.setParameter("userId", userId);
+            query.setParameter("days", daysThreshold);
+            return query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
         }
     }
 
+    // Tổng số tiền nợ chưa trả
     public BigDecimal getTotalUnpaid() {
-        EntityManager em = emf.createEntityManager();
         try {
-            TypedQuery<BigDecimal> q = em.createQuery(
-                    "SELECT COALESCE(SUM(d.amount), 0) FROM Debt d WHERE d.status IS NULL OR d.status <> :paid",
-                    BigDecimal.class);
-            q.setParameter("paid", Debt.STATUS_PAID);
-            return q.getSingleResult();
-        } finally {
-            em.close();
+            TypedQuery<BigDecimal> query = em.createQuery(
+                    "SELECT COALESCE(SUM(d.amount), 0) FROM Debt d WHERE d.status != 'PAID'",
+                    BigDecimal.class
+            );
+            return query.getSingleResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return BigDecimal.ZERO;
         }
     }
 
-    public BigDecimal getTotalUnpaidByUser(UUID userId) {
-        if (userId == null) return getTotalUnpaid();
-        EntityManager em = emf.createEntityManager();
-        try {
-            TypedQuery<BigDecimal> q = em.createQuery(
-                    "SELECT COALESCE(SUM(d.amount), 0) FROM Debt d WHERE d.userId = :uid AND (d.status IS NULL OR d.status <> :paid)",
-                    BigDecimal.class);
-            q.setParameter("uid", userId);
-            q.setParameter("paid", Debt.STATUS_PAID);
-            return q.getSingleResult();
-        } finally {
-            em.close();
-        }
-    }
-
+    // Tổng số tiền nợ quá hạn
     public BigDecimal getTotalOverdue() {
-        EntityManager em = emf.createEntityManager();
         try {
-            TypedQuery<BigDecimal> q = em.createQuery(
-                    "SELECT COALESCE(SUM(d.amount), 0) FROM Debt d WHERE d.dueDate < :today AND (d.status IS NULL OR d.status <> :paid)",
-                    BigDecimal.class);
-            q.setParameter("today", LocalDate.now());
-            q.setParameter("paid", Debt.STATUS_PAID);
-            return q.getSingleResult();
-        } finally {
-            em.close();
+            TypedQuery<BigDecimal> query = em.createQuery(
+                    "SELECT COALESCE(SUM(d.amount), 0) FROM Debt d WHERE d.status = 'OVERDUE' OR d.dueDate < CURRENT_DATE",
+                    BigDecimal.class
+            );
+            return query.getSingleResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return BigDecimal.ZERO;
         }
     }
 
-    public BigDecimal getTotalOverdueByUser(UUID userId) {
-        if (userId == null) return getTotalOverdue();
-        EntityManager em = emf.createEntityManager();
-        try {
-            TypedQuery<BigDecimal> q = em.createQuery(
-                    "SELECT COALESCE(SUM(d.amount), 0) FROM Debt d WHERE d.userId = :uid AND d.dueDate < :today AND (d.status IS NULL OR d.status <> :paid)",
-                    BigDecimal.class);
-            q.setParameter("uid", userId);
-            q.setParameter("today", LocalDate.now());
-            q.setParameter("paid", Debt.STATUS_PAID);
-            return q.getSingleResult();
-        } finally {
-            em.close();
-        }
-    }
+    // Có thể thêm các hàm khác như findOverdue, findNearDue, getTotalOverdue, getTotalUnpaid
+    // theo mẫu tương tự, đảm bảo luôn dùng COALESCE và handle exception
 }

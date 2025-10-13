@@ -3,6 +3,7 @@ package com.expensemanager.controller;
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
+import com.expensemanager.model.User;
 import com.expensemanager.service.TransactionService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -21,22 +22,23 @@ import java.util.*;
 @WebServlet("/transaction")
 public class TransactionController extends HttpServlet {
     private final TransactionService transactionService = new TransactionService();
-    private static final String TRANSACTION_CACHE = "transactionCache";
-    private static final int CACHE_SIZE = 6;
+    private static final String transaction_cache = "transactionCache";
+    private static final int cache_size = 6;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         HttpSession session = request.getSession(true);
+        User user = (User) session.getAttribute("user");
         UUID userId;
-
-        if (session.getAttribute("user_id") == null) {
+        if (user != null) {
+            userId = user.getId();
+        }else{
             response.sendRedirect(request.getContextPath() + "/login");
             return;
-        } else {
-            userId = (UUID) session.getAttribute("user_id");
         }
+
 
         String action = request.getParameter("action");
         String transactionId = request.getParameter("transactionId");
@@ -113,6 +115,8 @@ public class TransactionController extends HttpServlet {
 
         BigDecimal totalBalance = totalIncome.subtract(totalExpense);
 
+        request.setAttribute("pageJs", "transaction.js");
+        request.setAttribute("pageCss", "transaction.css");
         request.setAttribute("transList", transList);
         request.setAttribute("categoryList", categoryList);
         request.setAttribute("accountList", accountList);
@@ -164,6 +168,8 @@ public class TransactionController extends HttpServlet {
             List<Category> categoryList = getCategoryList(session, userId);
             List<Account> accountList = getAccountList(session, userId);
 
+            request.setAttribute("pageJs", "transaction.js");
+            request.setAttribute("pageCss", "transaction.css");
             request.setAttribute("dateRangeLabel", dateRangeLabel);
             request.setAttribute("transList", transactionList);
             request.setAttribute("categoryList", categoryList);
@@ -224,11 +230,11 @@ public class TransactionController extends HttpServlet {
     @SuppressWarnings("unchecked")
     private Map<String, List<Transaction>> getOrCreateCache(HttpSession session) {
         Map<String, List<Transaction>> cache =
-                (Map<String, List<Transaction>>) session.getAttribute(TRANSACTION_CACHE);
+                (Map<String, List<Transaction>>) session.getAttribute(transaction_cache);
 
         if (cache == null) {
-            cache = new LinkedHashMap<>(CACHE_SIZE + 1, 0.75f, true);
-            session.setAttribute(TRANSACTION_CACHE, cache);
+            cache = new LinkedHashMap<>(cache_size + 1, 0.75f, true);
+            session.setAttribute(transaction_cache, cache);
         }
 
         return cache;
@@ -259,9 +265,9 @@ public class TransactionController extends HttpServlet {
     }
 
     private void cleanupCache(Map<String, List<Transaction>> cache) {
-        if (cache.size() > CACHE_SIZE) {
+        if (cache.size() > cache_size) {
             Iterator<String> iterator = cache.keySet().iterator();
-            while (cache.size() > CACHE_SIZE && iterator.hasNext()) {
+            while (cache.size() > cache_size && iterator.hasNext()) {
                 iterator.next();
                 iterator.remove();
             }
@@ -270,7 +276,7 @@ public class TransactionController extends HttpServlet {
 
     private void clearTransactionCache(HttpSession session) {
         if (session != null) {
-            session.removeAttribute(TRANSACTION_CACHE);
+            session.removeAttribute(transaction_cache);
         }
     }
 

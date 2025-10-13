@@ -18,7 +18,6 @@
         };
     </script>
 </c:if>
-
 <div class="transaction-wrapper">
     <div class="transaction-container">
         <!-- Filter Panel -->
