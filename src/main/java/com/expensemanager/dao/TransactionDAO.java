@@ -105,7 +105,30 @@ public class TransactionDAO {
             em.close();
         }
     }
+    
+    //Vân Email
+    public List<Transaction> getTransactionsByUserAndDateRange(UUID userId, LocalDate startDate, LocalDate endDate) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            String jpql = "SELECT t FROM Transaction t " +
+                          "JOIN FETCH t.category c " +
+                          "JOIN FETCH t.account a " +
+                          "WHERE a.user.id = :userId " +
+                          "AND t.transactionDate >= :startDate " +
+                          "AND t.transactionDate <= :endDate " +
+                          "ORDER BY t.transactionDate ASC";
 
+            return em.createQuery(jpql, Transaction.class)
+                    .setParameter("userId", userId)
+                    .setParameter("startDate", startDate.atStartOfDay())
+                    .setParameter("endDate", endDate.plusDays(1).atStartOfDay())
+                    .getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    
     public void addIncomeTransaction(Transaction transaction) {
         EntityManager em = em();
         try {

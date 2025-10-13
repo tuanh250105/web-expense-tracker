@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -37,8 +38,7 @@ build/
 ### Mac OS ###
 .DS_Store
 
-.env.idea/
-
-.idea/
-.env".DS_Store"
-"target/"
+.env
+=======
+/bin/
+>>>>>>> Stashed changes
