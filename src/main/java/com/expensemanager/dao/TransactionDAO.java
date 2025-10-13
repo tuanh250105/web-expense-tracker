@@ -4,10 +4,6 @@ import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
 import com.expensemanager.util.JpaUtil;
-<<<<<<< HEAD
-=======
-
->>>>>>> 3b957b5 (oanh vs my)
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.TypedQuery;
@@ -19,7 +15,7 @@ import java.util.stream.Collectors;
 
 public class TransactionDAO {
 
-    // ✅ Dùng EntityManagerFactory chung từ JpaUtil (đã cấu hình DB_URL, DB_USER, DB_PASS)
+
     private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
 
     private EntityManager em() {
