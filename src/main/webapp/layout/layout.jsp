@@ -95,7 +95,7 @@
 
 <script defer src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js"></script>
 
-
+<%--Transaction--%>
 <script defer src="${pageContext.request.contextPath}/assets/js/transaction.js"></script>
 </body>
 </html>

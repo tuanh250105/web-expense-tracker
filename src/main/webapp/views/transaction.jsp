@@ -1,16 +1,7 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: khodo
-  Date: 6/10/25
-  Time: 22:47
-  To change this template use File | Settings | File Templates.
---%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<%@ page import="java.time.LocalDate" %>
-<%@ page import="java.time.format.TextStyle" %>
-<%@ page import="java.util.Locale" %>
 <c:if test="${not empty editTransaction}">
     <script>
         window.editTransactionData = {
@@ -30,7 +21,7 @@
 
 <div class="transaction-wrapper">
     <div class="transaction-container">
-        <!-- Filter -->
+        <!-- Filter Panel -->
         <form action="${pageContext.request.contextPath}/transaction" method="POST" class="filter-form">
             <aside class="filter-panel">
                 <input type="hidden" name="action" value="filter">
@@ -50,7 +41,6 @@
                 <label>Notes</label>
                 <input type="text" name="notes" placeholder="Notes">
 
-
                 <label>Type</label>
                 <div class="checkbox-group">
                     <label><input type="checkbox" name="type" value="Expense" checked> Expenses</label>
@@ -62,66 +52,116 @@
             </aside>
         </form>
 
-
-        <!-- Transactions -->
+        <!-- Transaction List -->
         <section class="transaction-list">
             <div class="transaction-header">
-                <button class="back-btn">&lt;</button>
-                <h2>${dateRangeLabel}</h2>
-                <span class="total">Total: <span class="negative">- $143.50</span></span>
+                <!-- Previous Month Button -->
+                <a href="${pageContext.request.contextPath}/transaction?navigate=prev"
+                   class="nav-btn back-btn" title="Previous month">
+                    &lt;
+                </a>
+
+                <!-- Current Month Display -->
+                <div class="month-display">
+                    <h2>${dateRangeLabel}</h2>
+                    <c:if test="${!isCurrentMonth and !isFiltered}">
+                        <a href="${pageContext.request.contextPath}/transaction"
+                           class="today-link">(Go to current month)</a>
+                    </c:if>
+                </div>
+
+                <!-- Next Month Button -->
+                <a href="${pageContext.request.contextPath}/transaction?navigate=next"
+                   class="nav-btn forward-btn" title="Next month">
+                    &gt;
+                </a>
+
+                <!-- Total Display -->
+                <span class="total">
+                    Total:
+                    <c:choose>
+                        <c:when test="${totalBalance >= 0}">
+                            <span class="positive">+ $<fmt:formatNumber value="${totalBalance}" pattern="#,##0.00"/></span>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="negative">- $<fmt:formatNumber value="${-totalBalance}" pattern="#,##0.00"/></span>
+                        </c:otherwise>
+                    </c:choose>
+                </span>
             </div>
 
             <ul class="transaction-items">
-                <c:forEach var="t" items="${transList}">
-                    <li class="transaction-item">
-                        <img src="${pageContext.request.contextPath}/${t.category.iconPath}" alt=List">
-                        <div class="details">
-                            <h3>${t.category.name}</h3>
-                            <p>${t.account.name}</p>
-                        </div>
-                        <div class="amount ${t.type eq 'income' ? 'income' : 'expense'}">
-                            <c:choose>
-                                <c:when test="${t.type eq 'income'}">
-                                    + $${t.amount}
-                                </c:when>
-                                <c:otherwise>
-                                    - $${t.amount}
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
-                        <div class="date">${t.transactionDate}</div>
-                        <button class="more-btn" type="button">
-                            <img src="${pageContext.request.contextPath}/assets/images/icon-base/more.png" alt="Icon">
-                        </button>
-                        <!-- Menu ẩn -->
-                        <div class="dropdown-menu">
-                            <form action="${pageContext.request.contextPath}/transaction" method="get" style="display:inline;">
-                                <input type="hidden" name="action" value="edit">
-                                <input type="hidden" name="id" value="${t.id}">
-                                <button class="dropdown-item edit" data-id="${t.id}">Edit transaction</button>
-                            </form>
-                            <button class="dropdown-item delete">Delete transaction</button>
-                        </div>
-                        <%-- Notes ẩn--%>
-                        <div class="notes">
-                            <c:if test="${not empty t.note}">
-                                ${t.note}
-                            </c:if>
-                            <c:if test="${empty t.note}">
-                                <em>No notes for this transaction.</em>
-                            </c:if>
-                        </div>
-                    </li>
-                </c:forEach>
+                <c:choose>
+                    <c:when test="${empty transList}">
+                        <li class="no-transactions">
+                            <p>No transactions found for this period</p>
+                        </li>
+                    </c:when>
+                    <c:otherwise>
+                        <c:forEach var="t" items="${transList}">
+                            <li class="transaction-item">
+                                <img src="${pageContext.request.contextPath}/${t.category.iconPath}" alt="Category Icon">
+                                <div class="details">
+                                    <h3>${t.category.name}</h3>
+                                    <p>${t.account.name}</p>
+                                </div>
+                                <div class="amount ${t.type eq 'income' ? 'income' : 'expense'}">
+                                    <c:choose>
+                                        <c:when test="${t.type eq 'income'}">
+                                            + $<fmt:formatNumber value="${t.amount}" pattern="#,##0.00"/>
+                                        </c:when>
+                                        <c:otherwise>
+                                            - $<fmt:formatNumber value="${t.amount}" pattern="#,##0.00"/>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                                <div class="date">
+                                        ${t.transactionDate != null ? t.transactionDate.toLocalDate().toString() : ''}
+                                </div>
+                                <button class="more-btn" type="button">
+                                    <img src="${pageContext.request.contextPath}/assets/images/icon-base/more.png" alt="More">
+                                </button>
+
+                                <!-- Dropdown Menu -->
+                                <div class="dropdown-menu">
+                                    <form action="${pageContext.request.contextPath}/transaction" method="get" style="display:inline;">
+                                        <input type="hidden" name="action" value="edit">
+                                        <input type="hidden" name="transactionId" value="${t.id}">
+                                        <button type="submit" class="dropdown-item edit">Edit transaction</button>
+                                    </form>
+                                    <form action="${pageContext.request.contextPath}/transaction" method="post"
+                                          class="delete-form" style="display:inline;">
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="id" value="${t.id}">
+                                        <button type="submit" class="dropdown-item delete">
+                                            Delete transaction
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <!-- Notes -->
+                                <div class="notes">
+                                    <c:choose>
+                                        <c:when test="${not empty t.note}">
+                                            ${t.note}
+                                        </c:when>
+                                        <c:otherwise>
+                                            <em>No notes for this transaction.</em>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </li>
+                        </c:forEach>
+                    </c:otherwise>
+                </c:choose>
             </ul>
         </section>
 
-        <!-- Form Income khi nhấp + (Add Transaction Income Form) -->
+        <!-- Form Income -->
         <div class="container-addForm" id="incomeForm">
             <form class="addForm modal-addForm" action="${pageContext.request.contextPath}/transaction" method="POST">
                 <input type="hidden" name="action" value="add_income">
                 <input type="hidden" name="type" value="income">
-                <input type="hidden" name="id">
 
                 <div class="addForm-header">
                     <h2>New Income</h2>
@@ -137,7 +177,6 @@
                             <input type="text" class="select_new_category open-category-modal" placeholder="Select category" readonly>
                             <input type="hidden" name="category" class="hidden_new_category">
                         </div>
-
                         <div class="input-group-2">
                             <div class="input-wrap">
                                 <label>Value</label>
@@ -192,9 +231,7 @@
             </form>
         </div>
 
-
-
-        <!-- Form Expense khi nhấp + (Add Transaction Expense Form) -->
+        <!-- Form Expense (tương tự Income) -->
         <div class="container-addForm" id="expenseForm">
             <form class="addForm modal-addForm" action="${pageContext.request.contextPath}/transaction" method="POST">
                 <input type="hidden" name="action" value="add_expense">
@@ -214,7 +251,6 @@
                             <input type="text" class="select_new_category open-category-modal" placeholder="Select category" readonly>
                             <input type="hidden" name="category" class="hidden_new_category">
                         </div>
-
                         <div class="input-group-2">
                             <div class="input-wrap">
                                 <label>Value</label>
@@ -252,7 +288,7 @@
                         </div>
                     </div>
 
-                    <!-- Note -->\
+                    <!-- Note -->
                     <div class="input-group">
                         <div class="input-img"><img src="${pageContext.request.contextPath}/assets/images/icon-base/notes.png" alt="Icon"></div>
                         <div class="input-wrap">
@@ -269,7 +305,6 @@
             </form>
         </div>
 
-
         <!-- Modal chọn Category -->
         <div id="categoryModal">
             <div class="modal-content">
@@ -278,7 +313,6 @@
                 <ul id="categoryList">
                     <c:forEach var="c" items="${categoryList}">
                         <li>
-
                             <button type="button" data-category="${c.id}">
                                 <img src="${pageContext.request.contextPath}/${c.iconPath}" alt="Icon">
                                     ${c.name}
@@ -289,10 +323,26 @@
             </div>
         </div>
 
-
+        <!-- FAB Buttons -->
         <div class="fab-buttons">
             <button class="fab add-income">+</button>
             <button class="fab add-expense">−</button>
         </div>
     </div>
 </div>
+
+<script>
+    // Simple loading indicator for month navigation
+    document.addEventListener('DOMContentLoaded', function() {
+        const navButtons = document.querySelectorAll('.nav-btn');
+
+        navButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                // Add loading class
+                this.classList.add('loading');
+                this.style.opacity = '0.5';
+                this.style.pointerEvents = 'none';
+            });
+        });
+    });
+</script>

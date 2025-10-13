@@ -7,12 +7,16 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 import jakarta.persistence.TypedQuery;
-import jakarta.transaction.Transactional;
 
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class TransactionDAO {
 
@@ -168,7 +172,7 @@ public class TransactionDAO {
         }
     }
 
-    public List<Transaction> filter(UUID userId, String fromDate, String toDate, String notes, String type) {
+    public List<Transaction> filter(UUID userId, String fromDate, String toDate, String notes, String[] types) {
         EntityManager em = emf.createEntityManager();
         try {
             StringBuilder jpql = new StringBuilder(
@@ -178,17 +182,17 @@ public class TransactionDAO {
                             "WHERE a.user.id = :userId"
             );
 
-            if (fromDate != null) {
+            if (fromDate != null && !fromDate.isEmpty()) {
                 jpql.append(" AND t.transactionDate >= :fromDate");
             }
-            if (toDate != null) {
+            if (toDate != null && !toDate.isEmpty()) {
                 jpql.append(" AND t.transactionDate < :toDate");
             }
             if (notes != null && !notes.isEmpty()) {
                 jpql.append(" AND LOWER(t.note) LIKE LOWER(:notes)");
             }
-            if (type != null && !type.isEmpty()) {
-                jpql.append(" AND t.type LIKE :type");
+            if (types != null && types.length > 0) {
+                jpql.append(" AND LOWER(t.type) IN :types");
             }
 
             jpql.append(" ORDER BY t.transactionDate DESC");
@@ -196,17 +200,25 @@ public class TransactionDAO {
             TypedQuery<Transaction> query = em.createQuery(jpql.toString(), Transaction.class);
             query.setParameter("userId", userId);
 
-            if (fromDate != null) {
+            if (fromDate != null && !fromDate.isEmpty()) {
                 query.setParameter("fromDate", LocalDate.parse(fromDate).atStartOfDay());
             }
-            if (toDate != null) {
+            if (toDate != null && !toDate.isEmpty()) {
                 query.setParameter("toDate", LocalDate.parse(toDate).plusDays(1).atStartOfDay());
             }
             if (notes != null && !notes.isEmpty()) {
                 query.setParameter("notes", "%" + notes + "%");
             }
-            if (type != null && !type.isEmpty()) {
-                query.setParameter("type", "%" + type + "%");
+            if (types != null && types.length > 0) {
+                List<String> normalized = Arrays.stream(types)
+                        .filter(s -> s != null && !s.isEmpty())
+                        // dùng lambda rõ ràng + Locale để tránh mơ hồ
+                        .map(s -> s.toLowerCase(Locale.ENGLISH))
+                        .collect(Collectors.toList());
+
+                if (!normalized.isEmpty()) {
+                    query.setParameter("types", normalized);
+                }
             }
 
             return query.getResultList();
@@ -215,4 +227,48 @@ public class TransactionDAO {
         }
     }
 
+    //Nhi; Budgets
+    public List<Transaction> findTransactionByCategoryIdAndDate(UUID categoryId, LocalDate fromDate, LocalDate toDate){
+        EntityManager em = emf.createEntityManager();
+
+        try {
+            String jpql = "SELECT t FROM Transaction t " +
+                    "JOIN FETCH t.category c " +
+                    "WHERE t.category.id = :categoryId " +
+                    "AND t.transactionDate >= :fromDate " +
+                    "AND t.transactionDate < :toDate";
+
+            return em.createQuery(jpql, Transaction.class)
+                    .setParameter("categoryId", categoryId)
+                    .setParameter("fromDate", fromDate.atStartOfDay())
+                    .setParameter("toDate", toDate.plusDays(1).atStartOfDay())
+                    .getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    //Dư; Schelduled_Transaction
+    public boolean hasTransactionNearDue(UUID categoryId, BigDecimal amount, String type, LocalDateTime start, LocalDateTime end, UUID userId) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            String jpql = "SELECT COUNT(t) > 0 FROM Transaction t " +
+                    "JOIN t.account a " +
+                    "WHERE t.category.id = :categoryId " +
+                    "AND t.amount = :amount " +
+                    "AND LOWER(t.type) = LOWER(:type) " +
+                    "AND t.transactionDate BETWEEN :start AND :end " +
+                    "AND a.user.id = :userId";
+            return (boolean) em.createQuery(jpql)
+                    .setParameter("categoryId", categoryId)
+                    .setParameter("amount", amount)
+                    .setParameter("type", type)
+                    .setParameter("start", start)
+                    .setParameter("end", end)
+                    .setParameter("userId", userId)
+                    .getSingleResult();
+        } finally {
+            em.close();
+        }
+    }
 }

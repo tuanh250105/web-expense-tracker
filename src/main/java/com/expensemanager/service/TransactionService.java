@@ -5,6 +5,8 @@ import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
 
+import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -37,7 +39,7 @@ public class TransactionService {
         Transaction t = new Transaction();
         t.setAccount(account);
         t.setCategory(category);
-        t.setAmount(Integer.parseInt(amount));
+        t.setAmount(new BigDecimal(amount));
         t.setNote(note);
         t.setTransactionDate(LocalDateTime.parse(transactionDate + "T" + time));
         t.setType(type);
@@ -59,7 +61,7 @@ public class TransactionService {
         Transaction t = new Transaction();
         t.setAccount(account);
         t.setCategory(category);
-        t.setAmount(Integer.parseInt(amount));
+        t.setAmount(new BigDecimal(amount));
         t.setNote(note);
         t.setTransactionDate(LocalDateTime.parse(transactionDate + "T" + time));
         t.setType(type);
@@ -96,7 +98,7 @@ public class TransactionService {
         t.setId(UUID.fromString(id));
         t.setAccount(account);
         t.setCategory(category);
-        t.setAmount(Integer.parseInt(amount));
+        t.setAmount(new BigDecimal(amount));
         t.setNote(note);
         t.setTransactionDate(LocalDateTime.parse(transactionDate));
         t.setType(type);
@@ -104,7 +106,7 @@ public class TransactionService {
         transactionDAO.updateTransaction(t);
     }
 
-    public List<Transaction> filterPanel(UUID userId, String fromDate, String toDate, String notes, String type) {
+    public List<Transaction> filterPanel(UUID userId, String fromDate, String toDate, String notes, String[] types) {
         if (fromDate != null && !fromDate.isEmpty() && toDate != null && !toDate.isEmpty()) {
             if (LocalDate.parse(fromDate).isAfter(LocalDate.parse(toDate))) {
                 throw new IllegalArgumentException("From date cannot be after to date");
@@ -115,9 +117,33 @@ public class TransactionService {
         fromDate = (fromDate == null || fromDate.isEmpty()) ? null : fromDate;
         toDate = (toDate == null || toDate.isEmpty()) ? null : toDate;
         notes = (notes == null) ? "" : notes;
-        type = (type == null) ? "" : type;
+        types = (types == null || types.length == 0) ? null : types;
 
-        return transactionDAO.filter(userId, fromDate, toDate, notes, type);
+
+        return transactionDAO.filter(userId, fromDate, toDate, notes, types);
+    }
+
+    public void deleteTransaction(String transactionId) {
+        Transaction transaction = transactionDAO.getTransactionById(UUID.fromString(transactionId));
+        if (transaction == null) {
+            throw new IllegalArgumentException("transaction không hợp lệ");
+        }
+
+        transactionDAO.deleteTransaction(transaction);
+    }
+
+    //Nhi; Budgets
+    public List<Transaction> findTransactionByCategoryIdAndDate(UUID categoryId, LocalDate fromDate, LocalDate toDate){
+        return transactionDAO.findTransactionByCategoryIdAndDate(categoryId, fromDate, toDate);
+    }
+
+    //Dư; Schelduled_Transaction
+    public boolean hasTransactionNearDue(UUID categoryId, BigDecimal amount, String type, Timestamp dueDate, int daysBefore, UUID userId) {
+        LocalDateTime due = dueDate.toLocalDateTime();
+        LocalDateTime start = due.minusDays(daysBefore);
+        LocalDateTime end = due;
+
+        return transactionDAO.hasTransactionNearDue(categoryId, amount, type, start, end, userId);
     }
 }
 
