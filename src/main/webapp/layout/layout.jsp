@@ -68,10 +68,9 @@
 
 <nav class="sidebar">
     <ul>
-        <li class="active"><a href="#"><i class="fa-solid fa-chart-line"></i> <span>Overallview</span></a></li>
-        <li><a href="#"><i class="fa-solid fa-receipt"></i> <span>Giao dịch</span></a></li>
-        <li><a href="${pageContext.request.contextPath}/scheduled_transactions?action=list"><i class="fa-solid fa-calendar-days"></i> <span>Giao dịch định kì</span></a></li>
+        <li class="active"><a href="#"><i class="fa-solid fa-chart-line"></i> <span>Overview</span></a></li>
         <li><a href="${pageContext.request.contextPath}/transaction"><i class="fa-solid fa-receipt"></i> <span>Giao dịch</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/scheduled_transactions?action=list"><i class="fa-solid fa-calendar-days"></i> <span>Giao dịch định kì</span></a></li>
         <li><a href="#"><i class="fa-solid fa-calendar-days"></i> <span>Giao dịch hằng tháng</span></a></li>
         <li><a href="#"><i class="fa-solid fa-building-columns"></i> <span>Tài khoản</span></a></li>
         <li><a href="${pageContext.request.contextPath}/scheduled_transactions?action=list"><i class="fa-solid fa-calendar-days"></i> <span>Giao dịch định kỳ</span></a></li>

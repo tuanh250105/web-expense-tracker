@@ -2,6 +2,8 @@ package com.expensemanager.util;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
@@ -22,10 +24,12 @@ public class JpaUtil {
       System.out.println("──────────────────────────────────────────────");
       System.out.println("🔗 [JpaUtil] Đang khởi tạo EntityManagerFactory...");
 
-      // 1️⃣ Lấy thông tin cấu hình từ biến môi trường (Tomcat đọc từ system env)
-      String url = System.getenv("DB_URL");
-      String user = System.getenv("DB_USER");
-      String pass = System.getenv("DB_PASS");
+
+        // Lấy từ .env, fallback sang System.getenv nếu không có
+        String url = System.getenv("DB_URL");
+        String user = System.getenv("DB_USER");
+        String pass = System.getenv("DB_PASS");
+
 
       // 2️⃣ Gộp vào Map thuộc tính JPA
       Map<String, Object> props = new HashMap<>();

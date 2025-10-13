@@ -3,6 +3,7 @@ package com.expensemanager.dao;
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
+import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
@@ -23,8 +24,7 @@ import java.util.stream.Collectors;
 
 public class TransactionDAO {
 
-    private static final EntityManagerFactory emf =
-            Persistence.createEntityManagerFactory("default");
+    private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
 
     public Account findAccountById(UUID id) {
         EntityManager em = emf.createEntityManager();

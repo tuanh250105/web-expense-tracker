@@ -21,8 +21,8 @@ import java.util.*;
 @WebServlet("/transaction")
 public class TransactionController extends HttpServlet {
     private final TransactionService transactionService = new TransactionService();
-    private static final String TRANSACTION_CACHE = "transactionCache";
-    private static final int CACHE_SIZE = 6;
+    private static final String transaction_cache = "transactionCache";
+    private static final int cache_size = 6;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -224,11 +224,11 @@ public class TransactionController extends HttpServlet {
     @SuppressWarnings("unchecked")
     private Map<String, List<Transaction>> getOrCreateCache(HttpSession session) {
         Map<String, List<Transaction>> cache =
-                (Map<String, List<Transaction>>) session.getAttribute(TRANSACTION_CACHE);
+                (Map<String, List<Transaction>>) session.getAttribute(transaction_cache);
 
         if (cache == null) {
-            cache = new LinkedHashMap<>(CACHE_SIZE + 1, 0.75f, true);
-            session.setAttribute(TRANSACTION_CACHE, cache);
+            cache = new LinkedHashMap<>(cache_size + 1, 0.75f, true);
+            session.setAttribute(transaction_cache, cache);
         }
 
         return cache;
@@ -259,9 +259,9 @@ public class TransactionController extends HttpServlet {
     }
 
     private void cleanupCache(Map<String, List<Transaction>> cache) {
-        if (cache.size() > CACHE_SIZE) {
+        if (cache.size() > cache_size) {
             Iterator<String> iterator = cache.keySet().iterator();
-            while (cache.size() > CACHE_SIZE && iterator.hasNext()) {
+            while (cache.size() > cache_size && iterator.hasNext()) {
                 iterator.next();
                 iterator.remove();
             }
@@ -270,7 +270,7 @@ public class TransactionController extends HttpServlet {
 
     private void clearTransactionCache(HttpSession session) {
         if (session != null) {
-            session.removeAttribute(TRANSACTION_CACHE);
+            session.removeAttribute(transaction_cache);
         }
     }
 
