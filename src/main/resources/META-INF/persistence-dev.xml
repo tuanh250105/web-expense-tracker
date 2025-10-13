@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             version="3.0"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_2.xsd">
+
+    <persistence-unit name="default" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+        <!-- Model classes are the same as persistence.xml -->
+        <class>com.expensemanager.model.Account</class>
+        <class>com.expensemanager.model.User</class>
+        <class>com.expensemanager.model.Category</class>
+        <class>com.expensemanager.model.Transaction</class>
+        <class>com.expensemanager.model.Budget</class>
+        <class>com.expensemanager.model.RewardPrize</class>
+        <class>com.expensemanager.model.RewardPoints</class>
+        <class>com.expensemanager.model.RewardSpin</class>
+        <class>com.expensemanager.model.CategoryStats</class>
+        <class>com.expensemanager.model.TopTransaction</class>
+        <class>com.expensemanager.model.TopDebt</class>
+        <class>com.expensemanager.model.PasswordResetToken</class>
+        <class>com.expensemanager.model.FAQ</class>
+        <class>com.expensemanager.model.ScheduledTransaction</class>
+
+        <properties>
+            <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+            <property name="jakarta.persistence.jdbc.url" value="${DB_URL}"/>
+            <property name="jakarta.persistence.jdbc.user" value="${DB_USER}"/>
+            <property name="jakarta.persistence.jdbc.password" value="${DB_PASS}"/>
+
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.jdbc.time_zone" value="UTC"/>
+
+            <!-- Dev-specific Hikari very small pool -->
+            <property name="hibernate.hikari.minimumIdle" value="1"/>
+            <property name="hibernate.hikari.maximumPoolSize" value="2"/>
+            <property name="hibernate.hikari.idleTimeout" value="30000"/>
+            <property name="hibernate.hikari.connectionTimeout" value="20000"/>
+            <property name="hibernate.hikari.maxLifetime" value="1800000"/>
+        </properties>
+    </persistence-unit>
+</persistence>
+
+

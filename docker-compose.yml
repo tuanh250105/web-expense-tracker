@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15
+    container_name: budgetbuddy-db
+    restart: always
+    env_file: .env
+    ports:
+      - "5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    container_name: budgetbuddy-adminer
+    restart: always
+    ports:
+      - "8081:8080"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: budgetbuddy-app
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    env_file: .env
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      APP_BASE_URL: ${APP_BASE_URL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+
+volumes:
+  db-data:
