@@ -1,23 +1,21 @@
 package com.expensemanager.dao;
 
-import com.expensemanager.model.Account;
-import com.expensemanager.model.Category;
-import com.expensemanager.model.ScheduledTransaction;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
-import jakarta.persistence.Query;
-
-import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.expensemanager.model.Account;
+import com.expensemanager.model.ScheduledTransaction;
+import com.expensemanager.util.JpaUtil;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Query;
+
 public class ScheduledTransactionDAO {
 
-    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("default");
+    private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
     public List<ScheduledTransaction> getAll() {
         return getFiltered(null, null, null, null, null, null, null);
     }
@@ -70,7 +68,7 @@ public class ScheduledTransactionDAO {
             if (categoryNameFilter != null && !categoryNameFilter.isEmpty())
                 query.setParameter("categoryName", "%" + categoryNameFilter.toLowerCase() + "%");
             if (account != null && !account.isEmpty())
-                query.setParameter("account", "%" + account.toLowerCase() + "%");
+query.setParameter("account", "%" + account.toLowerCase() + "%");
             if (from != null && !from.isEmpty())
                 query.setParameter("fromTs", Timestamp.valueOf(from + " 00:00:00"));
             if (to != null && !to.isEmpty())
@@ -147,7 +145,7 @@ public class ScheduledTransactionDAO {
             if (em.getTransaction().isActive()) em.getTransaction().rollback();
             throw new RuntimeException("Lỗi khi cập nhật ScheduledTransaction", e);
         } finally {
-            em.close();
+em.close();
         }
     }
 
@@ -217,7 +215,7 @@ public class ScheduledTransactionDAO {
 
             String jpql = "SELECT s FROM ScheduledTransaction s " +
                     "LEFT JOIN FETCH s.category " +
-                    "LEFT JOIN FETCH s.account a " +
+"LEFT JOIN FETCH s.account a " +
                     "LEFT JOIN FETCH a.user " +
                     "WHERE s.active = true " +
                     "AND s.nextRun > CURRENT_TIMESTAMP " +

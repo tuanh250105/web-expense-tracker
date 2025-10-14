@@ -61,9 +61,7 @@
         <i class="fa-regular fa-bell notification">
             <span class="badge">3</span>
         </i>
-        <form action="${pageContext.request.contextPath}/view/auth/login.jsp" method="post" style="display:inline;">
-            <button type="submit" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-        </form>
+        <a href="${pageContext.request.contextPath}/views/auth/login.jsp" class="btn-logout" style="background:#ef4444;color:#fff;display:inline-block;padding:8px 18px;border-radius:8px;text-decoration:none;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         <label class="switch">
             <input type="checkbox" id="darkModeToggle">
             <span class="slider"></span>
@@ -75,17 +73,15 @@
 <nav class="sidebar">
     <ul>
 
-        <li class="active"><a href="${pageContext.request.contextPath}/overview" data-page="overview"><i class="fa-solid fa-chart-line"></i> <span>Overview</span></a></li>
-        <li><a href="#"><i class="fa-solid fa-receipt"></i> <span>Giao dịch</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/overview" data-page="overview"><i class="fa-solid fa-chart-line"></i> <span>Overview</span></a></li>
         <li><a href="${pageContext.request.contextPath}/transaction"><i class="fa-solid fa-receipt"></i> <span>Giao dịch</span></a></li>
         <li><a href="${pageContext.request.contextPath}/scheduled_transactions?action=list"><i class="fa-solid fa-calendar-days"></i> <span>Giao dịch định kỳ</span></a></li>
-        <li><a href="${pageContext.request.contextPath}/accounts"><i class="fa-solid fa-building-columns"></i> <span>Tài khoản</span></a></li>
         <li><a href="${pageContext.request.contextPath}/accounts-management"><i class="fa-solid fa-tasks"></i> <span>Quản lý Tài khoản</span></a></li>
         <li><a href="#"><i class="fa-solid fa-wallet"></i> <span>Ngân sách</span></a></li>
         <li><a href="${pageContext.request.contextPath}/debt"><i class="fa-solid fa-hand-holding-dollar"></i> <span>Quản lý nợ</span></a></li>
         <hr>
-        <li><a href="${pageContext.request.contextPath}/analytics"><i class="fa-solid fa-chart-pie"></i> <span>Thống kê biểu đồ</span></a></li>
-        <li><a href="#"><i class="fa-solid fa-calendar"></i> <span>Lịch</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/analytics"><i class="fa-solid fa-chart-pie"></i> <span>Tổng hợp biểu đồ</span></a></li>
+    <li><a href="${pageContext.request.contextPath}/calendar"><i class="fa-solid fa-calendar"></i> <span>Lịch</span></a></li>
         <li><a href="${pageContext.request.contextPath}/group_expense"><i class="fa-solid fa-people-group"></i> <span>Chi tiêu nhóm</span></a></li>
         <li><a href="${pageContext.request.contextPath}/import-export"><i class="fa-solid fa-file-import"></i> <span>Import / Export file</span></a></li>
         <li><a href="${pageContext.request.contextPath}/top-categories"><i class="fa-solid fa-list-ul"></i> <span>Thống kê Top Categories</span></a></li>
@@ -113,7 +109,7 @@
     <c:if test="${not empty pageJs}">
         <script defer src="${pageContext.request.contextPath}/assets/js/${pageJs}"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js"></script>
-    </c:if>
+</c:if>
 
 </body>
 </html>

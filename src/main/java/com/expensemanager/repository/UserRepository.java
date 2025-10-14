@@ -74,24 +74,26 @@ public class UserRepository {
 
     // Đếm user tạo hôm nay
     public long countNewUsersToday() {
-        try (EntityManager em = JpaUtil.em()) {
-            LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
-            return em.createQuery("SELECT COUNT(u) FROM User u WHERE u.createdAt >= :startOfDay", Long.class)
-                    .setParameter("startOfDay", startOfDay)
-                    .getSingleResult();
-        }
+    try (EntityManager em = JpaUtil.em()) {
+        LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
+        java.time.Instant startOfDayInstant = startOfDay.atZone(java.time.ZoneId.systemDefault()).toInstant();
+        return em.createQuery("SELECT COUNT(u) FROM User u WHERE u.createdAt >= :startOfDay", Long.class)
+            .setParameter("startOfDay", startOfDayInstant)
+            .getSingleResult();
+    }
     }
 
     // Đếm user tạo tuần này
     public long countNewUsersThisWeek() {
-        try (EntityManager em = JpaUtil.em()) {
-            LocalDateTime startOfWeek = LocalDateTime.now()
-                    .with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
-                    .toLocalDate().atStartOfDay();
-            return em.createQuery("SELECT COUNT(u) FROM User u WHERE u.createdAt >= :startOfWeek", Long.class)
-                    .setParameter("startOfWeek", startOfWeek)
-                    .getSingleResult();
-        }
+    try (EntityManager em = JpaUtil.em()) {
+        LocalDateTime startOfWeek = LocalDateTime.now()
+            .with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
+            .toLocalDate().atStartOfDay();
+        java.time.Instant startOfWeekInstant = startOfWeek.atZone(java.time.ZoneId.systemDefault()).toInstant();
+        return em.createQuery("SELECT COUNT(u) FROM User u WHERE u.createdAt >= :startOfWeek", Long.class)
+            .setParameter("startOfWeek", startOfWeekInstant)
+            .getSingleResult();
+    }
     }
 
     // Lấy thống kê user theo thời gian (ví dụ: số user theo ngày)

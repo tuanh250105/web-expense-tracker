@@ -1,14 +1,14 @@
 package com.expensemanager.repository;
 
 public class UserStat {
-    public String period;
-    public long count;
+    public Object period;
+    public Long count;
 
-    public UserStat(String period, long count) {
+    public UserStat(Object period, Long count) {
         this.period = period;
         this.count = count;
     }
 
-    public String getPeriod() { return period; }
-    public long getCount() { return count; }
+    public Object getPeriod() { return period; }
+    public Long getCount() { return count; }
 }

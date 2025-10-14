@@ -33,7 +33,11 @@ public class AuthServlet extends HttpServlet {
             req.getRequestDispatcher("/views/auth/login.jsp").forward(req, resp);
         } else {
             req.getSession(true).setAttribute("user", u);
-            resp.sendRedirect(req.getContextPath() + "/layout/layout.jsp");
+            if ("ADMIN".equalsIgnoreCase(u.getRole())) {
+                resp.sendRedirect(req.getContextPath() + "/admin");
+            } else {
+                resp.sendRedirect(req.getContextPath() + "/overview");
+            }
         }
     }
 
@@ -48,7 +52,7 @@ public class AuthServlet extends HttpServlet {
             req.getRequestDispatcher("/views/auth/login.jsp").forward(req, resp);
         } catch (IllegalArgumentException e) {
             req.setAttribute("error", e.getMessage());
-            req.getRequestDispatcher("/views/auth/register.jsp").forward(req, resp);
+            req.getRequestDispatcher("/overview").forward(req, resp);
         }
     }
 }
