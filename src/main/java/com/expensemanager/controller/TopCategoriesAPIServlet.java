@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.expensemanager.model.User;
 import com.expensemanager.service.TransactionServicestart;
 import com.expensemanager.service.TransactionServicestart.CategoryStats;
 import com.google.gson.Gson;
@@ -44,15 +45,11 @@ public class TopCategoriesAPIServlet extends HttpServlet {
         try {
             // Kiểm tra session
             HttpSession session = request.getSession(false);
-            UUID userId = null;
+            User user = (User) session.getAttribute("user");
+            UUID userId = user.getId();
 
-            if (session != null && session.getAttribute("user_id") != null) {
-                userId = (UUID) session.getAttribute("user_id");
-            }
-
-            // Development: Dùng UUID test
-            if (userId == null) {
-                userId = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
+            if (session != null && session.getAttribute("user") != null) {
+                userId = (UUID) ((User) session.getAttribute("user")).getId();
             }
 
             // Lấy tháng/năm từ query params

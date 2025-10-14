@@ -141,13 +141,14 @@ public class TransactionController extends HttpServlet {
 
         HttpSession session = request.getSession(true);
         User user = (User) session.getAttribute("user");
-        UUID user_Id = user.getId();
+        UUID userId = user.getId();
 
-        UUID userId;
+        //UUID userId;
         if (session == null || session.getAttribute("user_id") == null) {
-            userId = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
+            request.setAttribute("error", "You need to be logged in to perform this action.");
+
         } else {
-            userId = user_Id;
+            //userId = user_Id;
         }
 
         if ("filter".equals(action)) {
@@ -155,8 +156,9 @@ public class TransactionController extends HttpServlet {
             String toDate = request.getParameter("toDate");
             String notes = request.getParameter("notes");
             String[] typeValues = request.getParameterValues("type");
+            String categoryId = request.getParameter("category");
 
-            List<Transaction> transactionList = transactionService.filterPanel(userId, fromDate, toDate, notes, typeValues);
+            List<Transaction> transactionList = transactionService.filterPanel(userId, fromDate, toDate, notes, typeValues, categoryId);
 
             String dateRangeLabel;
             if (fromDate != null && !fromDate.isEmpty() && toDate != null && !toDate.isEmpty()) {

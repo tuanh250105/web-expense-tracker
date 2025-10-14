@@ -17,12 +17,15 @@ public class AnalyticsService {
     public List<Transaction> findTransactions(UUID userId, String type, LocalDateTime from, LocalDateTime to) {
         if (from != null && to != null) {
             String[] types = "all".equalsIgnoreCase(type) ? null : new String[]{type};
+            String categoryId = null;
+            String notes = null;
             return transactionService.filterPanel(
                     userId,
                     from.toLocalDate().toString(),
                     to.toLocalDate().toString(),
-                    "",
-                    types
+                    notes,
+                    types,
+                    categoryId
             );
         }
 

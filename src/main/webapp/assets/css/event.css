@@ -1,0 +1,531 @@
+/* Layout chung */
+.event-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.event-container {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+    width: 100%;
+    max-width: 1200px;
+}
+
+/* Filter Panel */
+.filter-panel {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    padding: 20px;
+    height: fit-content;
+}
+
+.filter-panel h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.filter-panel label {
+    display: block;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+    margin-top: 15px;
+}
+
+.range-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.range-inputs input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.apply-btn, .cancel-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.apply-btn {
+    background: #1976d2;
+    color: white;
+}
+
+.apply-btn:hover {
+    background: #1565c0;
+}
+
+.cancel-btn {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.cancel-btn:hover {
+    background: #e0e0e0;
+}
+
+/* Event List */
+.event-list {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    padding: 20px;
+}
+
+.event-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.event-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+}
+
+.event-items {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Event Item */
+.event-item {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    border: 1px solid #eee;
+}
+
+.event-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.event-item .details h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.event-item .details p {
+    font-size: 14px;
+    color: #666;
+    margin: 5px 0;
+}
+
+.progress-bar {
+    background: #eee;
+    height: 10px;
+    border-radius: 5px;
+    margin-top: 15px;
+    overflow: hidden;
+}
+
+.progress {
+    background: #1976d2;
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.5s;
+}
+
+.progress.warning {
+    background: #ff9800;
+}
+
+.progress.danger {
+    background: #d32f2f;
+}
+
+.more-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px 10px;
+    color: #666;
+}
+
+.more-btn:hover {
+    background: #e0e0e0;
+    border-radius: 4px;
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 45px;
+    right: 15px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    min-width: 180px;
+    z-index: 100;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-menu a,
+.dropdown-menu button {
+    display: block;
+    width: 100%;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: #333;
+    font-size: 14px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+}
+
+.dropdown-menu a:hover,
+.dropdown-menu button:hover {
+    background: #f5f5f5;
+}
+
+.dropdown-menu .delete-form {
+    margin: 0;
+}
+
+/* Form Add/Edit Event */
+.addForm-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.addForm-container.show {
+    display: flex;
+}
+
+.addForm-container form {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.addForm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.addForm-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+}
+
+.closeFormBtn {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #999;
+}
+
+.closeFormBtn:hover {
+    color: #333;
+}
+
+.addForm-body {
+    padding: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.input-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.input-group-2 {
+    flex: 1;
+}
+
+.input-img {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.input-img img {
+    width: 24px;
+    height: 24px;
+}
+
+.input-wrap {
+    flex: 1;
+}
+
+.input-wrap label {
+    display: block;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.input-wrap input,
+.input-wrap textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.input-wrap textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.addForm-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 20px;
+    border-top: 1px solid #eee;
+}
+
+.cancelEventBtn,
+.saveEventBtn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cancelEventBtn {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.cancelEventBtn:hover {
+    background: #e0e0e0;
+}
+
+.saveEventBtn {
+    background: #1976d2;
+    color: white;
+}
+
+.saveEventBtn:hover {
+    background: #1565c0;
+}
+
+/* Modal */
+#linkTransactionModal,
+#chartModal,
+#historyModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+#linkTransactionModal.show,
+#chartModal.show,
+#historyModal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px;
+    position: relative;
+}
+
+.modal-content h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.close-link-modal,
+.close-chart-modal,
+.close-history-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #999;
+}
+
+.close-link-modal:hover,
+.close-chart-modal:hover,
+.close-history-modal:hover {
+    color: #333;
+}
+
+#transactionList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#transactionList li {
+    margin-bottom: 10px;
+}
+
+#transactionList button {
+    width: 100%;
+    padding: 12px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#transactionList button:hover {
+    background: #e0e0e0;
+}
+
+#spentChart {
+    max-width: 100%;
+    max-height: 400px;
+}
+
+#historyList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#historyList li {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    color: #666;
+}
+
+/* FAB Buttons */
+.fab-buttons {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    display: flex;
+    gap: 10px;
+    z-index: 999;
+}
+
+.fab {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+}
+
+.fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+
+.add-event {
+    background: #1976d2;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .event-container {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-panel {
+        margin-bottom: 20px;
+    }
+
+    .event-wrapper {
+        padding: 10px;
+    }
+
+    .modal-content {
+        width: 95vw;
+        max-height: 90vh;
+    }
+
+    #spentChart {
+        max-height: 300px;
+    }
+
+    .fab-buttons {
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .fab {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+}

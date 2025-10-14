@@ -175,7 +175,7 @@ public class TransactionDAO {
     }
 
     // ========================= FILTER =========================
-    public List<Transaction> filter(UUID userId, String fromDate, String toDate, String notes, String[] types) {
+    public List<Transaction> filter(UUID userId, String fromDate, String toDate, String notes, String[] types, String categoryId) {
         EntityManager em = em();
         try {
             StringBuilder jpql = new StringBuilder("""
@@ -189,6 +189,7 @@ public class TransactionDAO {
             if (toDate != null && !toDate.isEmpty()) jpql.append(" AND t.transactionDate < :toDate");
             if (notes != null && !notes.isEmpty()) jpql.append(" AND LOWER(t.note) LIKE LOWER(:notes)");
             if (types != null && types.length > 0) jpql.append(" AND LOWER(t.type) IN :types");
+            if (categoryId != null && !categoryId.isEmpty()) jpql.append(" AND t.category.id = :categoryId");
             jpql.append(" ORDER BY t.transactionDate DESC");
 
             TypedQuery<Transaction> query = em.createQuery(jpql.toString(), Transaction.class);
@@ -206,6 +207,9 @@ public class TransactionDAO {
                         .map(s -> s.toLowerCase(Locale.ENGLISH))
                         .collect(Collectors.toList());
                 if (!normalized.isEmpty()) query.setParameter("types", normalized);
+            }
+            if (categoryId != null && !categoryId.isEmpty()) {
+                query.setParameter("categoryId", UUID.fromString(categoryId));
             }
 
             return query.getResultList();
