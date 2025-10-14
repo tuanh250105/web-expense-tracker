@@ -32,7 +32,7 @@
                 transactions.forEach(tx => {
                     const li = document.createElement('li');
                     li.className = 'flex justify-between items-center py-2 border-b';
-                    li.innerHTML = `<span class="flex items-center"><span class="text-blue-500 mr-2">🔹</span><span>${tx.category || 'Không xác định'}</span></span><span class="text-gray-500 text-sm">${tx.date || 'N/A'}</span><span class="font-semibold">${(tx.amount / 1_000_000).toLocaleString('vi-VN')} triệu đ</span>`;
+                    li.innerHTML = `<span class="flex items-center"><span class="text-blue-500 mr-2">🔹</span><span>${tx.category || 'Không xác định'}</span></span><span class="text-gray-500 text-sm">${tx.date || 'N/A'}</span><span class="font-semibold">${(tx.amount / 1).toLocaleString('vi-VN')} đ</span>`;
                     txList.appendChild(li);
                 });
             }

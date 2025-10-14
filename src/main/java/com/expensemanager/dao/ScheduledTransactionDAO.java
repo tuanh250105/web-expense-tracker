@@ -1,5 +1,13 @@
 package com.expensemanager.dao;
 
+import com.expensemanager.model.Account;
+import com.expensemanager.model.Category;
+import com.expensemanager.model.ScheduledTransaction;
+import com.expensemanager.util.JpaUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Query;
+
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;

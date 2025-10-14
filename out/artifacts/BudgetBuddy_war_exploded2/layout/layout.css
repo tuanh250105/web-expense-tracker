@@ -1,0 +1,254 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f8fafc;
+    color: #333;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* Header */
+/* Animated gradient header */
+header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 60px;
+    background: linear-gradient(270deg, #00c6ff, #0072ff, #6a11cb, #2575fc);
+    background-size: 600% 600%;
+    animation: gradientFlow 10s ease infinite;
+    color: white;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1000;
+}
+@keyframes gradientFlow {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+
+.banner-text {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    font-size: 16px;
+    color: #fff;
+    overflow: hidden;
+    height: 30px;
+}
+
+.text-rotate {
+    display: inline-block;
+    animation: rotateText 12s infinite;
+}
+
+.text-rotate span {
+    display: block;
+    text-align: center;
+    height: 30px;
+    line-height: 30px;
+    font-size: 16px;
+    animation: fadeInOut 12s infinite;
+}
+
+@keyframes rotateText {
+    0%, 20% { transform: translateY(0%); }
+    25%, 45% { transform: translateY(-33.3%); }
+    50%, 70% { transform: translateY(-66.6%); }
+    75%, 100% { transform: translateY(0%); }
+}
+
+@keyframes fadeInOut {
+    0%, 20% { opacity: 1; }
+    25%, 45% { opacity: 1; }
+    50%, 70% { opacity: 1; }
+    75%, 100% { opacity: 1; }
+}
+
+/* Notifications */
+.notification {
+    font-size: 18px;
+    margin-right: 10px;
+    cursor: pointer;
+    position: relative;
+}
+.notification .badge {
+    position: absolute;
+    top: -6px; right: -6px;
+    background: red;
+    color: white;
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 50%;
+}
+
+.header-actions {
+    display: flex; align-items: center; gap: 15px;
+}
+.btn-logout {
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
+
+.btn-logout:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(0, 198, 255, 0.6);
+}
+
+/* Ripple effect */
+.btn-logout:after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 300%;
+    top: 0;
+    left: -100%;
+    background: rgba(255,255,255,0.2);
+    transform: rotate(25deg);
+    transition: left 0.5s;
+}
+.btn-logout:hover:after {
+    left: 100%;
+}
+
+/* Toggle switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 55px;
+    height: 28px;
+}
+.switch input { display:none; }
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #ccc;
+    border-radius: 28px;
+    transition: background 0.4s;
+}
+
+.slider:before {
+    content: "🌞";
+    position: absolute;
+    height: 22px; width: 22px;
+    left: 3px; bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    transition: transform 0.4s, content 0.4s;
+}
+
+input:checked + .slider {
+    background: #0072ff;
+}
+input:checked + .slider:before {
+    transform: translateX(27px) rotate(360deg);
+    content: "🌙";
+}
+
+
+/* Sidebar */
+/* Sidebar container */
+.sidebar {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 240px;
+    height: 100%;
+    background: #2c3e50;
+    padding: 15px 0;
+    overflow-y: auto;
+    transition: transform 0.4s ease;
+    animation: slideIn 0.5s ease forwards;
+    box-shadow: 2px 0 6px rgba(0,0,0,0.15);
+    opacity: 0;
+    animation-fill-mode: forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Menu items */
+.sidebar ul {
+    list-style: none;
+    padding: 0 10px;
+}
+
+.sidebar ul li {
+    margin: 6px 0;
+    position: relative;
+    overflow: hidden; /* cho hiệu ứng line chạy */
+}
+
+.sidebar ul li a {
+    display: flex;
+    align-items: center;
+    color: white;
+    padding: 10px 14px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: background 0.3s, padding-left 0.3s, box-shadow 0.3s;
+}
+
+.sidebar ul li a i {
+    width: 20px;
+    text-align: center;
+    margin-right: 10px;
+    font-size: 15px;
+}
+
+/* Hover effect */
+.sidebar ul li a:hover {
+    background: rgba(0, 198, 255, 0.15);
+    padding-left: 20px;
+    box-shadow: inset 3px 0 0 #00c6ff;
+}
+
+/* Active item */
+.sidebar ul li.active a {
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    box-shadow: 0 2px 10px rgba(0, 114, 255, 0.3);
+}
+
+/* Divider */
+.sidebar hr {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    margin: 12px 0;
+}
+
+/* Content */
+.content {
+    margin-left: 250px;
+    padding: 80px 20px 20px;
+    transition: margin-left 0.3s ease, background 0.3s, color 0.3s;
+}
+
+/* Dark Mode */
+body.dark {
+    background: #1e1e2f;
+    color: #eee;
+}
+body.dark .sidebar { background: #1b2430; }
+body.dark .sidebar ul li a { color: #eee; }
+body.dark .btn-logout { background: #333; color: #fff; }

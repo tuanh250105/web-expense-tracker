@@ -24,8 +24,6 @@ public class JpaUtil {
             System.out.println("──────────────────────────────────────────────");
             System.out.println("🔗 [JpaUtil] Đang khởi tạo EntityManagerFactory...");
 
-
-
             // Lấy từ .env, fallback sang System.getenv nếu không có
             String url = System.getenv("DB_URL");
             String user = System.getenv("DB_USER");
@@ -35,8 +33,6 @@ public class JpaUtil {
             if (url == null) url = System.getProperty("DB_URL");
             if (user == null) user = System.getProperty("DB_USER");
             if (pass == null) pass = System.getProperty("DB_PASS");
-
-
 
             // 2️⃣ Gộp vào Map thuộc tính JPA
             Map<String, Object> props = new HashMap<>();
@@ -54,11 +50,22 @@ public class JpaUtil {
             props.put("hibernate.show_sql", "true");
             props.put("hibernate.format_sql", "true");
 
-            // 🔒 Ngăn lỗi “prepared statement already exists” trên Supabase Pooler
-            props.put("hibernate.hikari.dataSource.cachePrepStmts", "false");
-            props.put("hibernate.hikari.dataSource.prepStmtCacheSize", "0");
-            props.put("hibernate.hikari.dataSource.useServerPrepStmts", "false");
+            // ⚡ QUAN TRỌNG: Cấu hình Connection Pool
+            // Sử dụng built-in connection pool của Hibernate (không cần thư viện ngoài)
+            props.put("hibernate.connection.pool_size", "5");  // Tối đa 5 connections
 
+            // Release mode - trả connection về pool sau mỗi statement
+            props.put("hibernate.connection.release_mode", "after_transaction");
+
+            // Auto-commit
+            props.put("hibernate.connection.autocommit", "false");
+
+            // Connection timeout và validation
+            props.put("hibernate.c3p0.timeout", "300");  // 5 phút timeout
+            props.put("hibernate.c3p0.idle_test_period", "60");  // Test mỗi 60 giây
+            props.put("hibernate.c3p0.max_statements", "0");  // Tắt prepared statement cache
+
+            // Validation query
             props.put("hibernate.connection.provider_class",
                     "org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl");
 
@@ -66,15 +73,12 @@ public class JpaUtil {
             String persistenceUnitName = "default";
 
             // 5️⃣ Tạo EntityManagerFactory
-            if (props.isEmpty()) {
-                tempEmf = Persistence.createEntityManagerFactory(persistenceUnitName);
-            } else {
-                tempEmf = Persistence.createEntityManagerFactory(persistenceUnitName, props);
-            }
+            tempEmf = Persistence.createEntityManagerFactory(persistenceUnitName, props);
 
             System.out.println("✅ [JpaUtil] Khởi tạo EntityManagerFactory thành công!");
-            System.out.println("   DB_URL  = " + url);
+            System.out.println("   DB_URL  = " + (url != null ? url.replaceAll(":[^:@]+@", ":****@") : "null"));
             System.out.println("   DB_USER = " + user);
+            System.out.println("   Max Connection Pool Size = 5");
             System.out.println("──────────────────────────────────────────────");
 
         } catch (Exception e) {
@@ -86,7 +90,7 @@ public class JpaUtil {
     }
 
     /**
-     * Thêm option “prepareThreshold=0” để tránh lỗi Supabase pooler (prepared
+     * Thêm option "prepareThreshold=0" để tránh lỗi Supabase pooler (prepared
      * statement conflict).
      */
     private static String appendSafeUrlOptions(String url) {
@@ -118,5 +122,4 @@ public class JpaUtil {
             System.out.println("✅ [JpaUtil] Đã đóng EntityManagerFactory.");
         }
     }
-
 }
