@@ -45,7 +45,7 @@ public class TransactionController extends HttpServlet {
         String action = request.getParameter("action");
         String transactionId = request.getParameter("transactionId");
 
-        // Handle edit action
+        // edit action
         if ("edit".equals(action) && transactionId != null) {
             UUID transId = UUID.fromString(transactionId);
             Transaction editTransaction = transactionService.getTransactionById(transId);
