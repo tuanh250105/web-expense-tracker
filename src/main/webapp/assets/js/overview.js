@@ -1,4 +1,3 @@
-
 (function () {
     // --- Helper Functions ---
     function cleanData(data) {

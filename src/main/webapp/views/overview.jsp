@@ -1,14 +1,9 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/overview.css">
-<script>
-    window.contextPath = '${pageContext.request.contextPath}';
-</script>
 
 <div class="container overview-page">
     <h2>Tổng Quan</h2>
     <p>Chào mừng đến với <strong>BudgetBuddy</strong> - Ứng dụng quản lý chi tiêu cá nhân!</p>
-
-    <div id="overview-container"></div>
 
     <div class="dashboard-container">
         <!-- Danh sách giao dịch gần đây -->
@@ -82,5 +77,8 @@
         </div>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    var contextPath = '${pageContext.request.contextPath}';
+</script>
 <script src="${pageContext.request.contextPath}/assets/js/overview.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
