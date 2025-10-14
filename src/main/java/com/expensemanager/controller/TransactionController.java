@@ -28,9 +28,7 @@ public class TransactionController extends HttpServlet {
     private static final int cache_size = 6;
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(true);
         User user = (User) session.getAttribute("user");
         UUID userId;
@@ -53,8 +51,6 @@ public class TransactionController extends HttpServlet {
         }
 
 
-        String monthParam = request.getParameter("month");
-        String yearParam = request.getParameter("year");
         String navigate = request.getParameter("navigate");
 
         YearMonth currentYearMonth;
@@ -72,10 +68,6 @@ public class TransactionController extends HttpServlet {
             } else {
                 currentYearMonth = sessionYearMonth;
             }
-        } else if (monthParam != null && yearParam != null) {
-            int month = Integer.parseInt(monthParam);
-            int year = Integer.parseInt(yearParam);
-            currentYearMonth = YearMonth.of(year, month);
         } else {
             currentYearMonth = YearMonth.now();
         }
@@ -105,15 +97,19 @@ public class TransactionController extends HttpServlet {
 
         YearMonth currentMonth = YearMonth.now();
 
-        BigDecimal totalIncome = transList.stream()
-                .filter(t -> "income".equalsIgnoreCase(t.getType()))
-                .map(Transaction::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalIncome = BigDecimal.ZERO;
+        for (Transaction t : transList) {
+            if ("income".equalsIgnoreCase(t.getType())) {
+                totalIncome = totalIncome.add(t.getAmount());
+            }
+        }
 
-        BigDecimal totalExpense = transList.stream()
-                .filter(t -> "expense".equalsIgnoreCase(t.getType()))
-                .map(Transaction::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalExpense = BigDecimal.ZERO;
+        for (Transaction t : transList) {
+            if ("expense".equalsIgnoreCase(t.getType())) {
+                totalExpense = totalExpense.add(t.getAmount());
+            }
+        }
 
         BigDecimal totalBalance = totalIncome.subtract(totalExpense);
 
@@ -125,17 +121,13 @@ public class TransactionController extends HttpServlet {
         request.setAttribute("dateRangeLabel", dateRangeLabel);
         request.setAttribute("currentYearMonth", currentYearMonth);
         request.setAttribute("isCurrentMonth", currentYearMonth.equals(currentMonth));
-        request.setAttribute("totalIncome", totalIncome);
-        request.setAttribute("totalExpense", totalExpense);
         request.setAttribute("totalBalance", totalBalance);
-
         request.setAttribute("view", "/views/transaction.jsp");
         request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
         String action = request.getParameter("action");
 
@@ -143,12 +135,8 @@ public class TransactionController extends HttpServlet {
         User user = (User) session.getAttribute("user");
         UUID userId = user.getId();
 
-        //UUID userId;
         if (session == null || session.getAttribute("user_id") == null) {
-            request.setAttribute("error", "You need to be logged in to perform this action.");
-
-        } else {
-            //userId = user_Id;
+            request.setAttribute("error", "Login before use this Module PLease");
         }
 
         if ("filter".equals(action)) {
@@ -173,7 +161,6 @@ public class TransactionController extends HttpServlet {
 
             List<Category> categoryList = getCategoryList(session, userId);
             List<Account> accountList = getAccountList(session, userId);
-
             request.setAttribute("pageJs", "transaction.js");
             request.setAttribute("pageCss", "transaction.css");
             request.setAttribute("dateRangeLabel", dateRangeLabel);
@@ -183,7 +170,6 @@ public class TransactionController extends HttpServlet {
             request.setAttribute("isFiltered", true);
             request.setAttribute("view", "/views/transaction.jsp");
             request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
-            return;
         }
         else if ("add_income".equals(action)) {
             String categoryId = request.getParameter("category");
@@ -235,9 +221,7 @@ public class TransactionController extends HttpServlet {
 
     @SuppressWarnings("unchecked")
     private Map<String, List<Transaction>> getOrCreateCache(HttpSession session) {
-        Map<String, List<Transaction>> cache =
-                (Map<String, List<Transaction>>) session.getAttribute(transaction_cache);
-
+        Map<String, List<Transaction>> cache = (Map<String, List<Transaction>>) session.getAttribute(transaction_cache);
         if (cache == null) {
             cache = new LinkedHashMap<>(cache_size + 1, 0.75f, true);
             session.setAttribute(transaction_cache, cache);
@@ -260,10 +244,7 @@ public class TransactionController extends HttpServlet {
         for (YearMonth ym : toPreload) {
             String key = getCacheKey(ym);
             if (!cache.containsKey(key)) {
-                List<Transaction> transactions = transactionService.getAllTransactionsByMonthAndYear(
-                        userId,
-                        ym.getMonthValue(),
-                        ym.getYear()
+                List<Transaction> transactions = transactionService.getAllTransactionsByMonthAndYear(userId, ym.getMonthValue(), ym.getYear()
                 );
                 cache.put(key, transactions);
             }
@@ -273,9 +254,7 @@ public class TransactionController extends HttpServlet {
     private void cleanupCache(Map<String, List<Transaction>> cache) {
         if (cache.size() > cache_size) {
             Iterator<String> iterator = cache.keySet().iterator();
-            while (cache.size() > cache_size && iterator.hasNext()) {
-                iterator.next();
-                iterator.remove();
+            while (cache.size() > cache_size && iterator.hasNext()) {iterator.next();iterator.remove();
             }
         }
     }

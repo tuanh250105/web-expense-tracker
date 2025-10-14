@@ -1,6 +1,7 @@
 package com.expensemanager.controller;
 
 
+import com.expensemanager.model.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -8,86 +9,76 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.UUID;
+
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
+import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/report")
 public class ReportController extends HttpServlet {
 
 
-    private static final String SMTP_HOST = "smtp.gmail.com";
-    private static final String SMTP_PORT = "587";
-    private static final String SENDER_EMAIL = "tuanh25012005@gmail.com";
-    private static final String SENDER_PASSWORD = System.getenv("${SMTP_PASS}");
-    private static final String RECEIVER_EMAIL = "vominhkhoi299@gmail.com";
+    private static final String smtp_host = "smtp.gmail.com";
+    private static final String smtp_port = "587";
+    private static final String sender_email = "tuanh25012005@gmail.com"; // Cho moi User sai chung 1 Email =)))
+    private static final String sender_pass = System.getenv("SMTP_PASS");
+    private static final String receiver = "vominhkhoi299@gmail.com"; // Nay Admin nha
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        // Hiển thị form báo cáo
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.getRequestDispatcher("/views/report.jsp").forward(request, response);
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
 
-        // Lấy dữ liệu từ form
         String senderName = request.getParameter("senderName");
         String senderEmail = request.getParameter("senderEmail");
         String subject = request.getParameter("subject");
         String message = request.getParameter("message");
 
-        // Validate
-        if (senderName == null || senderEmail == null || subject == null || message == null ||
-                senderName.trim().isEmpty() || senderEmail.trim().isEmpty() ||
+        if (senderName == null || senderEmail == null || subject == null || message == null || senderName.trim().isEmpty() || senderEmail.trim().isEmpty() ||
                 subject.trim().isEmpty() || message.trim().length() < 10) {
-
             request.setAttribute("error", "Vui lòng điền đầy đủ thông tin hợp lệ");
             request.getRequestDispatcher("/views/report.jsp").forward(request, response);
             return;
         }
-
-        // Gửi email
-        boolean emailSent = sendEmail(senderName, senderEmail, subject, message);
+        HttpSession session = request.getSession();
+        User user  = (User) session.getAttribute("user");
+        UUID userId = user.getId();
+        // Send mail đi
+        boolean emailSent = sendEmail(senderName, senderEmail, subject, message, userId);
 
         if (emailSent) {
-            // Chuyển đến trang thank you
-            response.sendRedirect(request.getContextPath() + "/report/thank-you");
+            response.sendRedirect(request.getContextPath() + "/faq");
         } else {
             request.setAttribute("error", "Có lỗi xảy ra khi gửi email. Vui lòng thử lại sau.");
             request.getRequestDispatcher("/views/report.jsp").forward(request, response);
         }
     }
 
-    private boolean sendEmail(String senderName, String senderEmail, String subject, String message) {
+    private boolean sendEmail(String senderName, String senderEmail, String subject, String message, UUID userId) {
         try {
-            // Cấu hình properties
             Properties props = new Properties();
             props.put("mail.smtp.auth", "true");
             props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.smtp.host", SMTP_HOST);
-            props.put("mail.smtp.port", SMTP_PORT);
-            props.put("mail.smtp.ssl.trust", SMTP_HOST);
+            props.put("mail.smtp.host", smtp_host);
+            props.put("mail.smtp.port", smtp_port);
+            props.put("mail.smtp.ssl.trust", smtp_host);
             props.put("mail.smtp.ssl.protocols", "TLSv1.2");
-
-            // Tạo session
             Session session = Session.getInstance(props, new Authenticator() {
                 @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(SENDER_EMAIL, SENDER_PASSWORD);
-                }
+                protected PasswordAuthentication getPasswordAuthentication() {return new PasswordAuthentication(sender_email, sender_pass);}
             });
 
-            // Tạo message
             Message mimeMessage = new MimeMessage(session);
-            mimeMessage.setFrom(new InternetAddress(SENDER_EMAIL));
-            mimeMessage.setRecipients(Message.RecipientType.TO, InternetAddress.parse(RECEIVER_EMAIL));
+            mimeMessage.setFrom(new InternetAddress(sender_email));
+            mimeMessage.setRecipients(Message.RecipientType.TO, InternetAddress.parse(receiver));
             mimeMessage.setSubject("[Báo Cáo] " + subject);
 
-            // Nội dung email với HTML
             String emailContent = String.format(
                     "<html>" +
                             "<body style='font-family: Arial, sans-serif;'>" +
@@ -111,10 +102,7 @@ public class ReportController extends HttpServlet {
             );
 
             mimeMessage.setContent(emailContent, "text/html; charset=UTF-8");
-
-            // Gửi email
             Transport.send(mimeMessage);
-
             return true;
 
         } catch (Exception e) {

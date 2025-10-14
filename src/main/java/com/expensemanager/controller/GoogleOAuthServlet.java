@@ -75,6 +75,11 @@ public class GoogleOAuthServlet extends HttpServlet {
         var transport = new NetHttpTransport();
         var jsonFactory = GsonFactory.getDefaultInstance();
 
+//        Thư viện Google API yêu cầu hai thành phần:
+//
+//        NetHttpTransport: dùng để gửi HTTP(S) request.
+//        GsonFactory: để xử lý dữ liệu JSON từ Google (token, thông tin user...).
+
         System.out.println("🔍 [Google OAuth Callback]");
         System.out.println("code=" + code);
         System.out.println("redirect=" + redirect);
@@ -91,7 +96,7 @@ public class GoogleOAuthServlet extends HttpServlet {
         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier
                 .Builder(transport, jsonFactory)
                 .setAudience(Collections.singletonList(System.getenv("GOOGLE_CLIENT_ID"))).build();
-
+//        header.payload.signature
         boolean ok;
         try {
             ok = verifier.verify(idToken);

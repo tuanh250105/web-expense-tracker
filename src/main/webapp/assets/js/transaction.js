@@ -175,17 +175,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (window.editTransactionData) {
         const t = window.editTransactionData;
 
-        // ✅ Sửa: So sánh không phân biệt hoa/thường
         const formContainer = t.type.toLowerCase() === "income" ? formIncomeContainer : formExpenseContainer;
 
         formContainer.classList.add("active");
         initFlatpickr(formContainer);
 
-        // ✅ Set category
+        // Set category
         formContainer.querySelector('.hidden_new_category').value = t.categoryId;
         formContainer.querySelector('.select_new_category').value = t.categoryName;
 
-        // ✅ Set category icon - Tìm icon từ categoryList
+        // Tìm icon từ categoryList
         const categoryButton = document.querySelector(`#categoryList button[data-category="${t.categoryId}"]`);
         if (categoryButton) {
             const iconPath = categoryButton.getAttribute('data-icon');
@@ -196,28 +195,26 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // ✅ Set other fields
+        // Set other fields
         formContainer.querySelector('.type_value').value = t.value;
         formContainer.querySelector('.select_new_account').value = t.accountId;
         formContainer.querySelector('.select_new_date').value = t.date;
         formContainer.querySelector('.select_new_time').value = t.time;
         formContainer.querySelector('.type_new_notes').value = t.notes;
 
-        // ✅ Set header
+        // Set header
         const header = formContainer.querySelector('.addForm-header h2');
         if (header) header.textContent = "Edit " + t.type;
 
-        // ✅ Set action
+        //Set action
         const actionInput = formContainer.querySelector('input[name="action"]');
         actionInput.value = t.type.toLowerCase() === "income" ? "update_income" : "update_expense";
 
-        // ✅ Đảm bảo type được set đúng
         const typeInput = formContainer.querySelector('input[name="type"]');
         if (typeInput) {
             typeInput.value = t.type.toLowerCase();
         }
 
-        // ✅ Set ID
         let idInput = formContainer.querySelector('input[name="id"]');
         if (!idInput) {
             idInput = document.createElement("input");
@@ -254,7 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const menu = moreBtn.nextElementSibling;
 
             if (!menu || !menu.classList.contains("dropdown-menu")) {
-                console.warn("⚠️ Không tìm thấy dropdown-menu");
+                console.warn("Không tìm thấy dropdown-menu");
                 return;
             }
 

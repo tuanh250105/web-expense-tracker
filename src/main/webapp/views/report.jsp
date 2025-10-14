@@ -139,27 +139,23 @@
         <form action="${pageContext.request.contextPath}/report" method="POST" id="reportForm">
             <div class="form-group">
                 <label for="senderName">Họ và Tên <span class="required">*</span></label>
-                <input type="text" id="senderName" name="senderName" required
-                       placeholder="Nhập họ tên của bạn ở đây nè: ">
+                <input type="text" id="senderName" name="senderName" required placeholder="Nhập họ tên của bạn ở đây nè: ">
             </div>
 
             <div class="form-group">
                 <label for="senderEmail">Email <span class="required">*</span></label>
-                <input type="email" id="senderEmail" name="senderEmail" required
-                       placeholder="email@example.com">
+                <input type="email" id="senderEmail" name="senderEmail" required placeholder="email@example.com">
                 <small>Chúng tôi sẽ phản hồi qua email này nhé !</small>
             </div>
 
             <div class="form-group">
                 <label for="subject">Tiêu Đề <span class="required">*</span></label>
-                <input type="text" id="subject" name="subject" required
-                       placeholder="Nhập tiêu đề báo cáo:">
+                <input type="text" id="subject" name="subject" required placeholder="Nhập tiêu đề báo cáo:">
             </div>
 
             <div class="form-group">
                 <label for="message">Nội Dung <span class="required">*</span></label>
-                <textarea id="message" name="message" required
-                          placeholder="Nhập nội dung chi tiết báo cáo hoặc góp ý của bạn... (Mong bạn góp ý nhẹ nhàng nhé <3)"></textarea>
+                <textarea id="message" name="message" required placeholder="Nhập nội dung chi tiết báo cáo hoặc góp ý của bạn... (Mong bạn góp ý nhẹ nhàng nhé <3)"></textarea>
                 <small>Tối thiểu 10 ký tự</small>
             </div>
 

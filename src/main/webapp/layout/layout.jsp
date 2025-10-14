@@ -76,7 +76,7 @@
         <li><a href="${pageContext.request.contextPath}/transaction"><i class="fa-solid fa-receipt"></i> <span>Giao dịch</span></a></li>
         <li><a href="${pageContext.request.contextPath}/scheduled_transactions?action=list"><i class="fa-solid fa-calendar-days"></i> <span>Giao dịch định kỳ</span></a></li>
         <li><a href="${pageContext.request.contextPath}/accounts-management"><i class="fa-solid fa-tasks"></i> <span>Quản lý Tài khoản</span></a></li>
-        <li><a href="#"><i class="fa-solid fa-wallet"></i> <span>Ngân sách</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/budget"><i class="fa-solid fa-wallet"></i> <span>Ngân sách</span></a></li>
         <li><a href="${pageContext.request.contextPath}/debt"><i class="fa-solid fa-hand-holding-dollar"></i> <span>Quản lý nợ</span></a></li>
         <hr>
         <li><a href="${pageContext.request.contextPath}/analytics"><i class="fa-solid fa-chart-pie"></i> <span>Tổng hợp biểu đồ</span></a></li>

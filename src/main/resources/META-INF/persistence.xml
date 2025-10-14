@@ -23,6 +23,7 @@
         <class>com.expensemanager.model.GroupExpense</class>
         <class>com.expensemanager.model.GroupMember</class>
         <class>com.expensemanager.model.Event</class>
+        <class>com.expensemanager.model.Budget</class>
         <!-- Thêm các entity khác nếu có -->
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
