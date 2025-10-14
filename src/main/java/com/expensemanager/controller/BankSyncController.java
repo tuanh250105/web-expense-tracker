@@ -3,17 +3,19 @@ package com.expensemanager.controller;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
+import com.expensemanager.model.User;
 import com.expensemanager.service.AccountService;
 import com.expensemanager.service.CategoryService;
 import com.expensemanager.service.SepayService;
 import com.expensemanager.service.SepayService.SepayTransaction;
 import com.expensemanager.service.TransactionServicestart;
+import com.google.gson.Gson;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -24,23 +26,48 @@ import jakarta.servlet.http.HttpSession;
 
 /**
  * Controller để xử lý việc đồng bộ giao dịch từ ngân hàng.
- * Người dùng sẽ xem trước các giao dịch và chọn để nhập vào hệ thống.
+ * Bao gồm cả API endpoints cho categories và accounts.
  */
-@WebServlet(urlPatterns = {"/bank-sync", "/api/bank-sync", "/api/bank-sync/*"})
+@WebServlet(urlPatterns = {
+        "/bank-sync",
+        "/api/bank-sync",
+        "/api/bank-sync/*",
+        "/api/categories/*",
+        //"/api/accounts/*"
+})
 public class BankSyncController extends HttpServlet {
 
     private final SepayService sepayService = new SepayService();
     private final TransactionServicestart transactionService = new TransactionServicestart();
     private final AccountService accountService = new AccountService();
     private final CategoryService categoryService = new CategoryService();
+    private final Gson gson = new Gson();
 
     /**
-     * Xử lý yêu cầu GET: Hiển thị trang đồng bộ hoặc xử lý sync action.
-     * Trang này sẽ hiển thị các giao dịch đang chờ xử lý (nếu có).
+     * Xử lý yêu cầu GET
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
+        String pathInfo = request.getPathInfo();
+        String servletPath = request.getServletPath();
+
+        // === API ENDPOINTS ===
+
+        // API: Get Categories
+        if ("/api/categories".equals(servletPath) || servletPath.startsWith("/api/categories/")) {
+            handleGetCategories(request, response);
+            return;
+        }
+
+        // API: Get Accounts
+        if ("/api/accounts".equals(servletPath) || servletPath.startsWith("/api/accounts/")) {
+            handleGetAccounts(request, response);
+            return;
+        }
+
+        // === BANK SYNC ACTIONS ===
 
         String action = request.getParameter("action");
 
@@ -56,15 +83,147 @@ public class BankSyncController extends HttpServlet {
             return;
         }
 
-        // Giả sử có session check
-        // UUID userId = (UUID) session.getAttribute("user_id");
+        // === DEFAULT: SHOW PAGE ===
 
-        // ✅ Tải dữ liệu cần thiết cho form (dropdown tài khoản, danh mục)
+        // Tải dữ liệu cần thiết cho form (dropdown tài khoản, danh mục)
         loadFormData(request);
 
-        // ✅ Chuyển tiếp đến view để hiển thị trang
+        // Chuyển tiếp đến view để hiển thị trang
         request.setAttribute("view", "/views/bank-sync.jsp");
         request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
+    }
+
+    /**
+     * API: Get all categories for current user
+     * Endpoint: GET /api/categories/
+     */
+    private void handleGetCategories(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        try {
+            // Lấy user từ session
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                System.err.println("❌ No session found");
+                sendJsonError(response, HttpServletResponse.SC_UNAUTHORIZED, "Chưa đăng nhập");
+                return;
+            }
+
+            User user = (User) session.getAttribute("user");
+            if (user == null) {
+                System.err.println("❌ No user in session");
+                sendJsonError(response, HttpServletResponse.SC_UNAUTHORIZED, "Vui lòng đăng nhập");
+                return;
+            }
+
+            UUID userId = user.getId();
+            System.out.println("📂 API: Fetching categories for user: " + userId);
+
+            // Lấy danh sách categories
+            List<Category> categories = categoryService.getAllCategories(userId);
+
+            if (categories == null) {
+                System.err.println("❌ categoryService returned null");
+                categories = new ArrayList<>();
+            }
+
+            System.out.println("✅ Found " + categories.size() + " categories");
+
+            // Chuyển đổi sang format đơn giản cho JSON
+            List<Map<String, Object>> categoryList = categories.stream()
+                    .map(cat -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", cat.getId().toString());
+                        map.put("name", cat.getName());
+                        map.put("type", cat.getType());
+                        map.put("iconPath", cat.getIconPath() != null ? cat.getIconPath() : "fa-solid fa-tag");
+
+                        System.out.println("  📌 Category: " + cat.getName() + " (ID: " + cat.getId() + ")");
+                        return map;
+                    })
+                    .collect(Collectors.toList());
+
+            // Trả về JSON response
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("data", categoryList);
+
+            String jsonResponse = gson.toJson(result);
+            System.out.println("📤 Sending " + categoryList.size() + " categories");
+
+            response.getWriter().write(jsonResponse);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error in handleGetCategories: " + e.getClass().getName() + " - " + e.getMessage());
+            e.printStackTrace();
+            sendJsonError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Lỗi khi tải danh mục: " + e.getMessage());
+        }
+    }
+
+    /**
+     * API: Get all accounts for current user
+     * Endpoint: GET /api/accounts/
+     */
+    private void handleGetAccounts(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        try {
+            // Lấy user từ session
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                sendJsonError(response, HttpServletResponse.SC_UNAUTHORIZED, "Chưa đăng nhập");
+                return;
+            }
+
+            User user = (User) session.getAttribute("user");
+            if (user == null) {
+                sendJsonError(response, HttpServletResponse.SC_UNAUTHORIZED, "Vui lòng đăng nhập");
+                return;
+            }
+
+            System.out.println("💼 API: Fetching accounts for user: " + user.getId());
+
+            // Lấy danh sách accounts
+            List<Account> accounts = accountService.getAllAccounts();
+
+            if (accounts == null) {
+                accounts = new ArrayList<>();
+            }
+
+            System.out.println("✅ Found " + accounts.size() + " accounts");
+
+            // Chuyển đổi sang format JSON
+            List<Map<String, Object>> accountList = accounts.stream()
+                    .map(acc -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", acc.getId().toString());
+                        map.put("name", acc.getName());
+                        map.put("balance", acc.getBalance());
+                        map.put("currency", "VND");
+                        return map;
+                    })
+                    .collect(Collectors.toList());
+
+            // Trả về JSON response
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("data", accountList);
+
+            response.getWriter().write(gson.toJson(result));
+
+        } catch (Exception e) {
+            System.err.println("❌ Error in handleGetAccounts: " + e.getMessage());
+            e.printStackTrace();
+            sendJsonError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Lỗi khi tải tài khoản: " + e.getMessage());
+        }
     }
 
     /**
@@ -121,18 +280,6 @@ public class BankSyncController extends HttpServlet {
     }
 
     /**
-     * Escape special characters for JSON
-     */
-    private String escapeJson(String str) {
-        if (str == null) return "";
-        return str.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
-    }
-
-    /**
      * Handle sync action from AJAX GET request
      */
     private void handleSyncAction(HttpServletRequest request, HttpServletResponse response)
@@ -175,7 +322,7 @@ public class BankSyncController extends HttpServlet {
     }
 
     /**
-     * Xử lý yêu cầu POST: Thực hiện hành động "Lấy giao dịch" hoặc "Nhập giao dịch".
+     * Xử lý yêu cầu POST
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -192,13 +339,10 @@ public class BankSyncController extends HttpServlet {
 
         try {
             if ("fetch".equals(action)) {
-                // 1️⃣ Hành động: LẤY GIAO DỊCH từ SePay API
                 handleFetchTransactions(request, response);
             } else if ("import".equals(action)) {
-                // 2️⃣ Hành động: NHẬP CÁC GIAO DỊCH ĐÃ CHỌN vào database
                 handleImportTransactions(request, response);
             } else {
-                // Hành động không hợp lệ
                 request.setAttribute("error", "Hành động không được hỗ trợ.");
                 loadFormData(request);
                 request.setAttribute("view", "/views/bank-sync.jsp");
@@ -214,24 +358,23 @@ public class BankSyncController extends HttpServlet {
     }
 
     /**
-     * Xử lý logic lấy giao dịch từ SePay và lưu vào session.
+     * Xử lý logic lấy giao dịch từ SePay và lưu vào session
      */
     private void handleFetchTransactions(HttpServletRequest request, HttpServletResponse response)
             throws IOException, InterruptedException, ServletException {
 
         System.out.println("🏦 Bắt đầu lấy giao dịch từ SePay...");
-        List<SepayTransaction> transactions = sepayService.fetchTransactions(30); // Lấy 30 ngày
+        List<SepayTransaction> transactions = sepayService.fetchTransactions(30);
 
-        // ✅ Lưu các giao dịch vừa lấy được vào session để chờ người dùng xác nhận
         HttpSession session = request.getSession();
         session.setAttribute("pendingBankTransactions", transactions);
 
-        System.out.println("✅ Lấy thành công " + transactions.size() + " giao dịch. Chuyển hướng về trang review.");
+        System.out.println("✅ Lấy thành công " + transactions.size() + " giao dịch.");
         response.sendRedirect(request.getContextPath() + "/bank-sync");
     }
 
     /**
-     * Xử lý logic nhập các giao dịch đã chọn vào cơ sở dữ liệu.
+     * Xử lý logic nhập các giao dịch đã chọn vào database
      */
     private void handleImportTransactions(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
@@ -241,12 +384,11 @@ public class BankSyncController extends HttpServlet {
         List<SepayTransaction> pendingTransactions =
                 (List<SepayTransaction>) session.getAttribute("pendingBankTransactions");
 
-        // Lấy danh sách các giao dịch được người dùng tick chọn từ form
         String[] selectedIndices = request.getParameterValues("selectedTransaction");
 
         if (selectedIndices == null || selectedIndices.length == 0) {
             request.setAttribute("error", "Bạn chưa chọn giao dịch nào để nhập.");
-            loadFormData(request); // Tải lại dữ liệu cho form
+            loadFormData(request);
             request.getRequestDispatcher("/views/bank-sync.jsp").forward(request, response);
             return;
         }
@@ -254,24 +396,20 @@ public class BankSyncController extends HttpServlet {
         System.out.println("📥 Bắt đầu nhập " + selectedIndices.length + " giao dịch đã chọn...");
         int successCount = 0;
 
-        // Lặp qua các giao dịch được chọn để xử lý
         for (String indexStr : selectedIndices) {
             int index = Integer.parseInt(indexStr);
             SepayTransaction sepayTx = pendingTransactions.get(index);
 
-            // Lấy tài khoản và danh mục người dùng đã chọn cho giao dịch này
             String accountId = request.getParameter("accountId_" + index);
             String categoryId = request.getParameter("categoryId_" + index);
-            String note = sepayTx.getContent(); // Fix: getContent() instead of getDescription()
+            String note = sepayTx.getContent();
 
-            // Chuyển đổi SepayTransaction thành Transaction của hệ thống
             Transaction transaction = new Transaction();
             transaction.setAmount(BigDecimal.valueOf(sepayTx.getAmount()));
             transaction.setNote(note);
-            transaction.setTransactionDate(LocalDateTime.now()); // Fix: Use LocalDateTime.now()
+            transaction.setTransactionDate(LocalDateTime.now());
             transaction.setType(sepayTx.getAmount() > 0 ? "income" : "expense");
 
-            // Get Account and Category objects
             if (accountId != null && !accountId.isEmpty()) {
                 Account account = accountService.getAccountById(UUID.fromString(accountId));
                 transaction.setAccount(account);
@@ -281,16 +419,13 @@ public class BankSyncController extends HttpServlet {
                 transaction.setCategory(category);
             }
 
-            // Lưu vào database
             transactionService.addTransaction(transaction);
             successCount++;
         }
 
-        // ✅ Xóa các giao dịch chờ khỏi session sau khi đã xử lý xong
         session.removeAttribute("pendingBankTransactions");
 
         System.out.println("✅ Nhập thành công " + successCount + " giao dịch.");
-        // Chuyển hướng về trang danh sách giao dịch chính với thông báo thành công
         response.sendRedirect(request.getContextPath() + "/transactions?import_success=" + successCount);
     }
 
@@ -313,10 +448,9 @@ public class BankSyncController extends HttpServlet {
 
             System.out.println("📥 Received save transaction request: " + jsonString);
 
-            // Parse JSON using Gson
-            com.google.gson.Gson gson = new com.google.gson.Gson();
+            // Parse JSON
             @SuppressWarnings("unchecked")
-            java.util.Map<String, Object> jsonMap = gson.fromJson(jsonString, java.util.Map.class);
+            Map<String, Object> jsonMap = gson.fromJson(jsonString, Map.class);
 
             String accountId = (String) jsonMap.get("accountId");
             String categoryId = (String) jsonMap.get("categoryId");
@@ -340,14 +474,11 @@ public class BankSyncController extends HttpServlet {
 
             // Set type based on amount
             transaction.setType(transaction.getAmount().compareTo(BigDecimal.ZERO) >= 0 ? "income" : "expense");
-
-            // Set note
             transaction.setNote(note);
 
-            // Set transaction date - parse from string or use now
+            // Set transaction date
             if (transactionDateStr != null && !transactionDateStr.isEmpty()) {
                 try {
-                    // Parse ISO datetime string: "2025-10-12T10:14:00"
                     transaction.setTransactionDate(LocalDateTime.parse(transactionDateStr));
                 } catch (Exception e) {
                     System.err.println("⚠️ Cannot parse date: " + transactionDateStr + ", using now()");
@@ -399,15 +530,47 @@ public class BankSyncController extends HttpServlet {
     }
 
     /**
-     * Tải dữ liệu cần thiết cho các form trên trang (danh sách tài khoản, danh mục).
+     * Tải dữ liệu cần thiết cho các form trên trang
      */
     private void loadFormData(HttpServletRequest request) {
-        // Giả sử userId được lấy từ session
-         UUID userId = (UUID) request.getSession().getAttribute("user_id");
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("user");
+
+        if (user == null) {
+            System.err.println("⚠️ No user in session for loadFormData");
+            return;
+        }
+
+        UUID userId = user.getId();
         List<Account> accounts = accountService.getAllAccounts();
-        List<Category> categories = categoryService.getAllCategories(userId); // Hoặc getCategoriesByUser(userId);
+        List<Category> categories = categoryService.getAllCategories(userId);
+
+        System.out.println("📋 Loading form data: " + accounts.size() + " accounts, " + categories.size() + " categories");
 
         request.setAttribute("accounts", accounts);
         request.setAttribute("categories", categories);
+    }
+
+    /**
+     * Helper: Send JSON error response
+     */
+    private void sendJsonError(HttpServletResponse response, int statusCode, String message) throws IOException {
+        Map<String, Object> error = new HashMap<>();
+        error.put("success", false);
+        error.put("error", message);
+        response.setStatus(statusCode);
+        response.getWriter().write(gson.toJson(error));
+    }
+
+    /**
+     * Escape special characters for JSON
+     */
+    private String escapeJson(String str) {
+        if (str == null) return "";
+        return str.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 }

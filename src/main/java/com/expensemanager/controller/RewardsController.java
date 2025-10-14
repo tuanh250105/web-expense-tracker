@@ -1,5 +1,6 @@
 package com.expensemanager.controller;
 
+import com.expensemanager.model.User;
 import com.expensemanager.service.RewardService;
 import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
@@ -8,8 +9,8 @@ import jakarta.servlet.http.*;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.LocalDateTime;
 import java.util.*;
-import java.util.UUID;
 
 @WebServlet(name = "RewardsController", urlPatterns = {"/rewards", "/api/rewards/*"})
 public class RewardsController extends HttpServlet {
@@ -21,8 +22,12 @@ public class RewardsController extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException, ServletException {
 
+        // UI page
         if ("/rewards".equals(req.getServletPath())) {
+            UUID uid = resolveUserId(req);
+            String userId = uid.toString();
             req.setAttribute("view", "/views/rewards.jsp");
+            req.setAttribute("userId", userId);
             req.getRequestDispatcher("/layout/layout.jsp").forward(req, resp);
             return;
         }
@@ -50,11 +55,17 @@ public class RewardsController extends HttpServlet {
                     var prizes = service.getActivePrizes().stream()
                             .map(p -> Map.of("code", p.getCode(), "label", p.getLabel()))
                             .toList();
+
+                    var recentSpins = service.getRecentSpins(uid, 10); // 🔹 lấy lịch sử 10 lượt gần nhất
+
                     write(resp, Map.of(
                             "points", service.getUserScore(uid),
-                            "prizes", prizes
+                            "prizes", prizes,
+                            "recent", recentSpins  // ✅ thêm trường recent vào JSON
                     ));
                 }
+
+
             }
         } catch (Exception e) {
             resp.setStatus(500);
@@ -97,30 +108,27 @@ public class RewardsController extends HttpServlet {
         }
     }
 
-    private UUID resolveUserId(HttpServletRequest req) {
-        HttpSession session = req.getSession(false);
-
-        if (session != null) {
-            // Ưu tiên user thật trong session
-            Object u = session.getAttribute("user");
-            if (u instanceof com.expensemanager.model.User user && user.getId() != null)
-                return user.getId();
-
-            // Nếu chỉ có userId (UUID/String)
-            Object id = session.getAttribute("userId");
-            if (id instanceof UUID uid) return uid;
-            if (id instanceof String s && !s.isBlank()) {
-                try { return UUID.fromString(s); } catch (Exception ignored) {}
-            }
+    private int parseInt(String s, int def) {
+        try {
+            return Integer.parseInt(s);
+        } catch (Exception e) {
+            return def;
         }
-
-        // fallback chỉ dùng cho localhost test (không phải người dùng thật)
-        return UUID.fromString("60afce1a-f901-4144-8bdc-0b8dd37dd003");
     }
 
+    /**
+     * Lấy userId theo thứ tự ưu tiên:
+     * 1) session "user" (User object) -> id
+     * 2) session "userId" (UUID/String)
+     * 3) query param "userId" (UUID)
+     * 4) Fallback test id (dùng cho localhost/demo)
+     */
+    private UUID resolveUserId(HttpServletRequest req) {
+        HttpSession session = req.getSession(true);
+        User user = (User) session.getAttribute("user");
+        UUID userId = user.getId();
 
-    private int parseInt(String s, int def) {
-        try { return Integer.parseInt(s); }
-        catch (Exception e) { return def; }
+        return userId;
     }
 }
+

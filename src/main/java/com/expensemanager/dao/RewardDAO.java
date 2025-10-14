@@ -134,17 +134,26 @@ public class RewardDAO {
     public List<RewardSpin> recentSpins(UUID userId, int limit) {
         EntityManager em = em();
         try {
-            return em.createQuery(
+            List<RewardSpin> list = em.createQuery(
                             "SELECT s FROM RewardSpin s WHERE s.userId = :uid ORDER BY s.createdAt DESC",
                             RewardSpin.class
                     )
                     .setParameter("uid", userId)
                     .setMaxResults(limit)
                     .getResultList();
+
+            // 🔹 fallback prize_label nếu prize_code null
+            for (RewardSpin s : list) {
+                if (s.getPrizeLabel() == null || s.getPrizeLabel().isBlank()) {
+                    s.setPrizeLabel("(Không có nhãn)");
+                }
+            }
+            return list;
         } finally {
             em.close();
         }
     }
+
 
     // ====== ĐẾM NGÂN SÁCH ĐẠT MỤC TIÊU ======
     public int countAchievedBudgets(UUID userId) {

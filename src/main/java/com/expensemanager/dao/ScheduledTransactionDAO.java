@@ -3,6 +3,7 @@ package com.expensemanager.dao;
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.ScheduledTransaction;
+import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 public class ScheduledTransactionDAO {
 
-    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("default");
+    private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
     public List<ScheduledTransaction> getAll() {
         return getFiltered(null, null, null, null, null, null, null);
     }
