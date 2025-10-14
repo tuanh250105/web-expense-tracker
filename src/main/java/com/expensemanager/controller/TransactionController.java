@@ -4,6 +4,7 @@ import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
 import com.expensemanager.model.User;
+import com.expensemanager.service.AccountService;
 import com.expensemanager.service.TransactionService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -22,6 +23,7 @@ import java.util.*;
 @WebServlet("/transaction")
 public class TransactionController extends HttpServlet {
     private final TransactionService transactionService = new TransactionService();
+    private final AccountService accountService = new AccountService();
     private static final String transaction_cache = "transactionCache";
     private static final int cache_size = 6;
 
@@ -50,7 +52,7 @@ public class TransactionController extends HttpServlet {
             request.setAttribute("editTransaction", editTransaction);
         }
 
-        // Get month and year parameters
+
         String monthParam = request.getParameter("month");
         String yearParam = request.getParameter("year");
         String navigate = request.getParameter("navigate");
@@ -137,13 +139,15 @@ public class TransactionController extends HttpServlet {
 
         String action = request.getParameter("action");
 
-        HttpSession session = request.getSession(false);
-        UUID userId;
+        HttpSession session = request.getSession(true);
+        User user = (User) session.getAttribute("user");
+        UUID user_Id = user.getId();
 
+        UUID userId;
         if (session == null || session.getAttribute("user_id") == null) {
             userId = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
         } else {
-            userId = (UUID) session.getAttribute("user_id");
+            userId = user_Id;
         }
 
         if ("filter".equals(action)) {
@@ -294,7 +298,8 @@ public class TransactionController extends HttpServlet {
     private List<Account> getAccountList(HttpSession session, UUID userId) {
         List<Account> accountList = (List<Account>) session.getAttribute("accountList");
         if (accountList == null) {
-            accountList = transactionService.getAllAccountByUserId(userId);
+            accountList = accountService.getAccountsByUser(userId);
+            //accountList = transactionService.getAllAccountByUserId(userId);
             session.setAttribute("accountList", accountList);
         }
         return accountList;

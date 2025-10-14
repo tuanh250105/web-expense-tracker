@@ -155,13 +155,8 @@ public class BankHistoryController extends HttpServlet {
 
     private UUID getUserIdFromSession(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
-        if (session != null) {
-            Object userObj = session.getAttribute("user");
-            if (userObj instanceof User) {
-                return ((User) userObj).getId();
-            }
-        }
+        User user = (User) session.getAttribute("user");
         // Fallback for development or if session structure is different
-        return UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
+        return (UUID) user.getId();
     }
 }

@@ -26,7 +26,7 @@ public class ScheduledTransactionController extends HttpServlet {
         UUID userId = null;
         boolean isGuest = false;
 
-        // 🔹 Nếu chưa đăng nhập → tạo user test (fakeUser)
+        // Nếu chưa đăng nhập → tạo user test (fakeUser)
         if (session == null || session.getAttribute("user") == null) {
             System.out.println("⚠️ Chưa đăng nhập — bật chế độ test với user mặc định.");
             isGuest = true;
@@ -92,7 +92,7 @@ public class ScheduledTransactionController extends HttpServlet {
         UUID userId = null;
         boolean isGuest = false;
 
-        // 🔹 Nếu chưa đăng nhập → tạo user test (fakeUser)
+        // Nếu chưa đăng nhập → tạo user test (fakeUser)
         if (session == null || session.getAttribute("user") == null) {
             System.out.println("⚠️ Chưa đăng nhập — bật chế độ test với user mặc định.");
             isGuest = true;

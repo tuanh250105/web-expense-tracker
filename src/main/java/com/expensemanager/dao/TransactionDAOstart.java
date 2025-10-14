@@ -2,6 +2,7 @@ package com.expensemanager.dao;
 
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Transaction;
+import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -17,7 +18,7 @@ import java.util.UUID;
  */
 public class TransactionDAOstart {
 
-    private static final EntityManagerFactory emf;
+    private static EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
 
     static {
         EntityManagerFactory tmp = null;
@@ -38,7 +39,7 @@ public class TransactionDAOstart {
             properties.put("jakarta.persistence.jdbc.user", dbUser);
             properties.put("jakarta.persistence.jdbc.password", dbPass);
 
-            tmp = Persistence.createEntityManagerFactory("default", properties);
+            tmp = JpaUtil.getEntityManagerFactory();
             System.out.println("✅ EntityManagerFactory initialized successfully!");
         } catch (Exception e) {
             System.err.println("❌ Critical Error initializing EntityManagerFactory:");

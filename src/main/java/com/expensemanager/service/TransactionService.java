@@ -18,7 +18,9 @@ import java.util.stream.Collectors;
 
 
 public class TransactionService {
-    private TransactionDAO transactionDAO = new TransactionDAO();
+    private final TransactionDAO transactionDAO = new TransactionDAO();
+    private final CategoryService categoryService = new CategoryService();
+    private final AccountService  accountService = new AccountService();
 
     public List<Transaction> getAllTransactionsByMonthAndYear(UUID userId, int month, int year) {
         YearMonth yearMonth = YearMonth.of(year, month);
@@ -29,12 +31,14 @@ public class TransactionService {
     }
 
     public void addIncomeTransaction(String categoryId, String accountId, String amount, String note, String transactionDate, String time, String type, UUID userId) {
-        Account account = transactionDAO.findAccountById(UUID.fromString(accountId));
+        //Account account = transactionDAO.findAccountById(UUID.fromString(accountId));
+        Account account = accountService.getAccountById(UUID.fromString(accountId));
         if (account == null || !account.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("Tài khoản không tồn tại hoặc không thuộc về user hiện tại !!!!!!!!!!!!");
         }
 
-        Category category = transactionDAO.findCategoryById(UUID.fromString(categoryId));
+
+        Category category = categoryService.getCategoryById(UUID.fromString(categoryId));
         if (category == null) {
             throw new IllegalArgumentException("Category không hợp lệ");
         }
@@ -51,12 +55,12 @@ public class TransactionService {
     }
 
     public void addExpenseTransaction(String categoryId, String accountId, String amount, String note, String transactionDate, String time, String type, UUID userId) {
-        Account account = transactionDAO.findAccountById(UUID.fromString(accountId));
+        Account account = accountService.getAccountById(UUID.fromString(accountId));
         if (account == null || !account.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("Tài khoản không tồn tại hoặc không thuộc về user hiện tại");
         }
 
-        Category category = transactionDAO.findCategoryById(UUID.fromString(categoryId));
+        Category category = categoryService.getCategoryById(UUID.fromString(categoryId));
         if (category == null) {
             throw new IllegalArgumentException("Category không hợp lệ");
         }
@@ -73,10 +77,8 @@ public class TransactionService {
     }
 
     public List<Category> getAllCategory(UUID userId){
-         List<Category> category = transactionDAO.findAllCategoryOfUser(userId);
-         return category;
-
-
+        List<Category> category = categoryService.getAllCategories(userId);
+        return category;
     }
 
     public Transaction getTransactionById(UUID transactionId) {
@@ -89,12 +91,12 @@ public class TransactionService {
 
     public void updateTransaction(String id, String categoryId, String accountId, String amount, String note, String date, String time, String type, UUID userId) {
         String transactionDate = date + "T" + time;
-        Account account = transactionDAO.findAccountById(UUID.fromString(accountId));
+        Account account = accountService.getAccountById(UUID.fromString(accountId));
         if (account == null || !account.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("Tài khoản không tồn tại hoặc không thuộc về user hiện tại");
         }
 
-        Category category = transactionDAO.findCategoryById(UUID.fromString(categoryId));
+        Category category = categoryService.getCategoryById(UUID.fromString(categoryId));
         if (category == null) {
             throw new IllegalArgumentException("Category không hợp lệ");
         }
