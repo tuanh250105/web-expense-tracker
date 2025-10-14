@@ -136,7 +136,7 @@
     </div>
 
     <script>
-        var contextPath = '${pageContext.request.contextPath}';
+        window.BB_CTX = "${pageContext.request.contextPath}";
     </script>
     <script src="${pageContext.request.contextPath}/assets/js/scheduled_transactions.js"></script>
 </div>
