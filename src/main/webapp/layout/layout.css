@@ -163,12 +163,14 @@ input:checked + .slider:before {
 .sidebar {
     position: fixed;
     top: 60px;
+    bottom: 0; /* ensure the sidebar stops at the bottom of the viewport and doesn't overlap header */
     left: 0;
     width: 240px;
-    height: 100%;
     background: #2c3e50;
-    padding: 15px 0;
+    padding: 15px 0 30px; /* extra bottom padding for comfortable scroll */
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
     transition: transform 0.4s ease;
     animation: slideIn 0.5s ease forwards;
     box-shadow: 2px 0 6px rgba(0,0,0,0.15);
@@ -196,7 +198,7 @@ input:checked + .slider:before {
 .sidebar ul li {
     margin: 6px 0;
     position: relative;
-    overflow: hidden; /* cho hiệu ứng line chạy */
+    /* remove overflow:hidden so list content (icons/text/hover effects) won't be clipped */
 }
 
 .sidebar ul li a {
