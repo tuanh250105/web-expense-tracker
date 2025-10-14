@@ -52,7 +52,7 @@ public class TransactionController extends HttpServlet {
             request.setAttribute("editTransaction", editTransaction);
         }
 
-        // Get month and year parameters
+
         String monthParam = request.getParameter("month");
         String yearParam = request.getParameter("year");
         String navigate = request.getParameter("navigate");
@@ -139,13 +139,15 @@ public class TransactionController extends HttpServlet {
 
         String action = request.getParameter("action");
 
-        HttpSession session = request.getSession(false);
-        UUID userId;
+        HttpSession session = request.getSession(true);
+        User user = (User) session.getAttribute("user");
+        UUID user_Id = user.getId();
 
+        UUID userId;
         if (session == null || session.getAttribute("user_id") == null) {
             userId = UUID.fromString("67b78d51-4eec-491c-bbf0-30e982def9e0");
         } else {
-            userId = (UUID) session.getAttribute("user_id");
+            userId = user_Id;
         }
 
         if ("filter".equals(action)) {

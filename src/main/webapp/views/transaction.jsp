@@ -80,10 +80,10 @@
                     Total:
                     <c:choose>
                         <c:when test="${totalBalance >= 0}">
-                            <span class="positive">+ $<fmt:formatNumber value="${totalBalance}" pattern="#,##0.00"/></span>
+                            <span class="positive">+ VNĐ <fmt:formatNumber value="${totalBalance}" pattern="#,##0.00"/></span>
                         </c:when>
                         <c:otherwise>
-                            <span class="negative">- $<fmt:formatNumber value="${-totalBalance}" pattern="#,##0.00"/></span>
+                            <span class="negative">- VNĐ<fmt:formatNumber value="${-totalBalance}" pattern="#,##0.00"/></span>
                         </c:otherwise>
                     </c:choose>
                 </span>
@@ -107,10 +107,10 @@
                                 <div class="amount ${t.type eq 'income' ? 'income' : 'expense'}">
                                     <c:choose>
                                         <c:when test="${t.type eq 'income'}">
-                                            + $<fmt:formatNumber value="${t.amount}" pattern="#,##0.00"/>
+                                            + đ<fmt:formatNumber value="${t.amount}" pattern="#,##0.00"/>
                                         </c:when>
                                         <c:otherwise>
-                                            - $<fmt:formatNumber value="${t.amount}" pattern="#,##0.00"/>
+                                            - đ<fmt:formatNumber value="${t.amount}" pattern="#,##0.00"/>
                                         </c:otherwise>
                                     </c:choose>
                                 </div>
@@ -179,7 +179,7 @@
                         <div class="input-group-2">
                             <div class="input-wrap">
                                 <label>Value</label>
-                                <input type="number" step="0.01" class="type_value" name="value" placeholder="0.00" required>
+                                <input type="number" step="0.01" class="type_value" name="value" placeholder="0.00 VND" required>
                             </div>
                         </div>
                     </div>
@@ -253,7 +253,7 @@
                         <div class="input-group-2">
                             <div class="input-wrap">
                                 <label>Value</label>
-                                <input type="number" step="0.01" class="type_value" name="value" placeholder="0.00" required>
+                                <input type="number" step="0.01" class="type_value" name="value" placeholder="0.00 VND" required>
                             </div>
                         </div>
                     </div>
@@ -331,7 +331,6 @@
 </div>
 
 <script>
-    // Simple loading indicator for month navigation
     document.addEventListener('DOMContentLoaded', function() {
         const navButtons = document.querySelectorAll('.nav-btn');
 

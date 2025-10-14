@@ -7,9 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeCategoryModalBtn = document.querySelector('.close-category-modal');
     const categoryList = document.getElementById('categoryList');
 
-    // ===============================
-    // Navigation buttons loading state
-    // ===============================
+
+    // 2 nut Prev va Next
     const navButtons = document.querySelectorAll('.nav-btn');
     navButtons.forEach(btn => {
         btn.addEventListener('click', function(e) {
@@ -19,9 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // ===============================
-    // Khởi tạo Flatpickr cho Add/Edit Form
-    // ===============================
+
+    // Khởi tạo Flatpickr cho 2 cái Add/Edit Form
     function initFlatpickr(formElement) {
         const dateInputs = formElement.querySelectorAll('.select_new_date');
         const timeInputs = formElement.querySelectorAll('.select_new_time');
@@ -45,9 +43,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // ===============================
-    // Khởi tạo Flatpickr cho Filter Panel
-    // ===============================
+
+    // Khởi tạo Flatpickr cho FilterPanel
     const filterPanel = document.querySelector('.filter-panel');
     if (filterPanel) {
         const filterDateInputs = filterPanel.querySelectorAll('.select_filter_from_date, .select_filter_to_date');
@@ -60,9 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // ===============================
-    // Hiển thị form khi nhấn FAB buttons
-    // ===============================
+    // Hiển thị form khi nhấn 2 nút FAB incomv vs expense buttons
     addIncomeBtn.addEventListener('click', () => {
         formIncomeContainer.classList.add('active');
         initFlatpickr(formIncomeContainer);
@@ -107,9 +102,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // ===============================
+
     // Logic cho Category Modal
-    // ===============================
     document.querySelectorAll('.open-category-modal').forEach(input => {
         input.addEventListener('click', (e) => {
             const currentForm = e.target.closest('.container-addForm');
@@ -176,9 +170,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // ===============================
+
     // Logic Edit Transaction
-    // ===============================
     if (window.editTransactionData) {
         const t = window.editTransactionData;
         const formContainer = t.type === "Income" ? formIncomeContainer : formExpenseContainer;
@@ -223,9 +216,8 @@ document.addEventListener("DOMContentLoaded", () => {
         idInput.value = t.id;
     }
 
-    // ===============================
+
     // Logic expand notes khi click vào transaction-item
-    // ===============================
     const items = document.querySelectorAll(".transaction-item");
     items.forEach(item => {
         item.addEventListener("click", function(e) {
@@ -237,9 +229,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // ===============================
-    // Logic dropdown menu (More button)
-    // ===============================
+
+    // Logic dropdown menu (more-butn)
     document.addEventListener("click", (e) => {
         const moreBtn = e.target.closest(".more-btn");
         const dropdownMenu = e.target.closest(".dropdown-menu");
@@ -271,9 +262,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // ===============================
+
     // Xử lý Delete Transaction với Confirm
-    // ===============================
     document.querySelectorAll(".delete-form").forEach(form => {
         form.addEventListener("submit", function(e) {
             e.preventDefault();

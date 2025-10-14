@@ -14,12 +14,12 @@ import jakarta.mail.internet.*;
 @WebServlet("/report")
 public class ReportController extends HttpServlet {
 
-    // Cấu hình email - THAY ĐỔI THÔNG TIN NÀY
+
     private static final String SMTP_HOST = "smtp.gmail.com";
     private static final String SMTP_PORT = "587";
-    private static final String SENDER_EMAIL = "tuanh25012005@gmail.com"; // Email của bạn
-    private static final String SENDER_PASSWORD = System.getenv("${SMTP_PASS}"); // App Password của Gmail
-    private static final String RECEIVER_EMAIL = "vominhkhoi299@gmail.com"; // Email nhận báo cáo
+    private static final String SENDER_EMAIL = "tuanh25012005@gmail.com";
+    private static final String SENDER_PASSWORD = System.getenv("${SMTP_PASS}");
+    private static final String RECEIVER_EMAIL = "vominhkhoi299@gmail.com";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
