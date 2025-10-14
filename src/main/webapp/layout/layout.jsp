@@ -81,7 +81,7 @@
         <li><a href="${pageContext.request.contextPath}/debt"><i class="fa-solid fa-hand-holding-dollar"></i> <span>Quản lý nợ</span></a></li>
         <hr>
         <li><a href="${pageContext.request.contextPath}/analytics"><i class="fa-solid fa-chart-pie"></i> <span>Tổng hợp biểu đồ</span></a></li>
-    <li><a href="${pageContext.request.contextPath}/calendar"><i class="fa-solid fa-calendar"></i> <span>Lịch</span></a></li>
+        <li><a href="${pageContext.request.contextPath}/calendar"><i class="fa-solid fa-calendar"></i> <span>Lịch</span></a></li>
         <li><a href="${pageContext.request.contextPath}/group_expense"><i class="fa-solid fa-people-group"></i> <span>Chi tiêu nhóm</span></a></li>
         <li><a href="${pageContext.request.contextPath}/import-export"><i class="fa-solid fa-file-import"></i> <span>Import / Export file</span></a></li>
         <li><a href="${pageContext.request.contextPath}/top-categories"><i class="fa-solid fa-list-ul"></i> <span>Thống kê Top Categories</span></a></li>
