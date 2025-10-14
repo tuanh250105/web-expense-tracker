@@ -1,0 +1,750 @@
+/* ==========================================================================
+   1️⃣ LAYOUT CHUNG
+   ========================================================================== */
+
+.transaction-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 20px 0;
+    box-sizing: border-box;
+}
+
+.transaction-container {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+    width: 100%;
+    max-width: 1200px;
+    background: transparent;
+    box-sizing: border-box;
+}
+
+/* ==========================================================================
+   2️⃣ FILTER PANEL
+   ========================================================================== */
+
+.filter-panel {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.filter-panel h2 {
+    margin-top: 0;
+    color: #1976d2;
+}
+
+.filter-panel input,
+.filter-panel select,
+.filter-panel textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-family: inherit;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-start;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center; /* căn giữa checkbox và text */
+    gap: 2px; /* khoảng cách giữa ô và chữ */
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.filter-panel .apply-btn {
+    background: #1976d2;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.cancel-btn {
+    align-self: flex-end;
+    background: none;
+    border: none;
+    color: #1976d2;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* ==========================================================================
+   3️⃣ TRANSACTION LIST
+   ========================================================================== */
+
+.transaction-list {
+    flex: 1;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+.transaction-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    gap: 15px;
+}
+
+.transaction-header h2 {
+    margin: 0;
+}
+.month-display {
+    flex: 1;
+    text-align: center;
+}
+
+.month-display h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+.today-link {
+    display: block;
+    font-size: 12px;
+    color: #2196F3;
+    text-decoration: none;
+    margin-top: 5px;
+}
+
+.today-link:hover {
+    text-decoration: underline;
+}
+
+.nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #f5f5f5;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.2s
+}
+
+.nav-btn:hover {
+    background: #e0e0e0;
+    transform: scale(1.1);
+}
+
+.nav-btn:active {
+    transform: scale(0.95);
+}
+
+.nav-btn.loading {
+    opacity: 0.5;
+    pointer-events: none;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+}
+
+/* Total display */
+.total {
+    font-weight: 600;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+.total .positive {
+    color: #4CAF50;
+}
+
+.total .negative {
+    color: #f44336;
+}
+
+/* Empty state */
+.no-transactions {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.no-transactions p {
+    font-size: 16px;
+    margin: 0;
+}
+
+/* Transaction items animation */
+.transaction-items {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .transaction-header {
+        flex-wrap: wrap;
+    }
+
+    .total {
+        width: 100%;
+        text-align: center;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .month-display h2 {
+        font-size: 18px;
+    }
+
+    .nav-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+}
+
+.expense { color: #e53935; }
+.income { color: #388e3c; }
+
+.transaction-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.transaction-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 50px 1fr auto auto auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    overflow: visible;
+}
+
+.transaction-item .notes {
+    grid-column: 1 / -1; /* chiếm full hàng */
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: #fff;
+    border-left: 3px solid #1976d2;
+    border-radius: 6px;
+    color: #444;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    display: none; /* ẩn mặc định */
+}
+
+.transaction-item.expanded {
+    background: #eef4ff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.transaction-item.expanded .notes {
+    display: block;
+}
+
+.transaction-item:hover {
+    background: #eef4ff;
+}
+
+.transaction-item img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.transaction-item .more-btn{
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #1976d2;
+    transition: color 0.2s;
+}
+.transaction-item .more-btn img {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    min-width: 200px;
+    z-index: 1000;
+    flex-direction: column;
+    overflow: hidden;
+    animation: fadeIn 0.15s ease-out;
+    margin-top: 4px;
+}
+
+.dropdown-menu.active {
+    display: flex;
+}
+
+.dropdown-item {
+    padding: 10px 14px;
+    background: none;
+    border: none;
+    text-align: left;
+    width: 100%;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background: #f3f4f6;
+}
+.details h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.details p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666;
+}
+/* ==========================================================================
+   4️⃣ FLOATING ACTION BUTTONS (FAB)
+   ========================================================================== */
+
+.fab-buttons {
+    position: fixed;
+    bottom: 24px;
+    right: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 1000;
+    pointer-events: auto;
+}
+
+.fab {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fab.add-income { background: #43a047; }
+.fab.add-expense { background: #e53935; }
+
+.fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+
+/* ==========================================================================
+   5️⃣ ADD TRANSACTION FORM (MODAL)
+   ========================================================================== */
+
+/* ✅ Đổi ID sang class để dùng cho cả Income & Expense */
+.container-addForm {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.45);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    backdrop-filter: blur(2px);
+}
+
+.container-addForm.active {
+    display: flex;
+    animation: fadeIn 0.25s ease-out;
+}
+
+/* Form chính */
+.addForm {
+    background-color: white;
+    width: 800px;
+    max-width: 90%;
+    height: 700px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    animation: slideUp 0.25s ease-out;
+}
+
+/* Header form */
+.addForm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1976d2;
+    color: #fff;
+    padding: 1rem 1.25rem;
+}
+
+.addForm-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-btn:hover { color: #ffeb3b; }
+
+/* Form body */
+.addForm-body {
+    padding: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    background-color: white;
+}
+
+.addForm-body::-webkit-scrollbar {
+    width: 8px;
+}
+.addForm-body::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+/* Form inputs */
+.input-wrap input,
+.input-wrap select,
+.input-wrap textarea {
+    width: 100%;
+    font-size: 1rem;
+    color: #333;
+    line-height: 1.5;
+    padding: 14px 16px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.input-wrap input:focus,
+.input-wrap select:focus,
+.input-wrap textarea:focus {
+    border-color: #1976d2;
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15);
+    outline: none;
+}
+
+.input-wrap textarea.type_new_notes {
+    height: 110px;
+    resize: none;
+}
+
+/* Input group */
+.input-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    width: 100%;
+    margin-bottom: 1rem;
+    box-sizing: border-box;
+}
+
+.input-img {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f2f6ff;
+    border-radius: 10px;
+    font-size: 20px;
+    color: #1976d2;
+}
+.input-img img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+}
+
+.input-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.input-wrap label {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: #222;
+}
+
+.input-wrap:has(> select)::after {
+    content: '';
+    position: absolute;
+    top: 60%;
+    right: 16px;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #555;
+    pointer-events: none;
+}
+/* ==========================================================================
+   FORM FOOTER - Income & Expense Colors
+   ========================================================================== */
+
+.addForm-footer {
+    padding: 1rem 1.5rem;
+    background: white;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.addForm-footer button {
+    min-width: 100px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* ========================================
+   NÚT SAVE - Màu theo Income/Expense
+======================================== */
+
+/* Income Form - Nút Save màu xanh */
+#incomeForm .saveTransactionBtn {
+    background-color: #43a047;
+    color: white;
+}
+
+#incomeForm .saveTransactionBtn:hover {
+    background-color: #2e7d32;
+    box-shadow: 0 4px 8px rgba(67, 160, 71, 0.3);
+}
+
+/* Expense Form - Nút Save màu đỏ */
+#expenseForm .saveTransactionBtn {
+    background-color: #e53935;
+    color: white;
+}
+
+#expenseForm .saveTransactionBtn:hover {
+    background-color: #c62828;
+    box-shadow: 0 4px 8px rgba(229, 57, 53, 0.3);
+}
+
+/* ========================================
+   NÚT CANCEL - Nền trong suốt, chữ màu
+======================================== */
+
+/* Income Form - Nút Cancel chữ xanh */
+#incomeForm .cancelTransactionBtn {
+    background-color: transparent;
+    color: #43a047;
+    border: 1px solid #43a047;
+}
+
+#incomeForm .cancelTransactionBtn:hover {
+    background-color: rgba(67, 160, 71, 0.1);
+    border-color: #2e7d32;
+    color: #2e7d32;
+}
+
+/* Expense Form - Nút Cancel chữ đỏ */
+#expenseForm .cancelTransactionBtn {
+    background-color: transparent;
+    color: #e53935;
+    border: 1px solid #e53935;
+}
+
+#expenseForm .cancelTransactionBtn:hover {
+    background-color: rgba(229, 57, 53, 0.1);
+    border-color: #c62828;
+    color: #c62828;
+}
+/* ==========================================================================
+   6️⃣ CATEGORY SELECTION MODAL
+   ========================================================================== */
+#categoryModal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(1px);
+    justify-content: center;
+    align-items: center;
+    z-index: 6000;
+}
+#categoryModal.active { display: flex; }
+
+#categoryModal .modal-content {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 10px;
+    width: 450px;
+    max-width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+#categoryModal h2 {
+    margin-top: 0;
+    font-size: 1.25rem;
+    color: #1976d2;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    flex-shrink: 0;
+}
+
+.close-category-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-category-modal:hover,
+.close-category-modal:focus {
+    color: #333;
+}
+
+#categoryList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid; /* Đổi từ flex sang grid */
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); /* Tự động chia cột */
+    gap: 10px;
+    overflow-y: auto; /* Cho phép scroll */
+    max-height: calc(80vh - 100px); /* Giới hạn chiều cao */
+    padding-right: 5px; /* Space cho scrollbar */
+}
+
+#categoryList li {
+    flex-grow: 1;
+    min-width: 100px;
+}
+
+#categoryList img{
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+}
+#categoryList button {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+    align-items: center;
+    justify-content: center;
+}
+
+#categoryList button:hover {
+    background-color: #1976d2;
+    color: white;
+    border-color: #1976d2;
+    transform: translateY(-1px);
+}
+
+.input-img img.category-icon {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    transition: all 0.3s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
