@@ -19,7 +19,8 @@
         const type = elType.value;
         elApp.innerHTML = '';
         const opts = [];
-        if (type === 'bar') {
+        // các loại có time-series
+        if (type === 'bar' || type === 'line') {
             opts.push({ v: 'timeseries', t: 'Theo chuỗi thời gian' });
             opts.push({ v: 'top-category', t: 'Top danh mục' });
             elGroup.disabled = false;
@@ -78,9 +79,80 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+
+    // === Các loại biểu đồ mới ===
+    function renderLine(labels, values, color) {
+        if (chart) chart.destroy();
+        chart = new Chart(elChart.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Thu - Chi theo thời gian',
+                    data: values,
+                    borderColor: color,
+                    backgroundColor: 'rgba(124,77,255,0.2)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    function renderDoughnut(labels, values) {
+        if (chart) chart.destroy();
+        chart = new Chart(elChart.getContext('2d'), {
+            type: 'doughnut',
+            data: { labels, datasets: [{ data: values }] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+
+    function renderRadar(labels, values) {
+        if (chart) chart.destroy();
+        chart = new Chart(elChart.getContext('2d'), {
+            type: 'radar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'So sánh danh mục',
+                    data: values,
+                    borderColor: '#8a2be2',
+                    backgroundColor: 'rgba(138,43,226,0.2)',
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } }
+            }
+        });
+    }
+
+    function renderPolar(labels, values) {
+        if (chart) chart.destroy();
+        chart = new Chart(elChart.getContext('2d'), {
+            type: 'polarArea',
+            data: { labels, datasets: [{ data: values }] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
             }
         });
     }
@@ -116,7 +188,6 @@
             } else {
                 dateStr = new Date().toISOString().substring(0, 10);
             }
-
             const amt = Number(t.amount || 0);
             if (t.type === 'income') sumIn += amt; else sumOut += amt;
             map[dateStr] = (map[dateStr] || 0) + amt * (t.type === 'income' ? 1 : -1);
@@ -159,7 +230,8 @@
                 }
                 const labels = grouped.map(x => x.label);
                 const values = grouped.map(x => x.value);
-                renderBar(labels, values, color);
+                if (chartType === 'line') renderLine(labels, values, color);
+                else renderBar(labels, values, color);
             }
 
             // === Biểu đồ Top danh mục ===
@@ -169,13 +241,16 @@
                     alert("Không có dữ liệu danh mục!");
                     return;
                 }
-
-                // Lấy đúng số top danh mục backend trả về
                 const labels = top.map(t => t.categoryName || `Danh mục #${t.categoryId}`);
                 const values = top.map(t => t.total);
-
-                if (chartType === 'bar') renderBar(labels, values, color);
-                else renderPie(labels, values);
+                switch (chartType) {
+                    case 'bar': renderBar(labels, values, color); break;
+                    case 'pie': renderPie(labels, values); break;
+                    case 'doughnut': renderDoughnut(labels, values); break;
+                    case 'radar': renderRadar(labels, values); break;
+                    case 'polar': renderPolar(labels, values); break;
+                    default: renderPie(labels, values);
+                }
             }
 
         } catch (err) {
@@ -183,7 +258,6 @@
             alert("Không thể tải dữ liệu từ API.");
         }
     });
-
 
     window.addEventListener("DOMContentLoaded", () => {
         const now = new Date();

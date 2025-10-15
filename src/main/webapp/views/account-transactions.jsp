@@ -332,44 +332,74 @@
             document.getElementById('account-balance').textContent = 
                 formatCurrency(accountInfo.balance || 0);
         }
-        
         // ==================== LOAD TRANSACTIONS ====================
-        
+
         function loadTransactions() {
             console.log('Loading transactions for account:', accountId);
-            
+
             fetch(contextPath + '/api/accounts/' + accountId + '/transactions')
                 .then(function(response) {
                     if (!response.ok) throw new Error('HTTP ' + response.status);
                     return response.json();
                 })
                 .then(function(data) {
-                    console.log('Transactions loaded:', data);
+                    console.log('🔍 Raw data received:', data);
+                    console.log('🔍 Type of data:', typeof data);
+                    console.log('🔍 Is Array?', Array.isArray(data));
+
+                    // ✅ FIX: Validate data là array
+                    if (!Array.isArray(data)) {
+                        console.error('❌ Data is not an array!', data);
+                        throw new Error('Dữ liệu không hợp lệ - expected array');
+                    }
+
                     transactions = data;
+                    console.log('✅ Transactions loaded:', transactions.length);
                     displayTransactions();
                     updateStats();
                 })
                 .catch(function(error) {
-                    console.error('Error loading transactions:', error);
-                    document.getElementById('transactions-list').innerHTML = 
+                    console.error('❌ Error loading transactions:', error);
+                    document.getElementById('transactions-list').innerHTML =
                         '<div class="empty"><i class="fas fa-exclamation-triangle"></i><h3>Lỗi tải dữ liệu</h3><p>' + error.message + '</p></div>';
                 });
         }
-        
+
         // ==================== DISPLAY TRANSACTIONS ====================
-        
+
         function displayTransactions() {
             var filterType = document.getElementById('filter-type').value;
             var filtered = transactions;
-            
+
+            // ✅ FIX: Validate transactions trước khi filter
+            if (!Array.isArray(transactions)) {
+                console.error('❌ transactions is not an array:', transactions);
+                document.getElementById('transactions-list').innerHTML =
+                    '<div class="empty"><i class="fas fa-exclamation-triangle"></i><h3>Lỗi dữ liệu</h3><p>Dữ liệu không hợp lệ</p></div>';
+                return;
+            }
+
             if (filterType !== 'all') {
                 filtered = transactions.filter(function(tx) {
+                    // ✅ FIX: Check if tx is array and has enough elements
+                    if (!Array.isArray(tx) || tx.length < 6) {
+                        console.warn('⚠️ Invalid transaction format:', tx);
+                        return false;
+                    }
                     return tx[5] === filterType;
                 });
             }
-            
+
+            // ✅ FIX: Validate filtered là array
+            if (!Array.isArray(filtered)) {
+                console.error('❌ filtered is not an array:', filtered);
+                document.getElementById('transactions-list').innerHTML =
+                    '<div class="empty"><i class="fas fa-exclamation-triangle"></i><h3>Lỗi dữ liệu</h3><p>Dữ liệu không hợp lệ</p></div>';
+                return;
+            }
+
             var container = document.getElementById('transactions-list');
-            
+
             if (filtered.length === 0) {
                 container.innerHTML = '<div class="empty">' +
                     '<i class="fas fa-inbox"></i>' +
@@ -378,7 +408,7 @@
                     '</div>';
                 return;
             }
-            
+
             var html = '<table class="transactions-table">';
             html = html + '<thead>';
             html = html + '<tr>';
@@ -390,19 +420,25 @@
             html = html + '</tr>';
             html = html + '</thead>';
             html = html + '<tbody>';
-            
+
             filtered.forEach(function(tx) {
+                // ✅ FIX: Validate each transaction
+                if (!Array.isArray(tx)) {
+                    console.warn('⚠️ Skipping invalid transaction:', tx);
+                    return;
+                }
+
                 var txId = tx[0];
                 var categoryName = tx[3] || 'Không rõ';
                 var amount = parseFloat(tx[4]) || 0;
                 var type = tx[5] || 'expense';
                 var note = tx[6] || '-';
                 var date = tx[7] || '';
-                
+
                 var typeText = type === 'income' ? 'Thu nhập' : 'Chi tiêu';
                 var amountClass = type === 'income' ? 'income' : 'expense';
                 var amountPrefix = type === 'income' ? '+' : '-';
-                
+
                 html = html + '<tr>';
                 html = html + '<td>' + formatDate(date) + '</td>';
                 html = html + '<td><span class="category-badge">' + categoryName + '</span></td>';
@@ -411,30 +447,42 @@
                 html = html + '<td><span class="amount ' + amountClass + '">' + amountPrefix + formatCurrency(amount) + '</span></td>';
                 html = html + '</tr>';
             });
-            
+
             html = html + '</tbody>';
             html = html + '</table>';
-            
+
             container.innerHTML = html;
         }
-        
+
         // ==================== UPDATE STATS ====================
-        
+
         function updateStats() {
+            // ✅ FIX: Validate transactions trước khi tính toán
+            if (!Array.isArray(transactions)) {
+                console.error('❌ Cannot update stats - transactions is not an array');
+                return;
+            }
+
             var totalIncome = 0;
             var totalExpense = 0;
-            
+
             transactions.forEach(function(tx) {
+                // ✅ FIX: Validate each transaction
+                if (!Array.isArray(tx) || tx.length < 6) {
+                    console.warn('⚠️ Skipping invalid transaction in stats:', tx);
+                    return;
+                }
+
                 var amount = parseFloat(tx[4]) || 0;
                 var type = tx[5];
-                
+
                 if (type === 'income') {
                     totalIncome = totalIncome + amount;
                 } else {
                     totalExpense = totalExpense + amount;
                 }
             });
-            
+
             document.getElementById('total-income').textContent = '+' + formatCurrency(totalIncome);
             document.getElementById('total-expense').textContent = '-' + formatCurrency(totalExpense);
             document.getElementById('transaction-count').textContent = transactions.length;
