@@ -27,9 +27,14 @@
         <!-- Thêm các entity khác nếu có -->
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
-            <property name="jakarta.persistence.jdbc.url" value="${DB_URL}"/>
-            <property name="jakarta.persistence.jdbc.user" value="${DB_USER}"/>
-            <property name="jakarta.persistence.jdbc.password" value="${DB_PASS}"/>
+            <property name="hibernate.connection.provider_class"
+                      value="org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl"/>
+
+
+            <!--            <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>-->
+<!--            <property name="jakarta.persistence.jdbc.url" value="${DB_URL}"/>-->
+<!--            <property name="jakarta.persistence.jdbc.user" value="${DB_USER}"/>-->
+<!--            <property name="jakarta.persistence.jdbc.password" value="${DB_PASS}"/>-->
 
             <property name="hibernate.hbm2ddl.auto" value="update"/>
             <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>

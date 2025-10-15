@@ -22,7 +22,7 @@ public class ImportExportService {
     private final AccountService accountService;
 
     // ✅ Dùng EntityManagerFactory từ JpaUtil để lấy kết nối đã cấu hình sẵn (DB_URL, DB_USER, DB_PASS)
-    private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
+    private static final EntityManager em= JpaUtil.getEntityManager();
 
     public ImportExportService() {
         dao = new ImportExportDAO();
@@ -43,7 +43,6 @@ public class ImportExportService {
             throw new IllegalArgumentException("Định dạng file không hỗ trợ: " + type);
         }
 
-        EntityManager em = emf.createEntityManager();
         Account acc = null;
 
         if (accountId != null) {

@@ -23,7 +23,8 @@ import jakarta.persistence.Query;
 
 public class ScheduledTransactionDAO {
 
-    private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
+    private EntityManager em;
+    private EntityManager em() {return JpaUtil.getEntityManager(); };
     public List<ScheduledTransaction> getAll() {
         return getFiltered(null, null, null, null, null, null, null);
     }
@@ -31,7 +32,7 @@ public class ScheduledTransactionDAO {
     public List<ScheduledTransaction> getFiltered(String categoryNameFilter, String account,
                                                   String from, String to, String note,
                                                   String[] types, UUID userId) {
-        EntityManager em = emf.createEntityManager();
+        em = em();
         try {
             StringBuilder jpql = new StringBuilder(
                     "SELECT s FROM ScheduledTransaction s " +
@@ -76,7 +77,7 @@ public class ScheduledTransactionDAO {
             if (categoryNameFilter != null && !categoryNameFilter.isEmpty())
                 query.setParameter("categoryName", "%" + categoryNameFilter.toLowerCase() + "%");
             if (account != null && !account.isEmpty())
-query.setParameter("account", "%" + account.toLowerCase() + "%");
+                query.setParameter("account", "%" + account.toLowerCase() + "%");
             if (from != null && !from.isEmpty())
                 query.setParameter("fromTs", Timestamp.valueOf(from + " 00:00:00"));
             if (to != null && !to.isEmpty())
@@ -105,7 +106,7 @@ query.setParameter("account", "%" + account.toLowerCase() + "%");
     }
 
     public List<Account> getAccountsByUserId(UUID userId) {
-        EntityManager em = emf.createEntityManager();
+        em = em();
         try {
             String jpql = "SELECT a FROM Account a WHERE a.user.id = :userId";
             Query query = em.createQuery(jpql, Account.class);
@@ -117,7 +118,7 @@ query.setParameter("account", "%" + account.toLowerCase() + "%");
     }
 
     public Account findAccountById(UUID id, UUID userId) {
-        EntityManager em = emf.createEntityManager();
+        em = em();
         try {
             String jpql = "SELECT a FROM Account a WHERE a.id = :id AND a.user.id = :userId";
             Query query = em.createQuery(jpql, Account.class);
@@ -130,7 +131,7 @@ query.setParameter("account", "%" + account.toLowerCase() + "%");
     }
 
     public void add(ScheduledTransaction t) {
-        EntityManager em = emf.createEntityManager();
+        em = em();
         try {
             em.getTransaction().begin();
             em.persist(t);
@@ -144,7 +145,7 @@ query.setParameter("account", "%" + account.toLowerCase() + "%");
     }
 
     public void update(ScheduledTransaction t) {
-        EntityManager em = emf.createEntityManager();
+        em = em();
         try {
             em.getTransaction().begin();
             em.merge(t);
@@ -158,7 +159,7 @@ em.close();
     }
 
     public void delete(UUID id, UUID userId) {
-        EntityManager em = emf.createEntityManager();
+        em = em();
         try {
             em.getTransaction().begin();
             String jpql = "SELECT s FROM ScheduledTransaction s JOIN s.account a WHERE s.id = :id AND a.user.id = :userId";
@@ -177,7 +178,7 @@ em.close();
     }
 
     public List<ScheduledTransaction> getDueTransactions() {
-        EntityManager em = emf.createEntityManager();
+        em = em();
         try {
             String jpql = "SELECT s FROM ScheduledTransaction s " +
                     "LEFT JOIN FETCH s.category " +
@@ -196,7 +197,7 @@ em.close();
     }
 
     public ScheduledTransaction getById(UUID id, UUID userId) {
-        EntityManager em = emf.createEntityManager();
+        em = em();
         try {
             String jpql = "SELECT s FROM ScheduledTransaction s " +
                     "LEFT JOIN FETCH s.category " +
@@ -215,7 +216,7 @@ em.close();
     }
 
     public List<ScheduledTransaction> getUpcomingTransactions(int daysAhead) {
-        EntityManager em = emf.createEntityManager();
+        em = em();
         try {
             // Tính toán end timestamp: now + daysAhead ngày
             Timestamp now = new Timestamp(System.currentTimeMillis());
@@ -252,7 +253,7 @@ em.close();
     }
 
     public String getUserEmailByAccount(UUID accountId) {
-        EntityManager em = emf.createEntityManager();
+        em = em();
         try {
             String jpql = "SELECT u.email FROM Account a JOIN a.user u WHERE a.id = :accountId";
             Query query = em.createQuery(jpql);

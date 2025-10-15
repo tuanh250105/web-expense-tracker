@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Hiển thị form khi nhấn 2 nút FAB incomv vs expense buttons
+    // Hiển thị form khi nhấn 2 nút FAB income vs expense buttons
     addIncomeBtn.addEventListener('click', () => {
         formIncomeContainer.classList.add('active');
         initFlatpickr(formIncomeContainer);
@@ -103,30 +103,119 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    // Logic cho Category Modal
+    // ========================================================================
+    // LOGIC MỚI: 2-LEVEL CATEGORY SELECTION
+    // ========================================================================
+
+    let currentParentCategory = null; // Lưu category cha đang được chọn
+
+    // Mở Category Modal
     document.querySelectorAll('.open-category-modal').forEach(input => {
         input.addEventListener('click', (e) => {
+            console.log('=== Opening Category Modal ===');
             const currentForm = e.target.closest('.container-addForm');
             const isFilterPanel = e.target.closest('.filter-panel');
+
+            // Reset về cấp 1 mỗi khi mở modal
+            currentParentCategory = null;
+            updateModalHeader();
 
             if (currentForm) {
                 categoryModal.dataset.activeForm = currentForm.id;
                 categoryModal.dataset.isFilter = 'false';
+                const type = currentForm.id.includes('income') ? 'income' : 'expense';
+                console.log('Form type:', type);
+                showParentCategories(type);
             } else if (isFilterPanel) {
                 categoryModal.dataset.activeForm = 'filter';
                 categoryModal.dataset.isFilter = 'true';
+                console.log('Filter panel - showing all types');
+                showParentCategories('all');
             }
 
             categoryModal.classList.add('active');
         });
     });
 
+    // Hiển thị category cha (parent_id = null)
+    function showParentCategories(type) {
+        const buttons = document.querySelectorAll('#categoryList button');
+
+        buttons.forEach(btn => {
+            const btnType = btn.getAttribute('data-type');
+            const parentId = btn.getAttribute('data-parent');
+
+            // Kiểm tra parent = null (category cha)
+            const isParentCategory = !parentId || parentId === '';
+
+            // Chỉ hiển thị category cha
+            if (isParentCategory && (type === 'all' || btnType === type)) {
+                btn.parentElement.style.display = '';
+            } else {
+                btn.parentElement.style.display = 'none';
+            }
+        });
+    }
+
+    // Hiển thị category con của một parent
+    function showChildCategories(parentId, type) {
+        const buttons = document.querySelectorAll('#categoryList button');
+        buttons.forEach(btn => {
+            const btnParent = btn.getAttribute('data-parent');
+            const btnType = btn.getAttribute('data-type');
+
+            // Hiển thị các category có parent_id = parentId
+            if (btnParent === parentId && (type === 'all' || btnType === type)) {
+                btn.parentElement.style.display = '';
+            } else {
+                btn.parentElement.style.display = 'none';
+            }
+        });
+    }
+
+    // Cập nhật header của modal (hiển thị breadcrumb)
+    function updateModalHeader() {
+        const modalTitle = categoryModal.querySelector('h2');
+        if (currentParentCategory) {
+            const backBtn = '<span class="back-to-parent" style="cursor: pointer; color: #1976d2; margin-right: 10px;">← Back</span>';
+            modalTitle.innerHTML = backBtn + currentParentCategory.name;
+
+            // Thêm event listener cho nút Back
+            const backButton = modalTitle.querySelector('.back-to-parent');
+            if (backButton) {
+                backButton.addEventListener('click', () => {
+                    currentParentCategory = null;
+                    updateModalHeader();
+
+                    const type = getActiveFormType();
+                    showParentCategories(type);
+                });
+            }
+        } else {
+            modalTitle.textContent = 'Select Category';
+        }
+    }
+
+    // Lấy type của form đang active
+    function getActiveFormType() {
+        if (categoryModal.dataset.isFilter === 'true') {
+            return 'all';
+        }
+        const activeFormId = categoryModal.dataset.activeForm;
+        return activeFormId && activeFormId.includes('income') ? 'income' : 'expense';
+    }
+
+    // Đóng modal
     closeCategoryModalBtn.addEventListener('click', () => {
         categoryModal.classList.remove('active');
+        currentParentCategory = null;
     });
 
     categoryModal.addEventListener('click', (e) => {
-        if (e.target === categoryModal) categoryModal.classList.remove('active');
+        if (e.target === categoryModal) {
+            categoryModal.classList.remove('active');
+            currentParentCategory = null;
+        }
     });
 
     // Xử lý chọn Category
@@ -134,33 +223,52 @@ document.addEventListener("DOMContentLoaded", () => {
         const button = e.target.closest('button');
         if (!button) return;
 
-        const selectedCategoryName = button.textContent.trim();
-        const selectedCategoryValue = button.getAttribute('data-category');
-        const selectedCategoryIcon = button.getAttribute('data-icon');
+        const categoryId = button.getAttribute('data-category');
+        const categoryName = button.textContent.trim();
+        const categoryIconImg = button.querySelector('img');
+        const categoryIcon = categoryIconImg ? categoryIconImg.src : button.getAttribute('data-icon');
+        const parentId = button.getAttribute('data-parent');
 
-        if (categoryModal.dataset.isFilter === 'true') {
-            // Filter panel
-            filterPanel.querySelector('#select_new_category').value = selectedCategoryName;
-            filterPanel.querySelector('#hidden_new_category').value = selectedCategoryValue;
-        } else {
-            // Add/Edit form
-            const activeFormContainer = document.querySelector(`#${categoryModal.dataset.activeForm}`);
-            if (activeFormContainer) {
-                // Cập nhật tên category
-                activeFormContainer.querySelector('.select_new_category').value = selectedCategoryName;
-                activeFormContainer.querySelector('.hidden_new_category').value = selectedCategoryValue;
+        // Nếu đây là category cha (parent_id = null)
+        if (parentId === 'null' || parentId === '' || !parentId) {
+            // Lưu category cha và hiển thị các category con
+            currentParentCategory = {
+                id: categoryId,
+                name: categoryName
+            };
+            updateModalHeader();
 
-                // Cập nhật icon category
-                const categoryIconImg = activeFormContainer.querySelector('.category-icon');
-                if (categoryIconImg && selectedCategoryIcon) {
-                    categoryIconImg.src = selectedCategoryIcon;
-                    categoryIconImg.alt = selectedCategoryName;
+            const type = getActiveFormType();
+            showChildCategories(categoryId, type);
+        }
+        // Nếu đây là category con (có parent_id)
+        else {
+            // Gán category vào form
+            if (categoryModal.dataset.isFilter === 'true') {
+                // Filter panel
+                filterPanel.querySelector('#select_new_category').value = categoryName;
+                filterPanel.querySelector('#hidden_new_category').value = categoryId;
+            } else {
+                // Add/Edit form
+                const activeFormContainer = document.querySelector(`#${categoryModal.dataset.activeForm}`);
+                if (activeFormContainer) {
+                    activeFormContainer.querySelector('.select_new_category').value = categoryName;
+                    activeFormContainer.querySelector('.hidden_new_category').value = categoryId;
+
+                    const categoryIconImg = activeFormContainer.querySelector('.category-icon');
+                    if (categoryIconImg && categoryIcon) {
+                        categoryIconImg.src = categoryIcon;
+                        categoryIconImg.alt = categoryName;
+                    }
                 }
             }
-        }
 
-        categoryModal.classList.remove('active');
+            // Đóng modal và reset
+            categoryModal.classList.remove('active');
+            currentParentCategory = null;
+        }
     });
+
 
     // Nút cancel trong mỗi form
     document.querySelectorAll('.cancelTransactionBtn').forEach(btn => {
@@ -187,7 +295,8 @@ document.addEventListener("DOMContentLoaded", () => {
         // Tìm icon từ categoryList
         const categoryButton = document.querySelector(`#categoryList button[data-category="${t.categoryId}"]`);
         if (categoryButton) {
-            const iconPath = categoryButton.getAttribute('data-icon');
+            const iconImg = categoryButton.querySelector('img');
+            const iconPath = iconImg ? iconImg.src : null;
             const categoryIconImg = formContainer.querySelector('.category-icon');
             if (categoryIconImg && iconPath) {
                 categoryIconImg.src = iconPath;

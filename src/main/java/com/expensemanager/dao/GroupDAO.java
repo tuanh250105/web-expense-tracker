@@ -8,7 +8,6 @@ import jakarta.persistence.TypedQuery;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -17,10 +16,10 @@ import java.util.UUID;
  */
 public class GroupDAO {
 
-    private EntityManager em = JpaUtil.getEntityManager();
+    private EntityManager em;
 
     public GroupDAO(EntityManager em) {
-        this.em = em;
+        this.em = JpaUtil.getEntityManager();
     }
 
     /**

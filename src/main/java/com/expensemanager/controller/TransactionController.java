@@ -35,7 +35,7 @@ public class TransactionController extends HttpServlet {
         if (user != null) {
             userId = user.getId();
         }else{
-            response.sendRedirect(request.getContextPath() + "/login");
+            response.sendRedirect(request.getContextPath());
             return;
         }
 
@@ -267,22 +267,14 @@ public class TransactionController extends HttpServlet {
 
     @SuppressWarnings("unchecked")
     private List<Category> getCategoryList(HttpSession session, UUID userId) {
-        List<Category> categoryList = (List<Category>) session.getAttribute("categoryList");
-        if (categoryList == null) {
-            categoryList = transactionService.getAllCategory(userId);
-            session.setAttribute("categoryList", categoryList);
-        }
-        return categoryList;
+        //categoryList = transactionService.getAllCategory(userId);
+        return transactionService.getAllCategory(userId);
     }
 
     @SuppressWarnings("unchecked")
     private List<Account> getAccountList(HttpSession session, UUID userId) {
-        List<Account> accountList = (List<Account>) session.getAttribute("accountList");
-        if (accountList == null) {
-            accountList = accountService.getAccountsByUser(userId);
-            //accountList = transactionService.getAllAccountByUserId(userId);
-            session.setAttribute("accountList", accountList);
-        }
-        return accountList;
+        //accountList = accountService.getAccountsByUser(userId);
+        //accountList = transactionService.getAllAccountByUserId(userId);
+        return transactionService.getAllAccountByUserId(userId);
     }
 }

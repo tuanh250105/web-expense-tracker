@@ -29,17 +29,15 @@ public class DebtController extends HttpServlet {
     @Override
     public void init() throws ServletException {
         super.init();
-        // Không giữ EntityManager/DAO ở field để tránh EM kéo dài giữa các request.
         System.out.println("[DebtController] init done");
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Mỗi request tạo 1 EM mới và đóng ở finally
         EntityManager em = null;
         try {
-            em = JpaUtil.getEntityManagerFactory().createEntityManager();
+            em = JpaUtil.getEntityManager();
             DebtDAO debtDAO = new DebtDAO(em);
             UserDAO userDAO = new UserDAO(em);
             DebtService debtService = new DebtService(debtDAO);
@@ -83,10 +81,8 @@ public class DebtController extends HttpServlet {
                               DebtService debtService, UserDAO userDAO) throws ServletException, IOException {
         UUID userId = getSessionUserId(request);
 
-        // lấy danh sách nợ cho user (hoặc tất cả nếu userId == null)
         List<Debt> list = debtService.getAllDebts(userId);
 
-        // lấy users để hiển thị trong bảng (nếu cần) và build map id->username để JSP dùng (tránh NPE)
         List<User> users;
         try {
             users = (List<User>) userDAO.findAll();
@@ -130,7 +126,6 @@ public class DebtController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // đọc action
         String action = request.getParameter("action");
         if (action == null || action.isEmpty()) action = request.getParameter("formAction");
         if (action == null || action.isEmpty()) action = request.getParameter("_action");
@@ -140,7 +135,7 @@ public class DebtController extends HttpServlet {
 
         EntityManager em = null;
         try {
-            em = JpaUtil.getEntityManagerFactory().createEntityManager();
+            em = JpaUtil.getEntityManager();
             DebtDAO debtDAO = new DebtDAO(em);
             UserDAO userDAO = new UserDAO(em);
             DebtService debtService = new DebtService(debtDAO);
@@ -183,42 +178,51 @@ public class DebtController extends HttpServlet {
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            request.getSession().setAttribute("flashError", "Lỗi xử lý: " + ex.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            try {
+                response.getWriter().write("Server error: " + ex.getMessage());
+                response.getWriter().flush();
+            } catch (IOException ioEx) {
+                ioEx.printStackTrace();
+            }
+
+            return;
         } finally {
             if (em != null && em.isOpen()) em.close();
         }
 
-        // redirect để reload danh sách (PRG pattern)
-        response.sendRedirect(request.getContextPath() + "/debt");
+        if (!response.isCommitted() && response.getStatus() == HttpServletResponse.SC_OK) {
+            response.sendRedirect(request.getContextPath() + "/debt");
+        }
     }
 
     private Debt parseDebtFromRequest(HttpServletRequest request) {
         Debt debt = new Debt();
 
-        // Lấy userId từ session; nếu không có, thử lấy từ request parameter "userId" (hidden) và lưu vào session
-        Object sessUser = request.getSession().getAttribute("userId");
-        String userIdStr = (sessUser != null) ? sessUser.toString() : null;
-
-        String paramUserId = request.getParameter("userId");
-        if ((userIdStr == null || userIdStr.isEmpty()) && paramUserId != null && !paramUserId.isEmpty()) {
-            // chỉ set session khi session chưa có userId (khởi tạo lần đầu)
-            userIdStr = paramUserId;
-            request.getSession().setAttribute("userId", userIdStr);
-            System.out.println("[DebtController] session userId set from request parameter: " + userIdStr);
+        UUID sessionUserId = getSessionUserId(request);
+        if (sessionUserId == null) {
+            String paramUserId = request.getParameter("userId");
+            if (paramUserId != null && !paramUserId.isEmpty()) {
+                try {
+                    sessionUserId = UUID.fromString(paramUserId);
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
         }
 
-        if (userIdStr == null || userIdStr.isEmpty()) {
-            // fallback sample (giữ như logic cũ)
-            userIdStr = "00000000-0000-0000-0000-000000000047";
-            request.getSession().setAttribute("userId", userIdStr);
+        if (sessionUserId == null) {
+            sessionUserId = UUID.fromString("00000000-0000-0000-0000-000000000047");
+            request.getSession().setAttribute("userId", sessionUserId.toString());
+            System.out.println("[DebtController] Warning: userId missing, fallback to sample " + sessionUserId);
+        } else {
+            HttpSession sess = request.getSession();
+            Object uidAttr = sess.getAttribute("userId");
+            if (uidAttr == null) {
+                sess.setAttribute("userId", sessionUserId.toString());
+            }
         }
 
-        try {
-            debt.setUserId(UUID.fromString(userIdStr));
-        } catch (Exception ex) {
-            debt.setUserId(UUID.fromString("00000000-0000-0000-0000-000000000047"));
-        }
-
+        debt.setUserId(sessionUserId);
         debt.setCreditorName(request.getParameter("creditorName"));
 
         String amt = request.getParameter("amount");
@@ -227,34 +231,52 @@ public class DebtController extends HttpServlet {
                 debt.setAmount(new BigDecimal(amt));
             } catch (NumberFormatException nfe) {
                 debt.setAmount(BigDecimal.ZERO);
+                System.out.println("[DebtController] parseDebtFromRequest: invalid amount -> " + amt);
             }
+        } else {
+            debt.setAmount(BigDecimal.ZERO);
         }
-
         String due = request.getParameter("dueDate");
         if (due != null && !due.isEmpty()) {
             try {
                 debt.setDueDate(LocalDate.parse(due));
             } catch (Exception e) {
-                // ignore, keep null
+                debt.setDueDate(LocalDate.now());
+                System.out.println("[DebtController] parseDebtFromRequest: invalid dueDate -> " + due + ", fallback to today");
             }
+        } else {
+            debt.setDueDate(LocalDate.now());
         }
 
-        debt.setStatus(request.getParameter("status") != null ? request.getParameter("status") : Debt.STATUS_PENDING);
+        debt.setStatus(request.getParameter("status") != null && !request.getParameter("status").isEmpty()
+                ? request.getParameter("status") : Debt.STATUS_PENDING);
         debt.setNote(request.getParameter("note") != null ? request.getParameter("note") : "");
+
+        System.out.println("[DebtController] parseDebtFromRequest -> userId=" + debt.getUserId()
+                + " creditor=" + debt.getCreditorName() + " amount=" + debt.getAmount()
+                + " dueDate=" + debt.getDueDate() + " status=" + debt.getStatus());
 
         return debt;
     }
 
     private UUID getSessionUserId(HttpServletRequest request) {
-//        Object sess = request.getSession().getAttribute("userId");
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("user");
-        UUID userId = (UUID) user.getId();
+        HttpSession session = request.getSession(false);
         if (session == null) return null;
-        try {
-            return userId;
-        } catch (Exception ex) {
-            return null;
+
+        Object userAttr = session.getAttribute("user");
+        if (userAttr instanceof User) {
+            User user = (User) userAttr;
+            if (user != null && user.getId() != null) return user.getId();
         }
+
+        Object uid = session.getAttribute("userId");
+        if (uid instanceof UUID) {
+            return (UUID) uid;
+        } else if (uid instanceof String) {
+            try {
+                return UUID.fromString((String) uid);
+            } catch (IllegalArgumentException ignored) { }
+        }
+        return null;
     }
 }

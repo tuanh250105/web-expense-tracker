@@ -18,54 +18,11 @@ import java.util.UUID;
  */
 public class TransactionDAOstart {
 
-    private static EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
-
-    static {
-        EntityManagerFactory tmp = null;
-        try {
-            System.out.println("🚀 Initializing EntityManagerFactory...");
-
-            // Programmatically read environment variables
-            Map<String, String> properties = new HashMap<>();
-            String dbUrl = System.getenv("DB_URL");
-            String dbUser = System.getenv("DB_USER");
-            String dbPass = System.getenv("DB_PASS");
-
-            if (dbUrl == null || dbUser == null || dbPass == null) {
-                throw new IllegalStateException("Database environment variables (DB_URL, DB_USER, DB_PASS) are not set.");
-            }
-
-            properties.put("jakarta.persistence.jdbc.url", dbUrl);
-            properties.put("jakarta.persistence.jdbc.user", dbUser);
-            properties.put("jakarta.persistence.jdbc.password", dbPass);
-
-            tmp = JpaUtil.getEntityManagerFactory();
-            System.out.println("✅ EntityManagerFactory initialized successfully!");
-        } catch (Exception e) {
-            System.err.println("❌ Critical Error initializing EntityManagerFactory:");
-            e.printStackTrace();
-            // Re-throw the exception to make the root cause visible
-            throw new ExceptionInInitializerError(e);
-        }
-        emf = tmp;
-    }
-
-    private EntityManager getEntityManager() {
-        if (emf == null) {
-            // This should ideally not be reached if ExceptionInInitializerError is thrown above
-            throw new IllegalStateException("EntityManagerFactory is not initialized. Check server logs for root cause.");
-        }
-        return emf.createEntityManager();
-    }
-
-    public static void closeFactory() {
-        if (emf != null && emf.isOpen()) {
-            emf.close();
-        }
-    }
+    private static EntityManager em;
+    private static EntityManager em() {return JpaUtil.getEntityManager(); };
 
     public void save(Transaction transaction) {
-        EntityManager em = getEntityManager();
+        em = em();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
@@ -84,7 +41,7 @@ public class TransactionDAOstart {
     }
 
     public void delete(UUID transactionId) {
-        EntityManager em = getEntityManager();
+        em = em();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
@@ -102,7 +59,7 @@ public class TransactionDAOstart {
     }
 
     public Transaction findById(UUID transactionId) {
-        EntityManager em = getEntityManager();
+        em = em();
         try {
             return em.find(Transaction.class, transactionId);
         } finally {
@@ -111,7 +68,7 @@ public class TransactionDAOstart {
     }
 
     public List<Transaction> findAll() {
-        EntityManager em = getEntityManager();
+        em = em();
         try {
             String jpql = "SELECT t FROM Transaction t ORDER BY t.transactionDate DESC";
             return em.createQuery(jpql, Transaction.class).getResultList();
@@ -121,7 +78,7 @@ public class TransactionDAOstart {
     }
 
     public List<Transaction> findAllByUserId(UUID userId) {
-        EntityManager em = getEntityManager();
+        em = em();
         try {
             String jpql = "SELECT t FROM Transaction t JOIN t.account a WHERE a.user.id = :userId ORDER BY t.transactionDate DESC";
             TypedQuery<Transaction> query = em.createQuery(jpql, Transaction.class);
@@ -133,7 +90,7 @@ public class TransactionDAOstart {
     }
 
     public List<Transaction> findByAccountId(UUID accountId) {
-        EntityManager em = getEntityManager();
+        em = em();
         try {
             String jpql = "SELECT t FROM Transaction t WHERE t.account.id = :accountId ORDER BY t.transactionDate DESC";
             TypedQuery<Transaction> query = em.createQuery(jpql, Transaction.class);
@@ -145,7 +102,7 @@ public class TransactionDAOstart {
     }
 
     public List<Transaction> findByAccountIdAndUserId(UUID userId, UUID accountId) {
-        EntityManager em = getEntityManager();
+        em = em();
         try {
             String jpql = "SELECT t FROM Transaction t WHERE t.account.user.id = :userId AND t.account.id = :accountId ORDER BY t.transactionDate DESC";
             TypedQuery<Transaction> query = em.createQuery(jpql, Transaction.class);
@@ -160,7 +117,7 @@ public class TransactionDAOstart {
     public List<Transaction> getAllTransactionsByMonthAndYear(UUID userId,
                                                               LocalDateTime startOfMonth,
                                                               LocalDateTime endOfMonth) {
-        EntityManager em = getEntityManager();
+        em = em();
         try {
             String jpql = """
                     SELECT t FROM Transaction t
@@ -182,7 +139,7 @@ public class TransactionDAOstart {
     }
 
     public List<Account> getAllAccountByUserId(UUID userId) {
-        EntityManager em = getEntityManager();
+        em = em();
         try {
             String jpql = "SELECT a FROM Account a WHERE a.user.id = :userId";
             TypedQuery<Account> query = em.createQuery(jpql, Account.class);
