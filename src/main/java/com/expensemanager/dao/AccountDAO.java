@@ -18,10 +18,9 @@ import jakarta.persistence.TypedQuery;
 public class AccountDAO {
 
     // ✅ Dùng chung EntityManagerFactory từ JpaUtil
-    private static final EntityManager em = JpaUtil.getEntityManager();
 
     private EntityManager getEntityManager() {
-        return em;
+        return JpaUtil.getEntityManager();
     }
 
     // ======================== SAVE ========================

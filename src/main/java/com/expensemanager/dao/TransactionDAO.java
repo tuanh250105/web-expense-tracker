@@ -19,15 +19,13 @@ import java.util.stream.Collectors;
 public class TransactionDAO {
 
 
-    private static final EntityManager em = JpaUtil.getEntityManager();
+    private EntityManager em;
+    private EntityManager em() {return JpaUtil.getEntityManager(); };
 
-    private EntityManager em() {
-        return em;
-    }
 
     // ========================= ACCOUNT =========================
     public Account findAccountById(UUID id) {
-        EntityManager em = em();
+        em = em();
         try {
             return em.find(Account.class, id);
         } finally {
@@ -36,7 +34,7 @@ public class TransactionDAO {
     }
 
     public List<Account> getAllAccountByUserId(UUID userId) {
-        EntityManager em = em();
+        em = em();
         try {
             String jpql = "SELECT a FROM Account a WHERE a.user.id = :userId";
             return em.createQuery(jpql, Account.class)
@@ -49,7 +47,7 @@ public class TransactionDAO {
 
     // ========================= CATEGORY =========================
     public Category findCategoryById(UUID id) {
-        EntityManager em = em();
+        em = em();
         try {
             return em.find(Category.class, id);
         } finally {
@@ -58,7 +56,6 @@ public class TransactionDAO {
     }
 
     public List<Category> findAllCategoryOfUser(UUID userId) {
-        EntityManager em = em();
         try {
             String jpql = "SELECT c FROM Category c WHERE c.user.id = :userId";
             return em.createQuery(jpql, Category.class)
@@ -71,7 +68,7 @@ public class TransactionDAO {
 
     // ========================= TRANSACTION =========================
     public Transaction getTransactionById(UUID transactionId) {
-        EntityManager em = em();
+        em = em();
         try {
             String jpql = """
                     SELECT t FROM Transaction t 
@@ -88,7 +85,7 @@ public class TransactionDAO {
     }
 
     public List<Transaction> getAllTransactionsByMonthAndYear(UUID userId, LocalDateTime startOfMonth, LocalDateTime endOfMonth) {
-        EntityManager em = em();
+        em = em();
         try {
             String jpql = """
                     SELECT t FROM Transaction t
@@ -110,7 +107,7 @@ public class TransactionDAO {
     }
 
     public void addIncomeTransaction(Transaction transaction) {
-        EntityManager em = em();
+        em = em();
         try {
             em.getTransaction().begin();
             Account account = em.find(Account.class, transaction.getAccount().getId());
@@ -128,7 +125,7 @@ public class TransactionDAO {
     }
 
     public void addExpenseTransaction(Transaction transaction) {
-        EntityManager em = em();
+        em = em();
         try {
             em.getTransaction().begin();
             Account account = em.find(Account.class, transaction.getAccount().getId());
@@ -146,7 +143,7 @@ public class TransactionDAO {
     }
 
     public void updateTransaction(Transaction transaction) {
-        EntityManager em = em();
+        em = em();
         try {
             em.getTransaction().begin();
             em.merge(transaction);
@@ -160,7 +157,7 @@ public class TransactionDAO {
     }
 
     public void deleteTransaction(Transaction transaction) {
-        EntityManager em = em();
+        em = em();
         try {
             em.getTransaction().begin();
             em.remove(em.merge(transaction));
@@ -175,7 +172,7 @@ public class TransactionDAO {
 
     // ========================= FILTER =========================
     public List<Transaction> filter(UUID userId, String fromDate, String toDate, String notes, String[] types, String categoryId) {
-        EntityManager em = em();
+        em = em();
         try {
             StringBuilder jpql = new StringBuilder("""
                 SELECT t FROM Transaction t
@@ -219,7 +216,7 @@ public class TransactionDAO {
 
     // ========================= BUDGET =========================
     public List<Transaction> findTransactionByCategoryIdAndDate(UUID categoryId, LocalDate fromDate, LocalDate toDate) {
-        EntityManager em = em();
+        em = em();
         try {
             String jpql = """
                 SELECT t FROM Transaction t
@@ -240,7 +237,7 @@ public class TransactionDAO {
 
     // ========================= SCHEDULED =========================
     public boolean hasTransactionNearDue(UUID categoryId, BigDecimal amount, String type, LocalDateTime start, LocalDateTime end, UUID userId) {
-        EntityManager em = em();
+        em = em();
         try {
             String jpql = """
                 SELECT COUNT(t) > 0 FROM Transaction t
@@ -328,7 +325,7 @@ public class TransactionDAO {
     }
 
     public long countByCategoryId(UUID categoryId) {
-        EntityManager em = em();
+        em = em();
         try {
             String jpql = "SELECT COUNT(t) FROM Transaction t WHERE t.category.id = :categoryId";
             return em.createQuery(jpql, Long.class)

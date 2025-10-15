@@ -12,13 +12,13 @@ import java.util.UUID;
 public class ImportExportDAO {
 
     // ✅ Dùng EntityManagerFactory từ JpaUtil (đã cấu hình DB_URL, DB_USER, DB_PASS)
-    private static final EntityManager em = JpaUtil.getEntityManager();
-
+    private  EntityManager em;
+    private EntityManager em() {return JpaUtil.getEntityManager(); };
     /**
      * Lưu danh sách Transaction vào database
      */
     public void saveTransactions(List<Transaction> transactions) {
-
+        em = em();
         em.getTransaction().begin();
         try {
             for (Transaction t : transactions) {
@@ -47,7 +47,7 @@ public class ImportExportDAO {
      * Lấy Transaction theo account và khoảng thời gian
      */
     public List<Transaction> getTransactionsByAccountAndDate(UUID accountId, LocalDate startDate, LocalDate endDate) {
-
+        em = em();
         try {
             String jpql = "SELECT t FROM Transaction t " +
                     "WHERE t.account.id = :accId " +
@@ -67,7 +67,7 @@ public class ImportExportDAO {
      * Lấy toàn bộ Transaction từ database
      */
     public List<Transaction> getAllTransactions() {
-
+        em = em();
         try {
             return em.createQuery("SELECT t FROM Transaction t", Transaction.class)
                     .getResultList();

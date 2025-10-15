@@ -12,11 +12,9 @@ import java.util.UUID;
 
 public class RewardDAO {
 
-    // ✅ Dùng chung EntityManagerFactory từ JpaUtil
-    private static final EntityManager EM = JpaUtil.getEntityManager();
 
     private EntityManager em() {
-        return EM;
+        return JpaUtil.getEntityManager();
     }
 
     // ====== LẤY ĐIỂM NGƯỜI DÙNG ======

@@ -18,9 +18,11 @@ import java.util.UUID;
  */
 public class TransactionDAOstart {
 
-    private static EntityManager em = JpaUtil.getEntityManager();
+    private static EntityManager em;
+    private static EntityManager em() {return JpaUtil.getEntityManager(); };
 
     public void save(Transaction transaction) {
+        em = em();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
@@ -39,6 +41,7 @@ public class TransactionDAOstart {
     }
 
     public void delete(UUID transactionId) {
+        em = em();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
@@ -56,6 +59,7 @@ public class TransactionDAOstart {
     }
 
     public Transaction findById(UUID transactionId) {
+        em = em();
         try {
             return em.find(Transaction.class, transactionId);
         } finally {
@@ -64,6 +68,7 @@ public class TransactionDAOstart {
     }
 
     public List<Transaction> findAll() {
+        em = em();
         try {
             String jpql = "SELECT t FROM Transaction t ORDER BY t.transactionDate DESC";
             return em.createQuery(jpql, Transaction.class).getResultList();
@@ -73,6 +78,7 @@ public class TransactionDAOstart {
     }
 
     public List<Transaction> findAllByUserId(UUID userId) {
+        em = em();
         try {
             String jpql = "SELECT t FROM Transaction t JOIN t.account a WHERE a.user.id = :userId ORDER BY t.transactionDate DESC";
             TypedQuery<Transaction> query = em.createQuery(jpql, Transaction.class);
@@ -84,6 +90,7 @@ public class TransactionDAOstart {
     }
 
     public List<Transaction> findByAccountId(UUID accountId) {
+        em = em();
         try {
             String jpql = "SELECT t FROM Transaction t WHERE t.account.id = :accountId ORDER BY t.transactionDate DESC";
             TypedQuery<Transaction> query = em.createQuery(jpql, Transaction.class);
@@ -95,7 +102,7 @@ public class TransactionDAOstart {
     }
 
     public List<Transaction> findByAccountIdAndUserId(UUID userId, UUID accountId) {
-
+        em = em();
         try {
             String jpql = "SELECT t FROM Transaction t WHERE t.account.user.id = :userId AND t.account.id = :accountId ORDER BY t.transactionDate DESC";
             TypedQuery<Transaction> query = em.createQuery(jpql, Transaction.class);
@@ -110,6 +117,7 @@ public class TransactionDAOstart {
     public List<Transaction> getAllTransactionsByMonthAndYear(UUID userId,
                                                               LocalDateTime startOfMonth,
                                                               LocalDateTime endOfMonth) {
+        em = em();
         try {
             String jpql = """
                     SELECT t FROM Transaction t
@@ -131,6 +139,7 @@ public class TransactionDAOstart {
     }
 
     public List<Account> getAllAccountByUserId(UUID userId) {
+        em = em();
         try {
             String jpql = "SELECT a FROM Account a WHERE a.user.id = :userId";
             TypedQuery<Account> query = em.createQuery(jpql, Account.class);

@@ -13,9 +13,12 @@ import java.util.List;
 import java.util.UUID;
 
 public class BudgetDAO {
-    private static final EntityManager em = JpaUtil.getEntityManager();
-
+    private EntityManager em;
+    private EntityManager em() {
+        return JpaUtil.getEntityManager();
+    }
     public Budget findById(UUID id) {
+        em = em();
         try {
             return em.find(Budget.class, id);
         } finally {
@@ -24,6 +27,7 @@ public class BudgetDAO {
     }
 
     public List<Budget> getAllByUserId(UUID userId) {
+        em = em();
         try {
             String jpql = "SELECT b FROM Budget b WHERE b.user.id = :userId ORDER BY b.startDate DESC";
             return em.createQuery(jpql, Budget.class).setParameter("userId", userId).getResultList();
@@ -33,7 +37,7 @@ public class BudgetDAO {
     }
 
     public void addBudget(Budget budget) {
-
+        em = em();
         try {
             em.getTransaction().begin();
             em.persist(budget);
@@ -47,7 +51,7 @@ public class BudgetDAO {
     }
 
     public void updateBudget(Budget budget) {
-
+        em = em();
         try {
             em.getTransaction().begin();
             em.merge(budget);
@@ -61,7 +65,7 @@ public class BudgetDAO {
     }
 
     public void deleteBudget(Budget budget) {
-
+        em = em();
         try {
             em.getTransaction().begin();
             Budget managedBudget = em.merge(budget);
@@ -76,6 +80,7 @@ public class BudgetDAO {
     }
 
     public BigDecimal calculateSpent(UUID budgetId) {
+        em = em();
         try {
             String sql = "SELECT COALESCE(SUM(t.amount), 0) " +
                     "FROM transactions t " +
@@ -91,6 +96,7 @@ public class BudgetDAO {
 
     @SuppressWarnings("unchecked")
     public List<BigDecimal> getDailySpent(UUID budgetId) {
+        em = em();
         try {
             String sql = "SELECT COALESCE(SUM(t.amount), 0) FROM transactions t " +
                     "WHERE t.category_id = (SELECT b.category_id FROM budgets b WHERE b.id = :budgetId) " +
@@ -106,7 +112,7 @@ public class BudgetDAO {
 
     @SuppressWarnings("unchecked")
     public List<LocalDate> getDailyDates(UUID budgetId) {
-
+        em = em();
         try {
             String sql = "SELECT t.transaction_date FROM transactions t " +
                     "WHERE t.category_id = (SELECT b.category_id FROM budgets b WHERE b.id = :budgetId) " +
@@ -121,7 +127,7 @@ public class BudgetDAO {
     }
 
     public List<Category> getAllByUserIdForCategories(UUID userId) {
-
+        em = em();
         try {
             String jpql = "SELECT c FROM Category c WHERE c.user.id = :userId AND c.type = 'expense' ORDER BY c.name";
             return em.createQuery(jpql, Category.class).setParameter("userId", userId).getResultList();
@@ -131,7 +137,7 @@ public class BudgetDAO {
     }
 
     public List<Budget> getHistoricalBudgets(UUID userId, UUID categoryId) {
-
+        em = em();
         try {
             String jpql = "SELECT b FROM Budget b WHERE b.user.id = :userId AND b.category.id = :categoryId " +
                     "AND b.endDate < CURRENT_DATE ORDER BY b.startDate DESC";
@@ -146,7 +152,7 @@ public class BudgetDAO {
 
     // Thêm method mới để lấy list Transaction cho budget mà không sửa logic gốc
     public List<Transaction> getTransactionsForBudget(UUID budgetId) {
-
+        em = em();
         try {
             String jpql = "SELECT t FROM Transaction t WHERE t.category.id = (SELECT b.category.id FROM Budget b WHERE b.id = :budgetId) " +
                     "AND t.type = 'expense' " +

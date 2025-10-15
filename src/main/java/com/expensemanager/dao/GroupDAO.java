@@ -19,7 +19,7 @@ public class GroupDAO {
     private EntityManager em;
 
     public GroupDAO(EntityManager em) {
-        this.em = em;
+        this.em = JpaUtil.getEntityManager();
     }
 
     /**

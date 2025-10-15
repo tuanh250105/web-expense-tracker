@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public class DebtDAO {
 
-    private final EntityManager em;
+    private EntityManager em;
 
     // Constructor nhận EntityManager
     public DebtDAO(EntityManager em) {
@@ -22,6 +22,10 @@ public class DebtDAO {
     // Constructor mặc định (tạo EntityManager từ JpaUtil)
     public DebtDAO() {
         this.em = JpaUtil.getEntityManager();
+    }
+
+    private EntityManager em() {
+        return JpaUtil.getEntityManager();
     }
 
     private EntityManager getEm() {
@@ -42,6 +46,7 @@ public class DebtDAO {
     }
 
     public Debt findById(UUID id) {
+
         if (id == null) return null;
         return em.find(Debt.class, id);
     }

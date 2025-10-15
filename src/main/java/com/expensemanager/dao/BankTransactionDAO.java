@@ -19,10 +19,9 @@ import jakarta.persistence.TypedQuery;
 public class BankTransactionDAO {
 
     // Static EMF, tạo 1 lần cho toàn bộ ứng dụng
-    private static final EntityManager em = JpaUtil.getEntityManager();
 
     private EntityManager getEntityManager() {
-        return em;
+        return JpaUtil.getEntityManager();
     }
 
 
