@@ -1,21 +1,29 @@
 package com.expensemanager.dao;
 
-import com.expensemanager.model.Account;
-import com.expensemanager.model.Category;
-import com.expensemanager.model.Transaction;
-import com.expensemanager.util.JpaUtil;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.TypedQuery;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
-import java.util.*;
 import java.util.stream.Collectors;
+
+import com.expensemanager.model.Account;
+import com.expensemanager.model.Category;
+import com.expensemanager.model.DaySummary;
+import com.expensemanager.model.Transaction;
+import com.expensemanager.util.JpaUtil;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.TypedQuery;
 
 public class TransactionDAO {
 
@@ -322,5 +330,30 @@ public class TransactionDAO {
                     return item;
                 })
                 .collect(Collectors.toList());
+    }
+
+    public Map<LocalDate, DaySummary> getDaySummaries(UUID userId, YearMonth month) {
+        EntityManager em = em();
+        try {
+            String jpql = "SELECT DATE(t.transactionDate), " +
+                      "SUM(CASE WHEN t.type='income' THEN t.amount ELSE 0 END), " +
+                      "SUM(CASE WHEN t.type='expense' THEN t.amount ELSE 0 END) " +
+                      "FROM Transaction t WHERE t.account.user.id = :userId " +
+                      "AND MONTH(t.transactionDate) = :month AND YEAR(t.transactionDate) = :year " +
+                      "GROUP BY DATE(t.transactionDate)";
+            List<Object[]> results = em.createQuery(jpql)
+                .setParameter("userId", userId)
+                .setParameter("month", month.getMonthValue())
+                .setParameter("year", month.getYear())
+                .getResultList();
+            Map<LocalDate, DaySummary> map = new HashMap<>();
+            for (Object[] row : results) {
+                LocalDate date = (LocalDate) row[0];
+                BigDecimal income = (BigDecimal) row[1];
+                BigDecimal expense = (BigDecimal) row[2];
+                map.put(date, new DaySummary(date, income, expense));
+            }
+            return map;
+        } finally { em.close(); }
     }
 }

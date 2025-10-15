@@ -1,19 +1,19 @@
 package com.expensemanager.service;
 
-import com.expensemanager.dao.TransactionDAO;
-import com.expensemanager.model.Account;
-import com.expensemanager.model.Category;
-import com.expensemanager.model.Transaction;
-
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import java.util.*;
-import java.util.stream.Collectors;
+
+import com.expensemanager.dao.TransactionDAO;
+import com.expensemanager.model.Account;
+import com.expensemanager.model.Category;
+import com.expensemanager.model.DaySummary;
+import com.expensemanager.model.Transaction;
 
 
 
@@ -164,5 +164,9 @@ public class TransactionService {
 
     public List<Map<String, Object>> groupTransactionsByCategory(List<Transaction> list, int topN) {
         return transactionDAO.groupTransactionsByCategory(list, topN);
+    }
+
+    public Map<LocalDate, DaySummary> getDaySummaries(UUID userId, YearMonth month) {
+        return transactionDAO.getDaySummaries(userId, month);
     }
 }
