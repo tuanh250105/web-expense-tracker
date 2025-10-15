@@ -30,8 +30,13 @@
         <label>Biểu đồ</label>
         <select id="bb-chart-type">
             <option value="bar" selected>Cột</option>
+            <option value="line">Đường</option>
             <option value="pie">Tròn</option>
+            <option value="doughnut">Vòng</option>
+            <option value="radar">Radar</option>
+            <option value="polar">Phân bố</option>
         </select>
+
 
         <label>Ứng dụng</label>
         <select id="bb-app"></select>
@@ -61,4 +66,3 @@
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="${pageContext.request.contextPath}/assets/js/analytics.js"></script>
-
