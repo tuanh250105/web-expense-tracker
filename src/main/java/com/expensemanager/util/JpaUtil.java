@@ -54,6 +54,7 @@ public class JpaUtil {
             // Sử dụng built-in connection pool của Hibernate (không cần thư viện ngoài)
             props.put("hibernate.connection.pool_size", "5");  // Tối đa 5 connections
 
+
             // Release mode - trả connection về pool sau mỗi statement
             props.put("hibernate.connection.release_mode", "after_transaction");
 
@@ -66,11 +67,13 @@ public class JpaUtil {
             props.put("hibernate.c3p0.max_statements", "0");  // Tắt prepared statement cache
 
             // Validation query
-            props.put("hibernate.connection.provider_class",
-                    "org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl");
+            //props.put("hibernate.connection.provider_class", "org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl");
 
             // 4️⃣ Tên persistence-unit (phải trùng trong persistence.xml)
             String persistenceUnitName = "default";
+            System.out.println("DEBUG >>> DB_URL=" + url);
+            System.out.println("DEBUG >>> DB_USER=" + user);
+            System.out.println("DEBUG >>> DB_PASS=" + (pass != null ? "********" : "null"));
 
             // 5️⃣ Tạo EntityManagerFactory
             tempEmf = Persistence.createEntityManagerFactory(persistenceUnitName, props);

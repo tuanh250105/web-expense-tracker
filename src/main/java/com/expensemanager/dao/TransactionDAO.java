@@ -5,7 +5,6 @@ import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
 import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.TypedQuery;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -20,10 +19,10 @@ import java.util.stream.Collectors;
 public class TransactionDAO {
 
 
-    private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
+    private static final EntityManager em = JpaUtil.getEntityManager();
 
     private EntityManager em() {
-        return emf.createEntityManager();
+        return em;
     }
 
     // ========================= ACCOUNT =========================

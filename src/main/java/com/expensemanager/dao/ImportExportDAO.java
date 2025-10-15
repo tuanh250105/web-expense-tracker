@@ -4,7 +4,6 @@ import com.expensemanager.model.Transaction;
 import com.expensemanager.util.JpaUtil;  // ✅ thêm import này
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,13 +12,13 @@ import java.util.UUID;
 public class ImportExportDAO {
 
     // ✅ Dùng EntityManagerFactory từ JpaUtil (đã cấu hình DB_URL, DB_USER, DB_PASS)
-    private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
+    private static final EntityManager em = JpaUtil.getEntityManager();
 
     /**
      * Lưu danh sách Transaction vào database
      */
     public void saveTransactions(List<Transaction> transactions) {
-        EntityManager em = emf.createEntityManager();
+
         em.getTransaction().begin();
         try {
             for (Transaction t : transactions) {
@@ -48,7 +47,7 @@ public class ImportExportDAO {
      * Lấy Transaction theo account và khoảng thời gian
      */
     public List<Transaction> getTransactionsByAccountAndDate(UUID accountId, LocalDate startDate, LocalDate endDate) {
-        EntityManager em = emf.createEntityManager();
+
         try {
             String jpql = "SELECT t FROM Transaction t " +
                     "WHERE t.account.id = :accId " +
@@ -68,7 +67,7 @@ public class ImportExportDAO {
      * Lấy toàn bộ Transaction từ database
      */
     public List<Transaction> getAllTransactions() {
-        EntityManager em = emf.createEntityManager();
+
         try {
             return em.createQuery("SELECT t FROM Transaction t", Transaction.class)
                     .getResultList();

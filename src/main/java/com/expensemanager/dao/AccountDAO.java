@@ -8,7 +8,6 @@ import com.expensemanager.model.User;
 import com.expensemanager.util.JpaUtil; // ✅ thêm import này
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.TypedQuery;
 
@@ -19,10 +18,10 @@ import jakarta.persistence.TypedQuery;
 public class AccountDAO {
 
     // ✅ Dùng chung EntityManagerFactory từ JpaUtil
-    private static final EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
+    private static final EntityManager em = JpaUtil.getEntityManager();
 
     private EntityManager getEntityManager() {
-        return emf.createEntityManager();
+        return em;
     }
 
     // ======================== SAVE ========================

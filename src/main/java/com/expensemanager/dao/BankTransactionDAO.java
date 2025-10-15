@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.expensemanager.model.Transaction;
 
+import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
@@ -18,18 +19,12 @@ import jakarta.persistence.TypedQuery;
 public class BankTransactionDAO {
 
     // Static EMF, tạo 1 lần cho toàn bộ ứng dụng
-    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("default");
+    private static final EntityManager em = JpaUtil.getEntityManager();
 
     private EntityManager getEntityManager() {
-        return emf.createEntityManager();
+        return em;
     }
 
-    // Đóng EMF khi app shutdown
-    public static void closeFactory() {
-        if (emf.isOpen()) {
-            emf.close();
-        }
-    }
 
     // ======================== SAVE ========================
     public void save(Transaction transaction) {

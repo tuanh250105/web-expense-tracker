@@ -29,12 +29,12 @@ import java.util.UUID;
 public class GroupServlet extends HttpServlet {
 
     private Gson gson;
-    private EntityManagerFactory emf;
+    private EntityManager em;
 
     @Override
     public void init() throws ServletException {
         gson = new Gson();
-        emf = JpaUtil.getEntityManagerFactory();
+        em = JpaUtil.getEntityManager();
     }
 
     // --- BỘ ĐỊNH TUYẾN (ROUTER) ---
@@ -180,7 +180,7 @@ public class GroupServlet extends HttpServlet {
             UUID userId = getUserIdFromSession(req, resp);
             if (userId == null) return;
 
-            em = emf.createEntityManager();
+
             DashboardService service = createDashboardService(userId, em);
             List<Map<String, String>> users = service.searchUsersByName(nameQuery);
             sendResponse(resp, HttpServletResponse.SC_OK, users);
@@ -232,7 +232,6 @@ public class GroupServlet extends HttpServlet {
     private void executeInTransaction(UUID userId, HttpServletResponse resp, TransactionalOperation operation) throws IOException {
         EntityManager em = null;
         try {
-            em = emf.createEntityManager();
             DashboardService service = createDashboardService(userId, em);
 
             em.getTransaction().begin();
@@ -267,10 +266,4 @@ public class GroupServlet extends HttpServlet {
         sendResponse(resp, status, Collections.singletonMap("error", message));
     }
 
-    @Override
-    public void destroy() {
-        if (emf != null && emf.isOpen()) {
-            emf.close();
-        }
-    }
 }

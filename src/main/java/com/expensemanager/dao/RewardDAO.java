@@ -13,10 +13,10 @@ import java.util.UUID;
 public class RewardDAO {
 
     // ✅ Dùng chung EntityManagerFactory từ JpaUtil
-    private static final EntityManagerFactory EMF = JpaUtil.getEntityManagerFactory();
+    private static final EntityManager EM = JpaUtil.getEntityManager();
 
     private EntityManager em() {
-        return EMF.createEntityManager();
+        return EM;
     }
 
     // ====== LẤY ĐIỂM NGƯỜI DÙNG ======
@@ -32,7 +32,7 @@ public class RewardDAO {
 
     // ====== CỘNG ĐIỂM ======
     public void addPoints(UUID userId, int points) {
-        EntityManager em = EMF.createEntityManager();
+        EntityManager em = em();
         try {
             em.getTransaction().begin();
 

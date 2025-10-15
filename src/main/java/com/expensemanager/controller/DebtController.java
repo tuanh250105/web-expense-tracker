@@ -37,7 +37,7 @@ public class DebtController extends HttpServlet {
             throws ServletException, IOException {
         EntityManager em = null;
         try {
-            em = JpaUtil.getEntityManagerFactory().createEntityManager();
+            em = JpaUtil.getEntityManager();
             DebtDAO debtDAO = new DebtDAO(em);
             UserDAO userDAO = new UserDAO(em);
             DebtService debtService = new DebtService(debtDAO);
@@ -135,7 +135,7 @@ public class DebtController extends HttpServlet {
 
         EntityManager em = null;
         try {
-            em = JpaUtil.getEntityManagerFactory().createEntityManager();
+            em = JpaUtil.getEntityManager();
             DebtDAO debtDAO = new DebtDAO(em);
             UserDAO userDAO = new UserDAO(em);
             DebtService debtService = new DebtService(debtDAO);
