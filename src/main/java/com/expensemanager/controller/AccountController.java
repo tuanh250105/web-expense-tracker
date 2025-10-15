@@ -16,6 +16,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 /**
  * AccountController - Quản lý các tài khoản ngân hàng (Ví, Thẻ tín dụng, v.v.).
@@ -102,9 +103,11 @@ public class AccountController extends HttpServlet {
                 handleStatsRequest(request, response);
                 return;
             }
-
+            HttpSession session = request.getSession(true);
+            User user = (User) session.getAttribute("user");
+            UUID userId = user.getId();
             // Get all accounts
-            List<Account> accounts = accountService.getAllAccounts();
+            List<Account> accounts = accountService.getAccountsByUser(userId);
 
             System.out.println("✅ Found " + accounts.size() + " accounts");
 
@@ -145,8 +148,11 @@ public class AccountController extends HttpServlet {
         try {
             System.out.println("📊 Handling stats request");
 
-            // Get all accounts with full details
-            List<Account> accounts = accountService.getAllAccounts();
+            HttpSession session = request.getSession(true);
+            User user = (User) session.getAttribute("user");
+            UUID userId = user.getId();
+            // Get all accounts
+            List<Account> accounts = accountService.getAccountsByUser(userId);
 
             // Build JSON array (not wrapped in success/data)
             StringBuilder json = new StringBuilder();
@@ -389,7 +395,11 @@ public class AccountController extends HttpServlet {
      * Phương thức trợ giúp để tải danh sách tài khoản và đặt vào request.
      */
     private void loadAllAccounts(HttpServletRequest request) {
-        List<Account> accounts = accountService.getAllAccounts();
+        HttpSession session = request.getSession(true);
+        User user = (User) session.getAttribute("user");
+        UUID userId = user.getId();
+        // Get all accounts
+        List<Account> accounts = accountService.getAccountsByUser(userId);
         request.setAttribute("accounts", accounts);
     }
 }
