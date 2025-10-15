@@ -183,7 +183,7 @@ public class TransactionDAO {
     }
 
     // ========================= FILTER =========================
-    public List<Transaction> filter(UUID userId, String fromDate, String toDate, String notes, String[] types) {
+    public List<Transaction> filter(UUID userId, String fromDate, String toDate, String notes, String[] types, String categoryId) {
         EntityManager em = em();
         try {
             StringBuilder jpql = new StringBuilder("""
@@ -197,6 +197,7 @@ public class TransactionDAO {
             if (toDate != null && !toDate.isEmpty()) jpql.append(" AND t.transactionDate < :toDate");
             if (notes != null && !notes.isEmpty()) jpql.append(" AND LOWER(t.note) LIKE LOWER(:notes)");
             if (types != null && types.length > 0) jpql.append(" AND LOWER(t.type) IN :types");
+            if (categoryId != null && !categoryId.isEmpty()) jpql.append(" AND t.category.id = :categoryId");
             jpql.append(" ORDER BY t.transactionDate DESC");
 
             TypedQuery<Transaction> query = em.createQuery(jpql.toString(), Transaction.class);
@@ -214,6 +215,9 @@ public class TransactionDAO {
                         .map(s -> s.toLowerCase(Locale.ENGLISH))
                         .collect(Collectors.toList());
                 if (!normalized.isEmpty()) query.setParameter("types", normalized);
+            }
+            if (categoryId != null && !categoryId.isEmpty()) {
+                query.setParameter("categoryId", UUID.fromString(categoryId));
             }
 
             return query.getResultList();
@@ -332,7 +336,7 @@ public class TransactionDAO {
                 .collect(Collectors.toList());
     }
 
-    public Map<LocalDate, DaySummary> getDaySummaries(UUID userId, YearMonth month) {
+    public Map<String, DaySummary> getDaySummaries(UUID userId, YearMonth month) {
         EntityManager em = em();
         try {
             String jpql = "SELECT DATE(t.transactionDate), " +
@@ -346,14 +350,37 @@ public class TransactionDAO {
                 .setParameter("month", month.getMonthValue())
                 .setParameter("year", month.getYear())
                 .getResultList();
-            Map<LocalDate, DaySummary> map = new HashMap<>();
+            Map<String, DaySummary> map = new HashMap<>();
             for (Object[] row : results) {
-                LocalDate date = (LocalDate) row[0];
+                LocalDate date;
+                Object dateObj = row[0];
+                if (dateObj instanceof java.sql.Date) {
+                    date = ((java.sql.Date) dateObj).toLocalDate();
+                } else if (dateObj instanceof java.util.Date) {
+                    date = ((java.util.Date) dateObj).toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                } else if (dateObj instanceof String) {
+                    date = LocalDate.parse((String) dateObj);
+                } else {
+                    date = LocalDate.parse(dateObj.toString());
+                }
                 BigDecimal income = (BigDecimal) row[1];
                 BigDecimal expense = (BigDecimal) row[2];
-                map.put(date, new DaySummary(date, income, expense));
+                map.put(date.toString(), new DaySummary(date, income, expense));
             }
             return map;
         } finally { em.close(); }
+    }
+
+    public List<Transaction> getTransactionsForDay(UUID userId, LocalDate date) {
+        EntityManager em = em();
+        try {
+            return em.createQuery(
+                "SELECT t FROM Transaction t WHERE t.account.user.id = :userId AND DATE(t.transactionDate) = :date", Transaction.class)
+                .setParameter("userId", userId)
+                .setParameter("date", date)
+                .getResultList();
+        } finally {
+            em.close();
+        }
     }
 }

@@ -128,8 +128,7 @@
                                         <input type="hidden" name="transactionId" value="${t.id}">
                                         <button type="submit" class="dropdown-item edit">Edit transaction</button>
                                     </form>
-                                    <form action="${pageContext.request.contextPath}/transaction" method="post"
-                                          class="delete-form" style="display:inline;">
+                                    <form action="${pageContext.request.contextPath}/transaction" method="post" class="delete-form" style="display:inline;">
                                         <input type="hidden" name="action" value="delete">
                                         <input type="hidden" name="id" value="${t.id}">
                                         <button type="submit" class="dropdown-item delete">

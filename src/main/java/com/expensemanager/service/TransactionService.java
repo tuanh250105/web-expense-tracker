@@ -31,8 +31,8 @@ public class TransactionService {
     }
 
     public void addIncomeTransaction(String categoryId, String accountId, String amount, String note, String transactionDate, String time, String type, UUID userId) {
-        //Account account = transactionDAO.findAccountById(UUID.fromString(accountId));
-        Account account = accountService.getAccountById(UUID.fromString(accountId));
+        Account account = transactionDAO.findAccountById(UUID.fromString(accountId));
+        //Account account = accountService.getAccountById(UUID.fromString(accountId));
         if (account == null || !account.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("Tài khoản không tồn tại hoặc không thuộc về user hiện tại !!!!!!!!!!!!");
         }
@@ -113,7 +113,7 @@ public class TransactionService {
         transactionDAO.updateTransaction(t);
     }
 
-    public List<Transaction> filterPanel(UUID userId, String fromDate, String toDate, String notes, String[] types) {
+    public List<Transaction> filterPanel(UUID userId, String fromDate, String toDate, String notes, String[] types, String categoryId) {
         if (fromDate != null && !fromDate.isEmpty() && toDate != null && !toDate.isEmpty()) {
             if (LocalDate.parse(fromDate).isAfter(LocalDate.parse(toDate))) {
                 throw new IllegalArgumentException("From date cannot be after to date");
@@ -125,9 +125,10 @@ public class TransactionService {
         toDate = (toDate == null || toDate.isEmpty()) ? null : toDate;
         notes = (notes == null) ? "" : notes;
         types = (types == null || types.length == 0) ? null : types;
+        categoryId = (categoryId == null || categoryId.isEmpty()) ? null : categoryId;
 
 
-        return transactionDAO.filter(userId, fromDate, toDate, notes, types);
+        return transactionDAO.filter(userId, fromDate, toDate, notes, types, categoryId);
     }
 
     public void deleteTransaction(String transactionId) {
@@ -166,7 +167,13 @@ public class TransactionService {
         return transactionDAO.groupTransactionsByCategory(list, topN);
     }
 
-    public Map<LocalDate, DaySummary> getDaySummaries(UUID userId, YearMonth month) {
-        return transactionDAO.getDaySummaries(userId, month);
+    public Map<String, DaySummary> getDaySummaries(UUID userId, YearMonth month) {
+    // Ensure the return type matches DAO (Map<String, DaySummary>)
+    return transactionDAO.getDaySummaries(userId, month);
+    }
+
+    public List<Transaction> getTransactionsForDay(UUID userId, LocalDate date) {
+        // Implement this to fetch transactions for the user on the given date
+        return transactionDAO.getTransactionsForDay(userId, date);
     }
 }

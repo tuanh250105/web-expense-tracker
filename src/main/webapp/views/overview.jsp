@@ -77,8 +77,8 @@
         </div>
     </div>
 </div>
-<script>
-    var contextPath = '${pageContext.request.contextPath}';
+<script type="text/javascript">
+    var contextPath = "${pageContext.request.contextPath}";
 </script>
 <script src="${pageContext.request.contextPath}/assets/js/overview.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

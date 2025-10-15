@@ -174,7 +174,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Logic Edit Transaction
     if (window.editTransactionData) {
         const t = window.editTransactionData;
-        const formContainer = t.type === "Income" ? formIncomeContainer : formExpenseContainer;
+
+        const formContainer = t.type.toLowerCase() === "income" ? formIncomeContainer : formExpenseContainer;
+
         formContainer.classList.add("active");
         initFlatpickr(formContainer);
 
@@ -182,7 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
         formContainer.querySelector('.hidden_new_category').value = t.categoryId;
         formContainer.querySelector('.select_new_category').value = t.categoryName;
 
-        // Set category icon - Tìm icon từ categoryList
+        // Tìm icon từ categoryList
         const categoryButton = document.querySelector(`#categoryList button[data-category="${t.categoryId}"]`);
         if (categoryButton) {
             const iconPath = categoryButton.getAttribute('data-icon');
@@ -200,11 +202,18 @@ document.addEventListener("DOMContentLoaded", () => {
         formContainer.querySelector('.select_new_time').value = t.time;
         formContainer.querySelector('.type_new_notes').value = t.notes;
 
+        // Set header
         const header = formContainer.querySelector('.addForm-header h2');
         if (header) header.textContent = "Edit " + t.type;
 
+        //Set action
         const actionInput = formContainer.querySelector('input[name="action"]');
         actionInput.value = t.type.toLowerCase() === "income" ? "update_income" : "update_expense";
+
+        const typeInput = formContainer.querySelector('input[name="type"]');
+        if (typeInput) {
+            typeInput.value = t.type.toLowerCase();
+        }
 
         let idInput = formContainer.querySelector('input[name="id"]');
         if (!idInput) {
@@ -242,7 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const menu = moreBtn.nextElementSibling;
 
             if (!menu || !menu.classList.contains("dropdown-menu")) {
-                console.warn("⚠️ Không tìm thấy dropdown-menu");
+                console.warn("Không tìm thấy dropdown-menu");
                 return;
             }
 

@@ -33,7 +33,7 @@ import jakarta.servlet.http.HttpSession;
         "/api/bank-sync",
         "/api/bank-sync/*",
         "/api/categories/*",
-        //"/api/accounts/*"
+        // "/api/accounts/*"
 })
 public class BankSyncController extends HttpServlet {
 
