@@ -1,4 +1,6 @@
 (function () {
+    Chart.defaults.font.family = "'Poppins', sans-serif";
+    Chart.defaults.font.size = 14;
     // --- Helper Functions ---
     function cleanData(data) {
         return Array.isArray(data) ? data.map(val => (val == null || isNaN(val) ? 0 : Number(val))) : [];

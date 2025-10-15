@@ -327,4 +327,16 @@ public class TransactionDAO {
                 })
                 .collect(Collectors.toList());
     }
+
+    public long countByCategoryId(UUID categoryId) {
+        EntityManager em = em();
+        try {
+            String jpql = "SELECT COUNT(t) FROM Transaction t WHERE t.category.id = :categoryId";
+            return em.createQuery(jpql, Long.class)
+                    .setParameter("categoryId", categoryId)
+                    .getSingleResult();
+        } finally {
+            em.close();
+        }
+    }
 }

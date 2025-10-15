@@ -4,7 +4,6 @@ import com.expensemanager.dao.TransactionDAO;
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
-
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -13,11 +12,10 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 
-public class TransactionService {
+public class TransactionService{
     private final TransactionDAO transactionDAO = new TransactionDAO();
     private final CategoryService categoryService = new CategoryService();
     private final AccountService  accountService = new AccountService();
@@ -31,8 +29,8 @@ public class TransactionService {
     }
 
     public void addIncomeTransaction(String categoryId, String accountId, String amount, String note, String transactionDate, String time, String type, UUID userId) {
-        Account account = transactionDAO.findAccountById(UUID.fromString(accountId));
-        //Account account = accountService.getAccountById(UUID.fromString(accountId));
+        //Account account = transactionDAO.findAccountById(UUID.fromString(accountId));
+        Account account = accountService.getAccountById(UUID.fromString(accountId));
         if (account == null || !account.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("Tài khoản không tồn tại hoặc không thuộc về user hiện tại !!!!!!!!!!!!");
         }
@@ -120,7 +118,7 @@ public class TransactionService {
             }
         }
 
-        // Chuyển chuỗi rỗng thành null cho DAO xử lý dễ hơn
+
         fromDate = (fromDate == null || fromDate.isEmpty()) ? null : fromDate;
         toDate = (toDate == null || toDate.isEmpty()) ? null : toDate;
         notes = (notes == null) ? "" : notes;
@@ -158,12 +156,16 @@ public class TransactionService {
     public Map<String, Double> calculateSummary(List<Transaction> list) {
         return transactionDAO.calculateSummary(list);
     }
-
     public List<Map<String, Object>> groupTransactionsByTime(List<Transaction> list, String group) {
         return transactionDAO.groupTransactionsByTime(list, group);
     }
 
     public List<Map<String, Object>> groupTransactionsByCategory(List<Transaction> list, int topN) {
         return transactionDAO.groupTransactionsByCategory(list, topN);
+    }
+
+    //Oanh
+    public long countByCategoryId(UUID categoryId) {
+        return transactionDAO.countByCategoryId(categoryId);
     }
 }

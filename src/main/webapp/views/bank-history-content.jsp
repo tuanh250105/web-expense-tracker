@@ -438,7 +438,6 @@
             window.pendingTransactionsData = transactions;
 
             const categories = await loadCategories();
-
             let categoryOptions = '<option value="">Chọn danh mục</option>';
             categories.forEach(function(cat) {
                 categoryOptions += '<option value="' + cat.id + '">' + cat.name + '</option>';
@@ -527,7 +526,7 @@
                     throw new Error('Không tìm thấy dữ liệu giao dịch');
                 }
 
-                var accountId = '11111111-1111-1111-1111-111111111111';
+                var accountId = '90949c6c-63ba-4ea5-a580-0b66df34d826';
 
                 var transactionData = {
                     accountId: accountId,

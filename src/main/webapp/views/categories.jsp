@@ -1,22 +1,19 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-
 <style>
+    /* Các style chung được giữ lại */
     .categories-container {
         max-width: 900px;
         margin: 40px auto;
         font-family: "Poppins", sans-serif;
     }
-
     h1, h2 {
         color: var(--primary-color, #4a90e2);
         border-bottom: 2px solid var(--primary-color, #4a90e2);
         padding-bottom: 10px;
         margin-bottom: 20px;
     }
-
     .form-container, .table-container {
         background-color: #fff;
         border-radius: 10px;
@@ -24,35 +21,30 @@
         box-shadow: 0 3px 6px rgba(0,0,0,0.1);
         margin-bottom: 25px;
     }
-
     .form-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 20px;
-        align-items: end; /* ✅ giúp các ô input nằm cùng đường chân */
+        align-items: end;
     }
-
     .form-group {
         display: flex;
         flex-direction: column;
-        position: relative; /* For icon picker positioning */
+        position: relative;
     }
-
     .form-group label {
         margin-bottom: 6px;
         font-weight: 600;
         color: #333;
     }
-
     .form-group input[type="text"],
     .form-group select {
         padding: 10px 12px;
         border: 1px solid #ccc;
         border-radius: 6px;
         font-size: 15px;
-        height: 42px; /* ✅ chiều cao đồng nhất */
+        height: 42px;
     }
-
     .form-group input[type="color"] {
         width: 100%;
         height: 42px;
@@ -61,35 +53,6 @@
         cursor: pointer;
         padding: 0;
     }
-
-    .icon-input {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .icon-input input {
-        flex: 1;
-        background: #fafafa;
-        height: 42px;
-    }
-
-    .icon-input i {
-        font-size: 22px;
-        color: #333; /* icon mặc định đen */
-    }
-
-    .icon-input button {
-        background-color: var(--primary-color, #4a90e2);
-        color: #fff;
-        border: none;
-        padding: 8px 14px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 500;
-        height: 42px;
-    }
-
     .form-container button[type="submit"] {
         grid-column: 1 / -1;
         margin-top: 15px;
@@ -101,53 +64,61 @@
         cursor: pointer;
         font-size: 16px;
     }
-
     .form-container button[type="submit"]:hover {
         opacity: 0.9;
     }
-
     table {
         width: 100%;
         border-collapse: collapse;
     }
-
     th, td {
         border-bottom: 1px solid #e0e0e0;
         padding: 12px;
         text-align: left;
+        vertical-align: middle;
     }
-
     th {
         background-color: #f8f9fa;
     }
-
-    .color-swatch {
-        display: inline-block;
-        width: 18px;
-        height: 18px;
-        border-radius: 4px;
-        margin-right: 6px;
-    }
-
     .actions a {
         color: var(--primary-color, #4a90e2);
         text-decoration: none;
         margin-right: 10px;
     }
-
     .sub-category {
         padding-left: 24px;
     }
-
     .sub-category::before {
         content: '↳ ';
     }
 
-    /* Popup icon */
-    #iconPicker {
+    /* CSS CHO TRÌNH CHỌN ẢNH */
+    .image-picker-group {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    #previewImage {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        object-fit: cover;
+    }
+    #chooseImageBtn {
+        background-color: var(--primary-color, #4a90e2);
+        color: #fff;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        height: 42px;
+    }
+    #imagePickerModal {
         display: none;
         position: absolute;
-        top: 100%; /* Position below the input group */
+        top: 100%;
         left: 0;
         right: 0;
         z-index: 10;
@@ -160,29 +131,65 @@
         max-height: 300px;
         overflow-y: auto;
     }
-
-    #iconGrid {
+    #imageGrid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+        gap: 10px;
     }
-
-    #iconGrid i {
-        font-size: 20px;
+    #imageGrid img {
+        width: 100%;
+        height: 50px;
+        object-fit: cover;
         cursor: pointer;
-        padding: 6px;
+        padding: 4px;
+        border-radius: 8px;
+        border: 2px solid transparent;
+        transition: border-color 0.2s;
+    }
+    #imageGrid img:hover {
+        border-color: var(--primary-color, #4a90e2);
+    }
+    .category-display {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .category-display img {
+        width: 28px;
+        height: 28px;
         border-radius: 6px;
-        transition: 0.2s;
-        text-align: center;
+    }
+    .color-swatch {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        margin-right: 6px;
     }
 
-    #iconGrid i:hover {
-        background: #f0f0f0;
+    /* CSS CHO THÔNG BÁO LỖI */
+    .alert {
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+    }
+    .alert-danger {
+        color: #a94442;
+        background-color: #f2dede;
+        border-color: #ebccd1;
     }
 </style>
 
 <div class="categories-container">
-    <h1><i class="fa-solid fa-tags"></i> Quản Lý Danh Mục</h1>
+    <h1>Quản Lý Danh Mục</h1>
+
+    <%-- HIỂN THỊ THÔNG BÁO LỖI (NẾU CÓ) --%>
+    <c:if test="${not empty error}">
+        <div class="alert alert-danger">
+                ${error}
+        </div>
+    </c:if>
 
     <div class="form-container">
         <h2>
@@ -229,22 +236,23 @@
                 </div>
 
                 <div class="form-group" style="grid-column: 1 / -1;">
-                    <label for="icon">Chọn biểu tượng:</label>
-                    <div class="icon-input">
-                        <input type="text" id="icon" name="icon"
-                               value="${editCategory.iconPath}"
-                               placeholder="fa-solid fa-utensils" readonly>
-                        <i id="previewIcon"
-                           class="${empty editCategory.iconPath ? 'fa-solid fa-tag' : editCategory.iconPath}"></i>
+                    <label>Chọn biểu tượng:</label>
+                    <div class="image-picker-group">
+                        <c:set var="iconToShow" value="${pageContext.request.contextPath}/assets/images/categories/food.png" />
+                        <c:if test="${not empty editCategory.iconPath}">
+                            <c:set var="iconToShow" value="${pageContext.request.contextPath}${editCategory.iconPath}" />
+                        </c:if>
+                        <img id="previewImage" src="${iconToShow}" alt="Preview">
+
+                        <input type="hidden" id="iconPathInput" name="icon" value="${not empty editCategory.iconPath ? editCategory.iconPath : '/assets/images/categories/food.png'}">
+
                         <c:if test="${!readonly}">
-                            <button type="button" id="chooseIconBtn">Chọn</button>
+                            <button type="button" id="chooseImageBtn">Chọn Ảnh</button>
                         </c:if>
                     </div>
 
-                    <div id="iconPicker">
-                        <input type="text" id="iconSearch" placeholder="🔍 Tìm biểu tượng (ví dụ: money, car, food...)">
-                        <div id="iconGrid"></div>
-                        <p id="loadingIcons">Đang tải danh sách biểu tượng...</p>
+                    <div id="imagePickerModal">
+                        <div id="imageGrid"></div>
                     </div>
                 </div>
 
@@ -257,7 +265,6 @@
 
             <c:if test="${!readonly}">
                 <button type="submit">
-                    <i class="fa-solid fa-plus"></i>
                     <c:choose>
                         <c:when test="${not empty editCategory}">Cập nhật</c:when>
                         <c:otherwise>Thêm Mới</c:otherwise>
@@ -283,20 +290,18 @@
                 <c:if test="${empty parentCat.parent}">
                     <tr>
                         <td>
-                            <span class="color-swatch" style="background-color:${parentCat.color};"></span>
-                            <i class="${parentCat.iconPath}" style="color:#333;"></i>
-                            <strong>${parentCat.name}</strong>
+                            <div class="category-display">
+                                <span class="color-swatch" style="background-color:${parentCat.color};"></span>
+                                <img src="${pageContext.request.contextPath}${parentCat.iconPath}" alt="">
+                                <strong>${parentCat.name}</strong>
+                            </div>
                         </td>
                         <td>${parentCat.type}</td>
                         <td class="actions">
                             <c:if test="${!readonly}">
-                                <a href="${pageContext.request.contextPath}/categories?action=edit&id=${parentCat.id}">
-                                    <i class="fa-solid fa-pen"></i> Sửa
-                                </a>
+                                <a href="${pageContext.request.contextPath}/categories?action=edit&id=${parentCat.id}">Sửa</a>
                                 <a href="${pageContext.request.contextPath}/categories?action=delete&id=${parentCat.id}"
-                                   onclick="return confirm('Bạn có chắc muốn xóa danh mục này không?');">
-                                    <i class="fa-solid fa-trash"></i> Xóa
-                                </a>
+                                   onclick="return confirm('Bạn có chắc muốn xóa danh mục này không?');">Xóa</a>
                             </c:if>
                         </td>
                     </tr>
@@ -305,20 +310,18 @@
                         <c:if test="${not empty childCat.parent && childCat.parent.id == parentCat.id}">
                             <tr>
                                 <td class="sub-category">
-                                    <span class="color-swatch" style="background-color:${childCat.color};"></span>
-                                    <i class="${childCat.iconPath}" style="color:#333;"></i>
-                                        ${childCat.name}
+                                    <div class="category-display">
+                                        <span class="color-swatch" style="background-color:${childCat.color};"></span>
+                                        <img src="${pageContext.request.contextPath}${childCat.iconPath}" alt="">
+                                            ${childCat.name}
+                                    </div>
                                 </td>
                                 <td>${childCat.type}</td>
                                 <td class="actions">
                                     <c:if test="${!readonly}">
-                                        <a href="${pageContext.request.contextPath}/categories?action=edit&id=${childCat.id}">
-                                            <i class="fa-solid fa-pen"></i> Sửa
-                                        </a>
+                                        <a href="${pageContext.request.contextPath}/categories?action=edit&id=${childCat.id}">Sửa</a>
                                         <a href="${pageContext.request.contextPath}/categories?action=delete&id=${childCat.id}"
-                                           onclick="return confirm('Bạn có chắc muốn xóa danh mục này không?');">
-                                            <i class="fa-solid fa-trash"></i> Xóa
-                                        </a>
+                                           onclick="return confirm('Bạn có chắc muốn xóa danh mục này không?');">Xóa</a>
                                     </c:if>
                                 </td>
                             </tr>
@@ -333,64 +336,51 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const btn = document.getElementById("chooseIconBtn");
-        const picker = document.getElementById("iconPicker");
-        const input = document.getElementById("icon");
-        const preview = document.getElementById("previewIcon");
-        const search = document.getElementById("iconSearch");
-        const grid = document.getElementById("iconGrid");
-        const loading = document.getElementById("loadingIcons");
-        let allIcons = [];
+        const chooseBtn = document.getElementById("chooseImageBtn");
+        const modal = document.getElementById("imagePickerModal");
+        const grid = document.getElementById("imageGrid");
+        const hiddenInput = document.getElementById("iconPathInput");
+        const previewImg = document.getElementById("previewImage");
 
-        if (btn) {
-            btn.addEventListener("click", () => {
-                picker.style.display = picker.style.display === "none" ? "block" : "none";
-                if (picker.style.display === "block") search.focus();
-            });
-        }
+        const imageFiles = ["pet.png", "food.png", "gift.png", "home.png", "loan.png", "phone.png", "beauty.png", "drinks.png", "health.png", "salary.png", "travel.png", "charity.png", "concert.png", "shopping.png", "childcare.png", "education.png", "insurance.png", "investment.png", "entertainment.png", "transportation.png"];
 
-        document.addEventListener("click", (e) => {
-            if (picker && !picker.contains(e.target) && e.target !== btn) {
-                picker.style.display = "none";
-            }
-        });
+        const basePath = "${pageContext.request.contextPath}/assets/images/categories/";
 
-        search.addEventListener("input", () => {
-            const term = search.value.toLowerCase();
-            renderIcons(allIcons.filter(i => i.includes(term)));
-        });
-
-        function selectIcon(iconClass) {
-            input.value = "fa-solid fa-" + iconClass;
-            preview.className = "fa-solid fa-" + iconClass;
-            picker.style.display = "none";
-        }
-
-        function renderIcons(list) {
+        function renderImageGrid() {
             grid.innerHTML = "";
-            list.forEach(cls => {
-                const el = document.createElement("i");
-                el.className = "fa-solid fa-" + cls;
-                el.title = cls;
-                el.addEventListener("click", () => selectIcon(cls));
-                grid.appendChild(el);
+            imageFiles.forEach(file => {
+                const img = document.createElement("img");
+                img.src = basePath + file;
+                img.dataset.path = "/assets/images/categories/" + file;
+                img.addEventListener("click", selectImage);
+                grid.appendChild(img);
             });
-            loading.style.display = list.length === 0 ? "block" : "none";
-            loading.innerText = list.length === 0 ? "Không tìm thấy biểu tượng nào..." : "";
         }
 
-        async function loadIcons() {
-            try {
-                const res = await fetch("${pageContext.request.contextPath}/assets/icons.json");
-                const data = await res.json();
-                allIcons = Object.keys(data);
-                renderIcons(allIcons);
-                loading.style.display = "none";
-            } catch {
-                loading.innerText = "Không thể tải danh sách icon 😢";
+        function selectImage(event) {
+            const selectedRelativePath = event.target.dataset.path;
+            const selectedFullPath = event.target.src;
+
+            hiddenInput.value = selectedRelativePath;
+            previewImg.src = selectedFullPath;
+
+            modal.style.display = "none";
+        }
+
+        if (chooseBtn) {
+            chooseBtn.addEventListener("click", () => {
+                const isHidden = modal.style.display === "none" || modal.style.display === "";
+                modal.style.display = isHidden ? "block" : "none";
+                if (isHidden) {
+                    renderImageGrid();
+                }
+            });
+        }
+
+        document.addEventListener("click", (event) => {
+            if (modal && !modal.contains(event.target) && event.target !== chooseBtn) {
+                modal.style.display = "none";
             }
-        }
-
-        loadIcons();
+        });
     });
 </script>

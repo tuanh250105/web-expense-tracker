@@ -4,7 +4,6 @@ import com.expensemanager.model.Budget;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.User;
 import com.expensemanager.service.BudgetService;
-import com.expensemanager.dao.BudgetDAO; // Thay CategoryDAO bằng BudgetDAO
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -14,31 +13,26 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-
 @WebServlet("/budget")
 public class BudgetController extends HttpServlet {
     private final BudgetService budgetService = new BudgetService();
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
-        if (session == null) {
+        if (session == null || session.getAttribute("user") == null) {
             response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
             return;
         }
 
         User user = (User) session.getAttribute("user");
-        if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
-            return;
-        }
         UUID userId = user.getId();
 
         String action = request.getParameter("action");
         String budgetId = request.getParameter("budgetId");
+        String filterPeriod = request.getParameter("filterPeriod");
 
         try {
             if ("edit".equals(action) && budgetId != null) {
@@ -46,90 +40,87 @@ public class BudgetController extends HttpServlet {
                 if (editBudget != null) {
                     request.setAttribute("editBudget", editBudget);
                 } else {
-                    request.setAttribute("errorMessage", "Không tìm thấy ngân sách");
+                    session.setAttribute("errorMessage", "Không tìm thấy ngân sách");
                 }
             }
 
-            // Lấy danh sách ngân sách
-            List<Budget> budgets = budgetService.getAllByUserId(userId);
-            // Cập nhật spent_amount cho tất cả budgets
-            for (Budget b : budgets) {
-                budgetService.updateSpentAmount(b.getId());
+            List<Budget> budgets;
+            if (filterPeriod != null && !filterPeriod.equals("ALL")) {
+                budgets = budgetService.getBudgetsByPeriod(userId, filterPeriod);
+            } else {
+                budgets = budgetService.getAllByUserId(userId);
             }
-            request.setAttribute("budgets", budgets);
-            request.setAttribute("budgetService", budgetService);
 
-            // Lấy danh sách danh mục từ BudgetDAO
-            BudgetDAO budgetDAO = new BudgetDAO();
-            List<Category> categories = budgetDAO.getAllByUserIdForCategories(userId); // Sử dụng BudgetDAO
+            if (!budgets.isEmpty()) {
+                for (Budget b : budgets) {
+                    budgetService.updateSpentAmount(b.getId());
+                }
+            }
+
+            Map<String, List<Budget>> groupedBudgets = budgetService.groupByPeriodType(budgets);
+
+            request.setAttribute("budgets", budgets);
+            request.setAttribute("groupedBudgets", groupedBudgets);
+            request.setAttribute("budgetService", budgetService);
+            request.setAttribute("currentFilter", filterPeriod != null ? filterPeriod : "ALL");
+
+            List<Category> categories = budgetService.getAllCategoriesByUserId(userId);
             request.setAttribute("categories", categories);
 
+            long activeBudgets = budgets.stream().filter(Budget::isActive).count();
+            long exceededBudgets = budgets.stream().filter(b -> budgetService.isOverBudget(b.getId())).count();
+
+            request.setAttribute("activeBudgets", activeBudgets);
+            request.setAttribute("exceededBudgets", exceededBudgets);
+
+            // Set view cho layout
+            request.setAttribute("view", "/views/budget.jsp");
+
+            // Forward đến layout.jsp
+            request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
         } catch (Exception e) {
             e.printStackTrace();
-            request.setAttribute("errorMessage", "Lỗi khi tải danh sách ngân sách: " + e.getMessage());
+            session.setAttribute("errorMessage", "Lỗi khi tải ngân sách: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/budget");
         }
-
-        request.setAttribute("view", "/views/budget.jsp");
-        request.setAttribute("pageCss", "budgets.css");
-        request.setAttribute("pageJs", "budget.js");
-        request.getRequestDispatcher("/layout/layout.jsp").forward(request, response);
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
-
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
-        if (session == null) {
+        if (session == null || session.getAttribute("user") == null) {
             response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
             return;
         }
 
         User user = (User) session.getAttribute("user");
-        if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
-            return;
-        }
-        UUID userId = user.getId();
-
         String action = request.getParameter("action");
-
         try {
             if ("add".equals(action)) {
                 String categoryId = request.getParameter("categoryId");
                 String limitAmount = request.getParameter("limitAmount");
                 String startDate = request.getParameter("startDate");
                 String endDate = request.getParameter("endDate");
-
-                budgetService.addBudget(categoryId, limitAmount, startDate, endDate, userId);
-                session.setAttribute("successMessage", "Thêm ngân sách thành công!");
-
+                budgetService.addBudget(categoryId, limitAmount, startDate, endDate, user.getId());
+                session.setAttribute("successMessage", "Thêm ngân sách thành công");
             } else if ("update".equals(action)) {
                 String id = request.getParameter("id");
                 String categoryId = request.getParameter("categoryId");
                 String limitAmount = request.getParameter("limitAmount");
                 String startDate = request.getParameter("startDate");
                 String endDate = request.getParameter("endDate");
-
                 budgetService.updateBudget(id, categoryId, limitAmount, startDate, endDate);
-                session.setAttribute("successMessage", "Cập nhật ngân sách thành công!");
-
+                session.setAttribute("successMessage", "Cập nhật ngân sách thành công");
             } else if ("delete".equals(action)) {
                 String id = request.getParameter("id");
                 budgetService.deleteBudget(id);
-                session.setAttribute("successMessage", "Xóa ngân sách thành công!");
+                session.setAttribute("successMessage", "Xóa ngân sách thành công");
             }
-
-        } catch (IllegalArgumentException e) {
-            session.setAttribute("errorMessage", e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/budget");
         } catch (Exception e) {
             e.printStackTrace();
-            session.setAttribute("errorMessage", "Có lỗi xảy ra: " + e.getMessage());
+            session.setAttribute("errorMessage", "Lỗi: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/budget");
         }
-
-        response.sendRedirect(request.getContextPath() + "/budget");
     }
 }

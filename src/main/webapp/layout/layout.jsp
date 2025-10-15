@@ -88,7 +88,6 @@
         <li><a href="${pageContext.request.contextPath}/categories"><i class="fa-solid fa-folder-open"></i> <span>Quản lí danh mục</span></a></li>
         <hr>
         <li><a href="${pageContext.request.contextPath}/rewards"><i class="fa-solid fa-star"></i> <span>Minigames</span></a></li>
-        <li><a href="#"><i class="fa-solid fa-calendar-check"></i> <span>Quản lý sự kiện tài chính</span></a></li>
         <hr>
         <li><a href="${pageContext.request.contextPath}/faq"><i class="fa-solid fa-circle-question"></i> <span>Help - Hỏi đáp</span></a></li>
         <li><a href="${pageContext.request.contextPath}/report"><i class="fa-solid fa-message"></i> <span>Góp ý - Liên hệ</span></a></li>

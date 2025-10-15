@@ -124,7 +124,7 @@ public class CategoryDAO {
     public Optional<Category> findByUserIdAndExactName(UUID userId, String name) {
         EntityManager em = emf.createEntityManager();
         try {
-            String jpql = "SELECT c FROM Category c WHERE c.user.id = :userId AND c.name = :name";
+            String jpql = "SELECT c FROM Category c WHERE c.user.id = :userId AND LOWER(c.name) = LOWER(:name)";
             TypedQuery<Category> query = em.createQuery(jpql, Category.class);
             query.setParameter("userId", userId);
             query.setParameter("name", name);
@@ -134,6 +134,7 @@ public class CategoryDAO {
             em.close();
         }
     }
+
 
     public List<Category> findMainCategories() {
         EntityManager em = emf.createEntityManager();

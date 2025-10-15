@@ -748,3 +748,27 @@
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
 }
+
+#categoryModal h2 {
+    margin-top: 0;
+    font-size: 1.25rem;
+    color: #1976d2;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+#categoryModal h2 .back-to-parent {
+    cursor: pointer;
+    color: #1976d2;
+    margin-right: 10px;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+#categoryModal h2 .back-to-parent:hover {
+    color: #0d47a1;
+}

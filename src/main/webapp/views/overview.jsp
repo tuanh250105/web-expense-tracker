@@ -1,10 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/overview.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <div class="container overview-page">
-    <h2>Tổng Quan</h2>
-    <p>Chào mừng đến với <strong>BudgetBuddy</strong> - Ứng dụng quản lý chi tiêu cá nhân!</p>
-
     <div class="dashboard-container">
         <!-- Danh sách giao dịch gần đây -->
         <div class="recent-transactions">

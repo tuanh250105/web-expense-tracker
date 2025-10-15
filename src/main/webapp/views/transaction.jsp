@@ -80,10 +80,10 @@
                     Total:
                     <c:choose>
                         <c:when test="${totalBalance >= 0}">
-                            <span class="positive">+ VNĐ <fmt:formatNumber value="${totalBalance}" pattern="#,##0.00"/></span>
+                            <span class="positive">+ VNĐ <fmt:formatNumber value="${totalBalance}" pattern="#,##0"/></span>
                         </c:when>
                         <c:otherwise>
-                            <span class="negative">- VNĐ<fmt:formatNumber value="${-totalBalance}" pattern="#,##0.00"/></span>
+                            <span class="negative">- VNĐ<fmt:formatNumber value="${-totalBalance}" pattern="#,##0"/></span>
                         </c:otherwise>
                     </c:choose>
                 </span>
@@ -107,10 +107,10 @@
                                 <div class="amount ${t.type eq 'income' ? 'income' : 'expense'}">
                                     <c:choose>
                                         <c:when test="${t.type eq 'income'}">
-                                            + đ<fmt:formatNumber value="${t.amount}" pattern="#,##0.00"/>
+                                            + đ<fmt:formatNumber value="${t.amount}" pattern="#,##0"/>
                                         </c:when>
                                         <c:otherwise>
-                                            - đ<fmt:formatNumber value="${t.amount}" pattern="#,##0.00"/>
+                                            - đ<fmt:formatNumber value="${t.amount}" pattern="#,##0"/>
                                         </c:otherwise>
                                     </c:choose>
                                 </div>
@@ -303,7 +303,7 @@
             </form>
         </div>
 
-        <!-- Modal chọn Category -->
+        <!-- Modal chọn Category cho filter-->
         <div id="categoryModal">
             <div class="modal-content">
                 <span class="close-category-modal">&times;</span>
@@ -311,7 +311,7 @@
                 <ul id="categoryList">
                     <c:forEach var="c" items="${categoryList}">
                         <li>
-                            <button type="button" data-category="${c.id}">
+                            <button type="button" data-category="${c.id}" data-type="${c.type}" data-parent="${empty c.parent.id ? '' : c.parent.id}" >
                                 <img src="${pageContext.request.contextPath}/${c.iconPath}" alt="Icon">
                                     ${c.name}
                             </button>
