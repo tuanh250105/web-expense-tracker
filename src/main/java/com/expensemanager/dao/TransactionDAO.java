@@ -312,4 +312,97 @@ public class TransactionDAO {
             em.close();
         }
     }
+
+    // =======================
+    // Calendar view features
+    // =======================
+
+    /**
+     * Get daily aggregated income and expense totals for a given month/year.
+     * Returns a map keyed by LocalDate, with value array [income, expense].
+     */
+    public Map<LocalDate, BigDecimal[]> getDailySummary(UUID userId, int month, int year) {
+        em = em();
+        try {
+            LocalDate startDate = LocalDate.of(year, month, 1);
+            LocalDateTime startOfMonth = startDate.atStartOfDay();
+            LocalDateTime startOfNextMonth = startDate.plusMonths(1).atStartOfDay();
+
+            String jpql = """
+                SELECT FUNCTION('date', t.transactionDate) AS day,
+                       LOWER(t.type) AS type,
+                       SUM(t.amount) AS total
+                FROM Transaction t
+                JOIN t.account a
+                WHERE a.user.id = :userId
+                  AND t.transactionDate >= :start
+                  AND t.transactionDate < :end
+                GROUP BY FUNCTION('date', t.transactionDate), LOWER(t.type)
+                ORDER BY day ASC
+            """;
+
+            List<Object[]> rows = em.createQuery(jpql, Object[].class)
+                    .setParameter("userId", userId)
+                    .setParameter("start", startOfMonth)
+                    .setParameter("end", startOfNextMonth)
+                    .getResultList();
+
+            Map<LocalDate, BigDecimal[]> result = new HashMap<>();
+            for (Object[] r : rows) {
+                Object dayObj = r[0];
+                String type = (String) r[1];
+                BigDecimal total = (BigDecimal) r[2];
+
+                LocalDate day;
+                if (dayObj instanceof java.time.LocalDate) {
+                    day = (LocalDate) dayObj;
+                } else if (dayObj instanceof java.sql.Date) {
+                    day = ((java.sql.Date) dayObj).toLocalDate();
+                } else {
+                    // Fallback: derive from LocalDateTime
+                    day = startDate; // safe fallback, should not happen
+                }
+
+                BigDecimal[] acc = result.computeIfAbsent(day, d -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+                if ("income".equalsIgnoreCase(type)) {
+                    acc[0] = acc[0].add(total != null ? total : BigDecimal.ZERO);
+                } else if ("expense".equalsIgnoreCase(type)) {
+                    acc[1] = acc[1].add(total != null ? total : BigDecimal.ZERO);
+                }
+            }
+
+            return result;
+        } finally {
+            em.close();
+        }
+    }
+
+    /**
+     * Get all transactions for a user on a specific LocalDate.
+     * Eagerly fetches category and account for display needs.
+     */
+    public List<Transaction> getTransactionsByDate(UUID userId, LocalDate date) {
+        em = em();
+        try {
+            LocalDateTime start = date.atStartOfDay();
+            LocalDateTime end = date.plusDays(1).atStartOfDay();
+
+            String jpql = """
+                SELECT t FROM Transaction t
+                JOIN FETCH t.category c
+                JOIN FETCH t.account a
+                WHERE a.user.id = :userId
+                  AND t.transactionDate >= :start
+                  AND t.transactionDate < :end
+                ORDER BY t.transactionDate DESC
+            """;
+            return em.createQuery(jpql, Transaction.class)
+                    .setParameter("userId", userId)
+                    .setParameter("start", start)
+                    .setParameter("end", end)
+                    .getResultList();
+        } finally {
+            em.close();
+        }
+    }
 }
