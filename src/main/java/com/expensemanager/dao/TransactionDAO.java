@@ -42,9 +42,9 @@ public class TransactionDAO {
         em = em();
         try {
             String jpql = """
-                    SELECT t FROM Transaction t 
-                    JOIN FETCH t.category c 
-                    JOIN FETCH t.account a 
+                    SELECT t FROM Transaction t
+                    JOIN FETCH t.category c
+                    JOIN FETCH t.account a
                     WHERE t.id = :transactionId
                     """;
             return em.createQuery(jpql, Transaction.class).setParameter("transactionId", transactionId).getSingleResult();
