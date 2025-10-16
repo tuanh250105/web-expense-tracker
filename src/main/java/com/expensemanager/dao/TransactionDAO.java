@@ -1,14 +1,10 @@
 package com.expensemanager.dao;
-
-<<<<<<< HEAD
-=======
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
 import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
->>>>>>> 35b146d414e3ae02dd0219f4f674851b1f215a31
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -305,52 +301,6 @@ public class TransactionDAO {
                 })
                 .collect(Collectors.toList());
     }
-
-<<<<<<< HEAD
-    public Map<String, DaySummary> getDaySummaries(UUID userId, YearMonth month) {
-        EntityManager em = em();
-        try {
-            String jpql = "SELECT DATE(t.transactionDate), " +
-                      "SUM(CASE WHEN t.type='income' THEN t.amount ELSE 0 END), " +
-                      "SUM(CASE WHEN t.type='expense' THEN t.amount ELSE 0 END) " +
-                      "FROM Transaction t WHERE t.account.user.id = :userId " +
-                      "AND MONTH(t.transactionDate) = :month AND YEAR(t.transactionDate) = :year " +
-                      "GROUP BY DATE(t.transactionDate)";
-            List<Object[]> results = em.createQuery(jpql)
-                .setParameter("userId", userId)
-                .setParameter("month", month.getMonthValue())
-                .setParameter("year", month.getYear())
-                .getResultList();
-            Map<String, DaySummary> map = new HashMap<>();
-            for (Object[] row : results) {
-                LocalDate date;
-                Object dateObj = row[0];
-                if (dateObj instanceof java.sql.Date) {
-                    date = ((java.sql.Date) dateObj).toLocalDate();
-                } else if (dateObj instanceof java.util.Date) {
-                    date = ((java.util.Date) dateObj).toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-                } else if (dateObj instanceof String) {
-                    date = LocalDate.parse((String) dateObj);
-                } else {
-                    date = LocalDate.parse(dateObj.toString());
-                }
-                BigDecimal income = (BigDecimal) row[1];
-                BigDecimal expense = (BigDecimal) row[2];
-                map.put(date.toString(), new DaySummary(date, income, expense));
-            }
-            return map;
-        } finally { em.close(); }
-    }
-
-    public List<Transaction> getTransactionsForDay(UUID userId, LocalDate date) {
-        EntityManager em = em();
-        try {
-            return em.createQuery(
-                "SELECT t FROM Transaction t WHERE t.account.user.id = :userId AND DATE(t.transactionDate) = :date", Transaction.class)
-                .setParameter("userId", userId)
-                .setParameter("date", date)
-                .getResultList();
-=======
     public long countByCategoryId(UUID categoryId) {
         em = em();
         try {
@@ -358,7 +308,6 @@ public class TransactionDAO {
             return em.createQuery(jpql, Long.class)
                     .setParameter("categoryId", categoryId)
                     .getSingleResult();
->>>>>>> 35b146d414e3ae02dd0219f4f674851b1f215a31
         } finally {
             em.close();
         }

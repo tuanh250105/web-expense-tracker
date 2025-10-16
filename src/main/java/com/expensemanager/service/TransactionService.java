@@ -1,12 +1,8 @@
 package com.expensemanager.service;
-
-<<<<<<< HEAD
-=======
 import com.expensemanager.dao.TransactionDAO;
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.Transaction;
->>>>>>> 35b146d414e3ae02dd0219f4f674851b1f215a31
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -15,16 +11,16 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-<<<<<<< HEAD
+
 
 import com.expensemanager.dao.TransactionDAO;
 import com.expensemanager.model.Account;
 import com.expensemanager.model.Category;
 import com.expensemanager.model.DaySummary;
 import com.expensemanager.model.Transaction;
-=======
+
 import java.util.*;
->>>>>>> 35b146d414e3ae02dd0219f4f674851b1f215a31
+
 
 
 
@@ -177,19 +173,8 @@ public class TransactionService{
         return transactionDAO.groupTransactionsByCategory(list, topN);
     }
 
-<<<<<<< HEAD
-    public Map<String, DaySummary> getDaySummaries(UUID userId, YearMonth month) {
-    // Ensure the return type matches DAO (Map<String, DaySummary>)
-    return transactionDAO.getDaySummaries(userId, month);
-    }
-
-    public List<Transaction> getTransactionsForDay(UUID userId, LocalDate date) {
-        // Implement this to fetch transactions for the user on the given date
-        return transactionDAO.getTransactionsForDay(userId, date);
-=======
     //Oanh
     public long countByCategoryId(UUID categoryId) {
         return transactionDAO.countByCategoryId(categoryId);
->>>>>>> 35b146d414e3ae02dd0219f4f674851b1f215a31
     }
 }
