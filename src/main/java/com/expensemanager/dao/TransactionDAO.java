@@ -23,16 +23,8 @@ public class TransactionDAO {
     private EntityManager em() {return JpaUtil.getEntityManager(); };
 
 
-    // ========================= ACCOUNT =========================
-    public Account findAccountById(UUID id) {
-        em = em();
-        try {
-            return em.find(Account.class, id);
-        } finally {
-            em.close();
-        }
-    }
 
+    // Account temp
     public List<Account> getAllAccountByUserId(UUID userId) {
         em = em();
         try {
@@ -45,28 +37,7 @@ public class TransactionDAO {
         }
     }
 
-    // ========================= CATEGORY =========================
-    public Category findCategoryById(UUID id) {
-        em = em();
-        try {
-            return em.find(Category.class, id);
-        } finally {
-            em.close();
-        }
-    }
-
-    public List<Category> findAllCategoryOfUser(UUID userId) {
-        try {
-            String jpql = "SELECT c FROM Category c WHERE c.user.id = :userId";
-            return em.createQuery(jpql, Category.class)
-                    .setParameter("userId", userId)
-                    .getResultList();
-        } finally {
-            em.close();
-        }
-    }
-
-    // ========================= TRANSACTION =========================
+    //Danh cho Transaction của K
     public Transaction getTransactionById(UUID transactionId) {
         em = em();
         try {
@@ -76,9 +47,7 @@ public class TransactionDAO {
                     JOIN FETCH t.account a 
                     WHERE t.id = :transactionId
                     """;
-            return em.createQuery(jpql, Transaction.class)
-                    .setParameter("transactionId", transactionId)
-                    .getSingleResult();
+            return em.createQuery(jpql, Transaction.class).setParameter("transactionId", transactionId).getSingleResult();
         } finally {
             em.close();
         }
@@ -92,15 +61,11 @@ public class TransactionDAO {
                     JOIN FETCH t.category c
                     JOIN FETCH t.account a
                     WHERE a.user.id = :userId
-                    AND t.transactionDate >= :startOfMonth
-                    AND t.transactionDate < :endOfMonth
+                        AND t.transactionDate >=:startOfMonth
+                        AND t.transactionDate <:endOfMonth
                     ORDER BY t.transactionDate DESC
                     """;
-            return em.createQuery(jpql, Transaction.class)
-                    .setParameter("userId", userId)
-                    .setParameter("startOfMonth", startOfMonth)
-                    .setParameter("endOfMonth", endOfMonth)
-                    .getResultList();
+            return em.createQuery(jpql, Transaction.class).setParameter("userId", userId).setParameter("startOfMonth", startOfMonth).setParameter("endOfMonth", endOfMonth).getResultList();
         } finally {
             em.close();
         }
@@ -117,8 +82,7 @@ public class TransactionDAO {
             em.persist(transaction);
             em.getTransaction().commit();
         } catch (Exception e) {
-            if (em.getTransaction().isActive()) em.getTransaction().rollback();
-            throw e;
+            if (em.getTransaction().isActive()) em.getTransaction().rollback(); throw e;
         } finally {
             em.close();
         }
@@ -135,8 +99,7 @@ public class TransactionDAO {
             em.persist(transaction);
             em.getTransaction().commit();
         } catch (Exception e) {
-            if (em.getTransaction().isActive()) em.getTransaction().rollback();
-            throw e;
+            if (em.getTransaction().isActive()) em.getTransaction().rollback();throw e;
         } finally {
             em.close();
         }
@@ -170,7 +133,7 @@ public class TransactionDAO {
         }
     }
 
-    // ========================= FILTER =========================
+    //Filter panel
     public List<Transaction> filter(UUID userId, String fromDate, String toDate, String notes, String[] types, String categoryId) {
         em = em();
         try {
@@ -181,7 +144,8 @@ public class TransactionDAO {
                 WHERE a.user.id = :userId
             """);
 
-            if (fromDate != null && !fromDate.isEmpty()) jpql.append(" AND t.transactionDate >= :fromDate");
+            if (fromDate != null && !fromDate.isEmpty())
+                jpql.append(" AND t.transactionDate >= :fromDate");
             if (toDate != null && !toDate.isEmpty()) jpql.append(" AND t.transactionDate < :toDate");
             if (notes != null && !notes.isEmpty()) jpql.append(" AND LOWER(t.note) LIKE LOWER(:notes)");
             if (types != null && types.length > 0) jpql.append(" AND LOWER(t.type) IN :types");
@@ -214,7 +178,7 @@ public class TransactionDAO {
         }
     }
 
-    // ========================= BUDGET =========================
+    //Module Budget của Nhi
     public List<Transaction> findTransactionByCategoryIdAndDate(UUID categoryId, LocalDate fromDate, LocalDate toDate) {
         em = em();
         try {
@@ -235,7 +199,7 @@ public class TransactionDAO {
         }
     }
 
-    // ========================= SCHEDULED =========================
+    //Module Schelduled của Dư
     public boolean hasTransactionNearDue(UUID categoryId, BigDecimal amount, String type, LocalDateTime start, LocalDateTime end, UUID userId) {
         em = em();
         try {
@@ -261,7 +225,7 @@ public class TransactionDAO {
         }
     }
 
-    // ========================= THỐNG KÊ =========================
+    //THỐNG KÊ
     //My
     public Map<String, Double> calculateSummary(List<Transaction> list) {
         double income = list.stream()

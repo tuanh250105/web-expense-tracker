@@ -39,7 +39,6 @@ public class ReportController extends HttpServlet {
         String senderEmail = request.getParameter("senderEmail");
         String subject = request.getParameter("subject");
         String message = request.getParameter("message");
-
         if (senderName == null || senderEmail == null || subject == null || message == null || senderName.trim().isEmpty() || senderEmail.trim().isEmpty() ||
                 subject.trim().isEmpty() || message.trim().length() < 10) {
             request.setAttribute("error", "Vui lòng điền đầy đủ thông tin hợp lệ");
@@ -85,6 +84,7 @@ public class ReportController extends HttpServlet {
                             "<h2 style='color: #4CAF50;'>Báo Cáo Mới Từ Website</h2>" +
                             "<div style='background: #f5f5f5; padding: 20px; border-radius: 5px;'>" +
                             "<p><strong>Người gửi:</strong> %s</p>" +
+                            "<p><strong>User ID:</strong> %s</p>" +
                             "<p><strong>Email:</strong> %s</p>" +
                             "<p><strong>Tiêu đề:</strong> %s</p>" +
                             "<hr style='border: 1px solid #ddd;'>" +
@@ -93,9 +93,9 @@ public class ReportController extends HttpServlet {
                             "</div>" +
                             "<br>" +
                             "<p style='color: #999; font-size: 12px;'>Email này được gửi từ hệ thống báo cáo trên website.</p>" +
-                            "</body>" +
-                            "</html>",
+                            "</body>" + "</html>",
                     escapeHtml(senderName),
+                    escapeHtml(userId.toString()),
                     escapeHtml(senderEmail),
                     escapeHtml(subject),
                     escapeHtml(message)
