@@ -99,7 +99,7 @@
                     <c:otherwise>
                         <c:forEach var="t" items="${transList}">
                             <li class="transaction-item">
-                                <img src="${pageContext.request.contextPath}/${t.category.iconPath}" alt="Category Icon">
+                                <img src="${pageContext.request.contextPath}${t.category.iconPath}" alt="Category Icon">
                                 <div class="details">
                                     <h3>${t.category.name}</h3>
                                     <p>${t.account.name}</p>
@@ -312,7 +312,7 @@
                     <c:forEach var="c" items="${categoryList}">
                         <li>
                             <button type="button" data-category="${c.id}" data-type="${c.type}" data-parent="${empty c.parent.id ? '' : c.parent.id}" >
-                                <img src="${pageContext.request.contextPath}/${c.iconPath}" alt="Icon">
+                                <img src="${pageContext.request.contextPath}${c.iconPath}" alt="Icon">
                                     ${c.name}
                             </button>
                         </li>

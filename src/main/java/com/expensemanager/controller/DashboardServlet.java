@@ -3,12 +3,8 @@ package com.expensemanager.controller;
 import com.expensemanager.dao.*;
 import com.expensemanager.model.User;
 import com.expensemanager.service.DashboardService;
-import com.expensemanager.util.JpaUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,12 +22,10 @@ import java.util.logging.Logger;
 public class DashboardServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(DashboardServlet.class.getName());
     private Gson gson;
-    private EntityManagerFactory emf;
 
     @Override
     public void init() {
         gson = new GsonBuilder().setPrettyPrinting().create();
-        emf = JpaUtil.getEntityManagerFactory();
     }
 
     @Override
@@ -39,48 +33,59 @@ public class DashboardServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        EntityManager em = null;
         try {
-            em = emf.createEntityManager();
             HttpSession session = request.getSession(true);
             User user = (User) session.getAttribute("user");
+
+            if (user == null) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write(gson.toJson(Collections.singletonMap("error", "Người dùng chưa đăng nhập")));
+                return;
+            }
+
             UUID userId = user.getId();
 
-            // Khởi tạo DAO
+            // ✅ Không cần EntityManager ở servlet nữa
+            // DAO tự xử lý EntityManager bằng JpaUtil bên trong
             TransactionDAO transactionDAO = new TransactionDAO();
-            GroupDAO groupDAO = new GroupDAO(em);
-            UserDAO userDAO = new UserDAO(em);
-            AccountDAO accountDAO = new AccountDAO( );
+            GroupDAO groupDAO = new GroupDAO();
+            UserDAO userDAO = new UserDAO();
+            AccountDAO accountDAO = new AccountDAO();
 
-            DashboardService dashboardService = new DashboardService(userId,transactionDAO, groupDAO, userDAO, accountDAO);
+            // Dịch vụ tổng hợp dashboard
+            DashboardService dashboardService = new DashboardService(userId, transactionDAO, groupDAO, userDAO, accountDAO);
 
             String period = request.getParameter("period");
             Map<String, Object> data;
 
-            // SỬA LỖI: Logic mới để phân tích tham số `period` từ JavaScript
-            if (period != null && (period.startsWith("month-") || period.startsWith("week-"))) {
+            // ✅ Xử lý logic cho tham số period
+            if (period != null && (period.startsWith("month-") || period.startsWith("week-") || period.startsWith("year-"))) {
                 try {
                     String[] parts = period.split("-");
                     String type = parts[0];
                     int year = Integer.parseInt(parts[1]);
-                    int month = Integer.parseInt(parts[2]);
 
-                    if ("month".equals(type)) {
+                    if ("year".equals(type)) {
+                        data = dashboardService.getOverviewData(year);
+                    } else if ("month".equals(type)) {
+                        int month = Integer.parseInt(parts[2]);
                         data = dashboardService.getOverviewData(year, month);
                     } else if ("week".equals(type) && parts.length > 3) {
+                        int month = Integer.parseInt(parts[2]);
                         int week = Integer.parseInt(parts[3]);
                         data = dashboardService.getOverviewData(year, month, week);
                     } else {
-                        // Fallback an toàn nếu period không hợp lệ
                         data = dashboardService.getOverviewData("month");
                     }
                 } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    response.getWriter().write(gson.toJson(Collections.singletonMap("error", "Tham số period không hợp lệ: " + period)));
+                    response.getWriter().write(gson.toJson(Collections.singletonMap(
+                            "error", "Tham số period không hợp lệ: " + period
+                    )));
                     return;
                 }
             } else {
-                // Xử lý các trường hợp period đơn giản (month, week, year) và trường hợp mặc định
+                // Trường hợp period đơn giản hoặc mặc định
                 if (period == null || period.isEmpty()) {
                     period = "month";
                 }
@@ -92,18 +97,9 @@ public class DashboardServlet extends HttpServlet {
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Đã xảy ra lỗi khi lấy dữ liệu dashboard", e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write(gson.toJson(Collections.singletonMap("error", "Đã có lỗi xảy ra ở server: " + e.getMessage())));
-        } finally {
-            if (em != null && em.isOpen()) {
-                em.close();
-            }
-        }
-    }
-
-    @Override
-    public void destroy() {
-        if (emf != null) {
-            emf.close();
+            response.getWriter().write(gson.toJson(Collections.singletonMap(
+                    "error", "Đã có lỗi xảy ra ở server: " + e.getMessage()
+            )));
         }
     }
 }

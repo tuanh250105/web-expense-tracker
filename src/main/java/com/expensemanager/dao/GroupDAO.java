@@ -1,6 +1,7 @@
 package com.expensemanager.dao;
 
 import com.expensemanager.model.Group;
+import com.expensemanager.model.GroupExpense;
 import com.expensemanager.model.GroupMember;
 import com.expensemanager.util.JpaUtil;
 import jakarta.persistence.EntityManager;
@@ -16,10 +17,24 @@ import java.util.UUID;
  */
 public class GroupDAO {
 
-    private EntityManager em;
+    private final EntityManager em;
 
+    // Constructor nhận EntityManager
     public GroupDAO(EntityManager em) {
-        this.em = JpaUtil.getEntityManager();
+        this.em = em;
+    }
+
+    // Constructor mặc định (sử dụng JpaUtil)
+    public GroupDAO() {
+        this.em = null;
+    }
+
+    private EntityManager getEm() {
+        return (em != null) ? em : JpaUtil.getEntityManager();
+    }
+
+    private void closeEm(EntityManager e) {
+        if (em == null) e.close(); // chỉ close nếu là em do DAO tạo
     }
 
     /**
@@ -29,15 +44,20 @@ public class GroupDAO {
      * @return Danh sách mảng Object chứa {groupId, name, description, createdById}
      */
     public List<Object[]> findGroupsByUserId(UUID userId) {
-        String jpql = """
-            SELECT g.id, g.name, g.description, g.createdBy.id
-            FROM Group g
-            JOIN g.groupMembers m
-            WHERE m.user.id = :userId
-        """;
-        return em.createQuery(jpql, Object[].class)
-                .setParameter("userId", userId)
-                .getResultList();
+        EntityManager e = getEm();
+        try {
+            String jpql = """
+                SELECT g.id, g.name, g.description, g.createdBy.id
+                FROM Group g
+                JOIN g.groupMembers m
+                WHERE m.user.id = :userId
+            """;
+            return e.createQuery(jpql, Object[].class)
+                    .setParameter("userId", userId)
+                    .getResultList();
+        } finally {
+            closeEm(e);
+        }
     }
 
     /**
@@ -47,15 +67,20 @@ public class GroupDAO {
      * @return Danh sách {userId, fullName}
      */
     public List<Object[]> findMembersByGroupId(UUID groupId) {
-        String jpql = """
-            SELECT u.id, u.fullName
-            FROM GroupMember gm
-            JOIN gm.user u
-            WHERE gm.group.id = :groupId
-        """;
-        return em.createQuery(jpql, Object[].class)
-                .setParameter("groupId", groupId)
-                .getResultList();
+        EntityManager e = getEm();
+        try {
+            String jpql = """
+                SELECT u.id, u.fullName
+                FROM GroupMember gm
+                JOIN gm.user u
+                WHERE gm.group.id = :groupId
+            """;
+            return e.createQuery(jpql, Object[].class)
+                    .setParameter("groupId", groupId)
+                    .getResultList();
+        } finally {
+            closeEm(e);
+        }
     }
 
     /**
@@ -65,35 +90,49 @@ public class GroupDAO {
      * @return Tổng tiền (BigDecimal)
      */
     public BigDecimal sumExpensesByGroupId(UUID groupId) {
-        String jpql = "SELECT SUM(e.amount) FROM GroupExpense e WHERE e.group.id = :groupId";
-        TypedQuery<Long> query = em.createQuery(jpql, Long.class); // <-- Sửa ở đây
-        query.setParameter("groupId", groupId);
-
-        // getSingleResult() có thể trả về null nếu không có kết quả
-        Long totalSum = query.getSingleResult();
-
-        // Chuyển đổi an toàn từ Long sang BigDecimal
-        if (totalSum == null) {
-            return BigDecimal.ZERO;
+        EntityManager e = getEm();
+        try {
+            String jpql = "SELECT SUM(e.amount) FROM GroupExpense e WHERE e.group.id = :groupId";
+            TypedQuery<Long> query = e.createQuery(jpql, Long.class);
+            query.setParameter("groupId", groupId);
+            Long total = query.getSingleResult();
+            return (total != null) ? BigDecimal.valueOf(total) : BigDecimal.ZERO;
+        } finally {
+            closeEm(e);
         }
-        return BigDecimal.valueOf(totalSum);
     }
+
 
     /**
      * Tìm Group theo ID.
      */
     public Group findById(UUID groupId) {
-        return em.find(Group.class, groupId);
+        EntityManager e = getEm();
+        try {
+            return e.find(Group.class, groupId);
+        } finally {
+            closeEm(e);
+        }
     }
 
     /**
      * Lưu hoặc cập nhật Group.
      */
     public void save(Group group) {
-        if (group.getId() == null) {
-            em.persist(group);
-        } else {
-            em.merge(group);
+        EntityManager e = getEm();
+        try {
+            e.getTransaction().begin();
+            if (group.getId() == null) {
+                e.persist(group);
+            } else {
+                e.merge(group);
+            }
+            e.getTransaction().commit();
+        } catch (Exception ex) {
+            if (e.getTransaction().isActive()) e.getTransaction().rollback();
+            throw ex;
+        } finally {
+            closeEm(e);
         }
     }
 
@@ -101,56 +140,96 @@ public class GroupDAO {
      * Xóa Group.
      */
     public void delete(Group group) {
-        if (!em.contains(group)) {
-            group = em.merge(group);
+        EntityManager e = getEm();
+        try {
+            e.getTransaction().begin();
+            if (!e.contains(group)) {
+                group = e.merge(group);
+            }
+            e.remove(group);
+            e.getTransaction().commit();
+        } catch (Exception ex) {
+            if (e.getTransaction().isActive()) e.getTransaction().rollback();
+            throw ex;
+        } finally {
+            closeEm(e);
         }
-        em.remove(group);
     }
 
     /**
      * Lưu thông tin thành viên nhóm.
      */
     public void saveMember(GroupMember member) {
-        em.persist(member);
+        EntityManager e = getEm();
+        try {
+            e.getTransaction().begin();
+            e.persist(member);
+            e.getTransaction().commit();
+        } catch (Exception ex) {
+            if (e.getTransaction().isActive()) e.getTransaction().rollback();
+            throw ex;
+        } finally {
+            closeEm(e);
+        }
     }
 
     /**
      * Đếm số lượng thành viên trong nhóm.
      */
     public long countMembers(UUID groupId) {
-        String jpql = "SELECT COUNT(gm) FROM GroupMember gm WHERE gm.group.id = :groupId";
-        return em.createQuery(jpql, Long.class)
-                .setParameter("groupId", groupId)
-                .getSingleResult();
+        EntityManager e = getEm();
+        try {
+            String jpql = "SELECT COUNT(gm) FROM GroupMember gm WHERE gm.group.id = :groupId";
+            return e.createQuery(jpql, Long.class)
+                    .setParameter("groupId", groupId)
+                    .getSingleResult();
+        } finally {
+            closeEm(e);
+        }
     }
 
     /**
      * Xóa thành viên ra khỏi nhóm.
      */
     public void deleteMember(UUID groupId, UUID userId) {
-        String jpql = """
-            DELETE FROM GroupMember gm
-            WHERE gm.group.id = :groupId AND gm.user.id = :userId
-        """;
-        em.createQuery(jpql)
-                .setParameter("groupId", groupId)
-                .setParameter("userId", userId)
-                .executeUpdate();
+        EntityManager e = getEm();
+        try {
+            e.getTransaction().begin();
+            String jpql = """
+                DELETE FROM GroupMember gm
+                WHERE gm.group.id = :groupId AND gm.user.id = :userId
+            """;
+            e.createQuery(jpql)
+                    .setParameter("groupId", groupId)
+                    .setParameter("userId", userId)
+                    .executeUpdate();
+            e.getTransaction().commit();
+        } catch (Exception ex) {
+            if (e.getTransaction().isActive()) e.getTransaction().rollback();
+            throw ex;
+        } finally {
+            closeEm(e);
+        }
     }
 
     /**
      * Kiểm tra xem người dùng có thuộc nhóm hay không.
      */
     public boolean isUserMember(UUID groupId, UUID userId) {
-        String jpql = """
-            SELECT COUNT(gm)
-            FROM GroupMember gm
-            WHERE gm.group.id = :groupId AND gm.user.id = :userId
-        """;
-        Long count = em.createQuery(jpql, Long.class)
-                .setParameter("groupId", groupId)
-                .setParameter("userId", userId)
-                .getSingleResult();
-        return count > 0;
+        EntityManager e = getEm();
+        try {
+            String jpql = """
+                SELECT COUNT(gm)
+                FROM GroupMember gm
+                WHERE gm.group.id = :groupId AND gm.user.id = :userId
+            """;
+            Long count = e.createQuery(jpql, Long.class)
+                    .setParameter("groupId", groupId)
+                    .setParameter("userId", userId)
+                    .getSingleResult();
+            return count > 0;
+        } finally {
+            closeEm(e);
+        }
     }
 }

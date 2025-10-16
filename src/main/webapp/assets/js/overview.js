@@ -1,9 +1,15 @@
 (function () {
     Chart.defaults.font.family = "'Poppins', sans-serif";
     Chart.defaults.font.size = 14;
+
     // --- Helper Functions ---
     function cleanData(data) {
-        return Array.isArray(data) ? data.map(val => (val == null || isNaN(val) ? 0 : Number(val))) : [];
+        console.log("Cleaning data:", data);
+        return Array.isArray(data) ? data.map(val => {
+            if (val == null || isNaN(val)) return 0;
+            // Chuyển BigDecimal thành Number, giữ nguyên giá trị lớn
+            return Number(val);
+        }) : [];
     }
 
     function showLoading(elementId) {
@@ -21,9 +27,8 @@
         };
     }
 
-    // --- Chart and Data Loading ---
+    // --- Load basic info (transactions + balance) ---
     function loadOverviewData(data) {
-        // SỬA LỖI: dùng key `recentTransactions` từ backend
         const txList = document.getElementById('transaction-list');
         if (txList) {
             txList.innerHTML = '';
@@ -34,20 +39,26 @@
                 transactions.forEach(tx => {
                     const li = document.createElement('li');
                     li.className = 'flex justify-between items-center py-2 border-b';
-                    li.innerHTML = `<span class="flex items-center"><span class="text-blue-500 mr-2">🔹</span><span>${tx.category || 'Không xác định'}</span></span><span class="text-gray-500 text-sm">${tx.date || 'N/A'}</span><span class="font-semibold">${(tx.amount / 1).toLocaleString('vi-VN')} đ</span>`;
+                    li.innerHTML = `
+                        <span class="flex items-center">
+                            <span class="text-blue-500 mr-2">🔹</span>
+                            <span>${tx.category || 'Không xác định'}</span>
+                        </span>
+                        <span class="text-gray-500 text-sm">${tx.date || 'N/A'}</span>
+                        <span class="font-semibold">${Number(tx.amount).toLocaleString('vi-VN')} đ</span>`;
                     txList.appendChild(li);
                 });
             }
         }
 
-        // SỬA LỖI: dùng key `currentBalance` từ backend
         const currentBalanceElem = document.getElementById('current-balance');
         if (currentBalanceElem) {
             const currentBalance = data.currentBalance || 0;
-            currentBalanceElem.textContent = Number(currentBalance).toLocaleString('vi-VN') + ' triệu đ';
+            currentBalanceElem.textContent = (Number(currentBalance) / 1000000).toLocaleString('vi-VN') + ' triệu đ';
         }
     }
 
+    // --- Update Chart when user changes time range ---
     function updateOverviewChart(chart, key, period) {
         if (typeof window.contextPath === 'undefined') {
             console.error("❌ contextPath không được định nghĩa");
@@ -61,14 +72,17 @@
                 return res.json();
             })
             .then(json => {
+                console.log("Dữ liệu nhận được:", json);
                 if (json.error) {
                     console.error("❌ Lỗi từ server:", json.error);
                     return;
                 }
 
-                // SỬA LỖI: Đọc dữ liệu từ các key đúng do backend trả về
-                const balanceChangesData = json.balanceChanges || {};
-                const categoriesData = json.categories || {};
+                const balanceChangesData = json.balanceChanges || { labels: [], income: [], expense: [], runningBalance: [] };
+                const categoriesData = json.categories || { labels: [], data: [] };
+
+                console.log(`Balance changes data for ${key}:`, balanceChangesData);
+                console.log(`Categories data for ${key}:`, categoriesData);
 
                 if (key === "incomeExpense") {
                     chart.data.labels = balanceChangesData.labels || [];
@@ -79,60 +93,102 @@
                     chart.data.datasets[0].data = cleanData(categoriesData.data || []);
                 } else if (key === "balance") {
                     chart.data.labels = balanceChangesData.labels || [];
-                    // SỬA LỖI: dùng `runningBalance` cho biểu đồ số dư
                     chart.data.datasets[0].data = cleanData(balanceChangesData.runningBalance || []);
                 }
 
+                console.log(`Cập nhật biểu đồ ${key}:`, chart.data);
                 chart.update();
             })
             .catch(err => console.error("❌ Lỗi cập nhật biểu đồ:", err));
     }
 
-    // --- Chart Rendering ---
+    // --- Render monthly pie charts ---
     function renderMonthlyCharts(data) {
-        // SỬA LỖI: dùng key `monthlySummary` từ backend
         const monthlyData = data.monthlySummary || { previousMonth: {}, currentMonth: {} };
 
         const prevCtx = document.getElementById('previousMonthChart')?.getContext('2d');
         if (prevCtx) {
-            if (window.previousMonthChart && typeof window.previousMonthChart.destroy === 'function') window.previousMonthChart.destroy();
+            if (window.previousMonthChart?.destroy) window.previousMonthChart.destroy();
             window.previousMonthChart = new Chart(prevCtx, {
                 type: 'pie',
                 data: {
                     labels: ['Thu nhập', 'Chi tiêu'],
                     datasets: [{
-                        data: [monthlyData.previousMonth.income || 0, monthlyData.previousMonth.expense || 0],
+                        data: [
+                            Number(monthlyData.previousMonth.income || 0) / 1000000,
+                            Number(monthlyData.previousMonth.expense || 0) / 1000000
+                        ],
                         backgroundColor: ['#4CAF50', '#F44336']
                     }]
                 },
-                options: { plugins: { legend: { position: 'right' } }, responsive: true }
+                options: {
+                    plugins: {
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw.toLocaleString('vi-VN')} triệu đ`;
+                                }
+                            }
+                        }
+                    },
+                    responsive: true
+                }
             });
         }
 
         const currCtx = document.getElementById('currentMonthChart')?.getContext('2d');
         if (currCtx) {
-            if (window.currentMonthChart && typeof window.currentMonthChart.destroy === 'function') window.currentMonthChart.destroy();
+            if (window.currentMonthChart?.destroy) window.currentMonthChart.destroy();
             window.currentMonthChart = new Chart(currCtx, {
                 type: 'pie',
                 data: {
                     labels: ['Thu nhập', 'Chi tiêu'],
                     datasets: [{
-                        data: [monthlyData.currentMonth.income || 0, monthlyData.currentMonth.expense || 0],
+                        data: [
+                            Number(monthlyData.currentMonth.income || 0) / 1000000,
+                            Number(monthlyData.currentMonth.expense || 0) / 1000000
+                        ],
                         backgroundColor: ['#4CAF50', '#F44336']
                     }]
                 },
-                options: { plugins: { legend: { position: 'right' } }, responsive: true }
+                options: {
+                    plugins: {
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw.toLocaleString('vi-VN')} triệu đ`;
+                                }
+                            }
+                        }
+                    },
+                    responsive: true
+                }
             });
         }
     }
 
+    // --- Render main charts (income/expense, category, balance) ---
     function renderOverviewCharts(data) {
-        // SỬA LỖI: Đọc từ các key đúng là `balanceChanges` và `categories`
+        console.log("Rendering charts with data:", data);
+        if (Array.isArray(data.balanceChanges)) {
+            console.warn("Converting legacy balanceChanges format");
+            const arr = data.balanceChanges;
+            data.balanceChanges = {
+                labels: arr.map(i => i.date),
+                income: arr.map(i => i.income),
+                expense: arr.map(i => i.expense),
+                runningBalance: arr.map(i => i.balance)
+            };
+        }
+
         const { balanceChanges, categories } = data;
 
+        // Income vs Expense
         const incomeExpenseCtx = document.getElementById('incomeExpenseChart')?.getContext('2d');
         if (incomeExpenseCtx) {
-            if (window.incomeExpenseChart && typeof window.incomeExpenseChart.destroy === 'function') window.incomeExpenseChart.destroy();
+            if (window.incomeExpenseChart?.destroy) window.incomeExpenseChart.destroy();
             window.incomeExpenseChart = new Chart(incomeExpenseCtx, {
                 type: 'bar',
                 data: {
@@ -142,52 +198,117 @@
                         { label: 'Chi', data: cleanData(balanceChanges?.expense), backgroundColor: '#F44336' }
                     ]
                 },
-                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false, // Không bắt đầu từ 0 để hiển thị tốt hơn
+                            ticks: {
+                                callback: function(value) {
+                                    return (value / 1000000).toLocaleString('vi-VN') + ' triệu';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${(context.raw / 1000000).toLocaleString('vi-VN')} triệu đ`;
+                                }
+                            }
+                        }
+                    }
+                }
             });
         }
 
+        // Categories
         const categoryCtx = document.getElementById('categoryChart')?.getContext('2d');
         if (categoryCtx) {
-            if (window.categoryChart && typeof window.categoryChart.destroy === 'function') window.categoryChart.destroy();
+            if (window.categoryChart?.destroy) window.categoryChart.destroy();
             window.categoryChart = new Chart(categoryCtx, {
                 type: 'pie',
                 data: {
                     labels: categories?.labels || [],
                     datasets: [{
-                        data: cleanData(categories?.data),
+                        data: cleanData(categories?.data).map(val => val / 1000000),
                         backgroundColor: ['#4CAF50', '#FFC107', '#F44336', '#2196F3', '#9C27B0', '#009688']
                     }]
                 },
-                options: { plugins: { legend: { position: 'right' } }, responsive: true }
+                options: {
+                    plugins: {
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw.toLocaleString('vi-VN')} triệu đ`;
+                                }
+                            }
+                        }
+                    },
+                    responsive: true
+                }
             });
         }
 
+        // Balance over time
         const balanceCtx = document.getElementById('balanceChart')?.getContext('2d');
         if (balanceCtx) {
-            if (window.balanceChart && typeof window.balanceChart.destroy === 'function') window.balanceChart.destroy();
+            if (window.balanceChart?.destroy) window.balanceChart.destroy();
             window.balanceChart = new Chart(balanceCtx, {
                 type: 'line',
                 data: {
                     labels: balanceChanges?.labels || [],
-                    // SỬA LỖI: Dùng `runningBalance` cho dữ liệu
-                    datasets: [{ label: 'Số Dư', data: cleanData(balanceChanges?.runningBalance), borderColor: '#2196F3', fill: false }]
+                    datasets: [{
+                        label: 'Số Dư',
+                        data: cleanData(balanceChanges?.runningBalance).map(val => val / 1000000),
+                        borderColor: '#2196F3',
+                        fill: false
+                    }]
                 },
-                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false, // Không bắt đầu từ 0
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('vi-VN') + ' triệu';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Số Dư: ${context.raw.toLocaleString('vi-VN')} triệu đ`;
+                                }
+                            }
+                        }
+                    }
+                }
             });
         }
     }
 
-    // --- Dynamic Time Selectors Logic ---
+    // --- Setup time selectors for charts ---
     function setupTimeSelectors(chart, chartKey, unitId, specificId) {
         const unitSelector = document.getElementById(unitId);
         const specificSelector = document.getElementById(specificId);
 
-        if (!unitSelector || !specificSelector) return;
+        if (!unitSelector || !specificSelector) {
+            console.error(`❌ Selector không tìm thấy: ${unitId}, ${specificId}`);
+            return;
+        }
 
         function populateSpecificSelector() {
             const unit = unitSelector.value;
             specificSelector.innerHTML = '';
             specificSelector.style.display = 'inline-block';
+
+            console.log(`Populating ${specificId} for unit=${unit}`);
 
             if (unit === 'month') {
                 for (let i = 0; i < 12; i++) {
@@ -222,21 +343,41 @@
                     dayOfWeek = 1;
                     weekNum++;
                 }
-            } else { // year
+            } else if (unit === 'year') {
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                for (let i = 0; i < 5; i++) {
+                    const year = currentYear - i;
+                    const option = document.createElement('option');
+                    option.value = `year-${year}`;
+                    option.textContent = `Năm ${year}`;
+                    specificSelector.appendChild(option);
+                }
+            } else {
                 specificSelector.style.display = 'none';
             }
-            specificSelector.dispatchEvent(new Event('change'));
         }
 
-        unitSelector.addEventListener('change', populateSpecificSelector);
+        unitSelector.addEventListener('change', () => {
+            console.log(`Unit selector changed to: ${unitSelector.value}`);
+            populateSpecificSelector();
+        });
+
         specificSelector.addEventListener('change', debounce(() => {
             const period = specificSelector.style.display === 'none' ? unitSelector.value : specificSelector.value;
+            console.log(`Specific selector changed, period=${period}`);
             if (chart && period) {
                 updateOverviewChart(chart, chartKey, period);
             }
         }, 300));
 
         populateSpecificSelector();
+
+        const initialPeriod = specificSelector.style.display === 'none' ? unitSelector.value : specificSelector.value;
+        console.log(`Initial period for ${chartKey}: ${initialPeriod}`);
+        if (chart && initialPeriod) {
+            updateOverviewChart(chart, chartKey, initialPeriod);
+        }
     }
 
     // --- Main Initialization ---
@@ -261,11 +402,15 @@
                 setupTimeSelectors(window.incomeExpenseChart, "incomeExpense", 'timeUnitIncomeExpense', 'specificPeriodIncomeExpense');
                 setupTimeSelectors(window.categoryChart, "categories", 'timeUnitCategory', 'specificPeriodCategory');
                 setupTimeSelectors(window.balanceChart, "balance", 'timeUnitBalance', 'specificPeriodBalance');
-            }).catch(err => {
-            console.error("❌ Lỗi khi fetch dữ liệu ban đầu:", err)
-            document.getElementById('overview-container').innerHTML = `<p class="text-red-500">Không thể tải dữ liệu. Vui lòng kiểm tra console log.</p>`
-        });
-    }
+            })
+            .catch(err => {
+                console.error("❌ Lỗi khi fetch dữ liệu ban đầu:", err);
+                const container = document.getElementById('overview-container');
+                if (container) {
+                    container.innerHTML = `<p class="text-red-500">Không thể tải dữ liệu. Vui lòng kiểm tra console log.</p>`;
+                }
+            });
+    };
 
     document.addEventListener('DOMContentLoaded', () => {
         if (document.querySelector('.overview-page')) {

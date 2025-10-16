@@ -6,9 +6,8 @@ import com.expensemanager.dao.TransactionDAO;
 import com.expensemanager.dao.UserDAO;
 import com.expensemanager.model.Group;
 import com.expensemanager.model.GroupMember;
-import com.expensemanager.model.Transaction; // QUAN TRỌNG: Đảm bảo import Transaction
+import com.expensemanager.model.Transaction;
 import com.expensemanager.model.User;
-import jakarta.servlet.http.HttpSession;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -18,37 +17,26 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * DashboardService
- * Xử lý nghiệp vụ cho phần tổng quan tài chính (Dashboard).
- * Đã được viết lại để tối ưu hóa hiệu năng và sửa lỗi truy vấn lặp.
- */
 public class DashboardService {
 
-    // ========== DAO dependencies ==========
     private final TransactionDAO transactionDAO;
     private final GroupDAO groupDAO;
     private final UserDAO userDAO;
     private final AccountDAO accountDAO;
 
-    // ========== Constant values ==========
-
     private static UUID CURRENT_USER_ID;
     private static final BigDecimal ONE_UNIT = new BigDecimal("1");
+    // Sử dụng format cho frontend
     private static final DateTimeFormatter DAY_FORMAT = DateTimeFormatter.ofPattern("dd/MM");
     private static final DateTimeFormatter MONTH_FORMAT = DateTimeFormatter.ofPattern("MM");
 
     public DashboardService(UUID user_id, TransactionDAO transactionDAO, GroupDAO groupDAO, UserDAO userDAO, AccountDAO accountDAO) {
-        this.CURRENT_USER_ID = user_id;
+        CURRENT_USER_ID = user_id;
         this.transactionDAO = transactionDAO;
         this.groupDAO = groupDAO;
         this.userDAO = userDAO;
         this.accountDAO = accountDAO;
     }
-
-    // =========================================
-    // PUBLIC API (được Controller gọi)
-    // =========================================
 
     public Map<String, Object> getOverviewData(String period) {
         LocalDate today = LocalDate.now();
@@ -82,21 +70,23 @@ public class DashboardService {
         return getOverviewDataForRange(range[0], range[1], "day");
     }
 
+    public Map<String, Object> getOverviewData(int year) {
+        LocalDate startDate = LocalDate.of(year, 1, 1);
+        LocalDate endDate = LocalDate.of(year, 12, 31);
+        return getOverviewDataForRange(startDate, endDate, "month");
+    }
 
-    // =========================================
-    // MAIN DATA AGGREGATOR (ĐÃ TỐI ƯU HÓA)
-    // =========================================
-
+    // --- Sửa lỗi: Cung cấp dữ liệu BalanceChanges và Categories đúng định dạng ---
     private Map<String, Object> getOverviewDataForRange(LocalDate startDate, LocalDate endDate, String groupBy) {
         Map<String, Object> data = new HashMap<>();
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
 
         try {
-            // TỐI ƯU HÓA: Lấy tất cả giao dịch trong khoảng thời gian chỉ MỘT LẦN DUY NHẤT.
             List<Transaction> allTransactionsInRange;
-            if ("year".equals(groupBy)) {
-                // Nếu xem cả năm, cần lấy dữ liệu cả năm để tính toán đúng
+
+            // Xử lý phạm vi dữ liệu cho groupBy="month" (period="year")
+            if ("month".equals(groupBy)) {
                 LocalDateTime yearStart = LocalDate.of(startDate.getYear(), 1, 1).atStartOfDay();
                 LocalDateTime yearEnd = LocalDate.of(startDate.getYear(), 12, 31).atTime(LocalTime.MAX);
                 allTransactionsInRange = transactionDAO.getAllTransactionsByMonthAndYear(CURRENT_USER_ID, yearStart, yearEnd);
@@ -104,17 +94,21 @@ public class DashboardService {
                 allTransactionsInRange = transactionDAO.getAllTransactionsByMonthAndYear(CURRENT_USER_ID, startDateTime, endDateTime);
             }
 
-
-            // Các hàm con bây giờ sẽ xử lý trên danh sách đã có, không truy vấn CSDL nữa.
             data.put("recentTransactions", getRecentTransactionsFromList(allTransactionsInRange));
             data.put("groupExpenses", getGroupExpenses());
             data.put("monthlySummary", getMonthlySummary());
             data.put("currentBalance", getCurrentBalance());
 
+            // ✅ Đã sửa: Luôn cung cấp dữ liệu categories cho biểu đồ Pie/Donut
+            data.put("categories", getCategoriesPieDataFromList(allTransactionsInRange));
+
+            // ✅ Đã sửa: Gọi hàm chuyển đổi định dạng cho balanceChanges
             if ("month".equals(groupBy)) {
-                calculateMonthlyBalanceChanges(data, startDate.getYear(), allTransactionsInRange);
+                List<Map<String, Object>> monthlyChanges = calculateMonthlyBalanceChanges(allTransactionsInRange, startDate.getYear());
+                data.put("balanceChanges", convertMonthlyChangesToFrontendFormat(monthlyChanges)); // Chuyển đổi
             } else {
-                calculateDailyBalanceChanges(data, startDate, endDate, allTransactionsInRange);
+                List<Map<String, Object>> dailyChanges = calculateDailyBalanceChanges(allTransactionsInRange, startDate, endDate);
+                data.put("balanceChanges", convertDailyChangesToFrontendFormat(dailyChanges)); // Chuyển đổi
             }
 
         } catch (Exception e) {
@@ -124,85 +118,121 @@ public class DashboardService {
         return data;
     }
 
-    // =========================================
-    // 1️⃣ Biến động số dư (Balance Changes) (ĐÃ TỐI ƯU HÓA)
-    // =========================================
+    // --- Cần chuyển đổi từ List<Map> sang Map<List> cho JS ---
+    private Map<String, Object> convertDailyChangesToFrontendFormat(List<Map<String, Object>> dailyChanges) {
+        List<String> labels = dailyChanges.stream()
+                .map(d -> {
+                    Object dateObj = d.get("date");
+                    if (dateObj instanceof LocalDate) {
+                        return ((LocalDate) dateObj).format(DAY_FORMAT);
+                    }
+                    return (String) dateObj; // Trường hợp date là String
+                })
+                .collect(Collectors.toList());
 
-    private void calculateDailyBalanceChanges(Map<String, Object> data, LocalDate startDate, LocalDate endDate, List<Transaction> allTransactions) {
-        List<String> labels = new ArrayList<>();
-        List<BigDecimal> incomeList = new ArrayList<>();
-        List<BigDecimal> expenseList = new ArrayList<>();
-        List<BigDecimal> balanceList = new ArrayList<>();
+        List<BigDecimal> income = dailyChanges.stream().map(d -> (BigDecimal) d.get("income")).collect(Collectors.toList());
+        List<BigDecimal> expense = dailyChanges.stream().map(d -> (BigDecimal) d.get("expense")).collect(Collectors.toList());
+        List<BigDecimal> runningBalance = dailyChanges.stream().map(d -> (BigDecimal) d.get("balance")).collect(Collectors.toList());
 
-        BigDecimal runningBalance = getOpeningBalance(startDate);
+        return Map.of(
+                "labels", labels,
+                "income", income,
+                "expense", expense,
+                "runningBalance", runningBalance
+        );
+    }
+
+    private Map<String, Object> convertMonthlyChangesToFrontendFormat(List<Map<String, Object>> monthlyChanges) {
+        List<String> labels = monthlyChanges.stream()
+                .map(d -> "Tháng " + d.get("month")) // Format tháng
+                .collect(Collectors.toList());
+
+        List<BigDecimal> income = monthlyChanges.stream().map(d -> (BigDecimal) d.get("income")).collect(Collectors.toList());
+        List<BigDecimal> expense = monthlyChanges.stream().map(d -> (BigDecimal) d.get("expense")).collect(Collectors.toList());
+        List<BigDecimal> runningBalance = monthlyChanges.stream().map(d -> (BigDecimal) d.get("balance")).collect(Collectors.toList());
+
+        return Map.of(
+                "labels", labels,
+                "income", income,
+                "expense", expense,
+                "runningBalance", runningBalance
+        );
+    }
+
+    // ===== 1️⃣ Daily Balance Changes (Giữ nguyên logic tính toán, trả về List<Map> thô) =====
+    private List<Map<String, Object>> calculateDailyBalanceChanges(List<Transaction> allTransactions,
+                                                                   LocalDate startDate, LocalDate endDate) {
+        List<Map<String, Object>> dailyChanges = new ArrayList<>();
+
+        BigDecimal[] runningBalance = { getOpeningBalance(startDate) };
 
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-            labels.add(date.format(DAY_FORMAT));
-            final LocalDate currentDate = date; // Biến final để dùng trong lambda
+            LocalDate currentDate = date;
 
-            // TÍNH TOÁN TRONG JAVA: Lọc và tính tổng từ danh sách đã có, KHÔNG GỌI DAO.
             BigDecimal income = allTransactions.stream()
-                    .filter(t -> "income".equalsIgnoreCase(t.getType()) && t.getTransactionDate().toLocalDate().isEqual(currentDate))
-                    .map(t -> t.getAmount() != null ? t.getAmount() : BigDecimal.ZERO)
+                    .filter(t -> "income".equalsIgnoreCase(t.getType())
+                            && t.getTransactionDate().toLocalDate().isEqual(currentDate))
+                    .map(t -> Optional.ofNullable(t.getAmount()).orElse(BigDecimal.ZERO))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             BigDecimal expense = allTransactions.stream()
-                    .filter(t -> "expense".equalsIgnoreCase(t.getType()) && t.getTransactionDate().toLocalDate().isEqual(currentDate))
-                    .map(t -> t.getAmount() != null ? t.getAmount() : BigDecimal.ZERO)
+                    .filter(t -> "expense".equalsIgnoreCase(t.getType())
+                            && t.getTransactionDate().toLocalDate().isEqual(currentDate))
+                    .map(t -> Optional.ofNullable(t.getAmount()).orElse(BigDecimal.ZERO))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            incomeList.add(income.divide(ONE_UNIT, 2, RoundingMode.HALF_UP));
-            expenseList.add(expense.divide(ONE_UNIT, 2, RoundingMode.HALF_UP));
+            runningBalance[0] = runningBalance[0].add(income).subtract(expense);
 
-            runningBalance = runningBalance.add(income).subtract(expense);
-            balanceList.add(runningBalance.divide(ONE_UNIT, 2, RoundingMode.HALF_UP).max(BigDecimal.ZERO));
+            dailyChanges.add(Map.of(
+                    "date", currentDate, // Sử dụng LocalDate để dễ dàng format sau này
+                    "income", income,
+                    "expense", expense,
+                    "balance", runningBalance[0]
+            ));
         }
 
-        data.put("balanceChanges", Map.of(
-                "labels", labels, "income", incomeList, "expense", expenseList, "runningBalance", balanceList
-        ));
-        data.put("categories", getCategoriesPieDataFromList(allTransactions));
+        return dailyChanges;
     }
 
-    private void calculateMonthlyBalanceChanges(Map<String, Object> data, int year, List<Transaction> allTransactionsForYear) {
-        List<String> labels = new ArrayList<>();
-        List<BigDecimal> incomeList = new ArrayList<>();
-        List<BigDecimal> expenseList = new ArrayList<>();
-        List<BigDecimal> balanceList = new ArrayList<>();
+    // ===== 2️⃣ Monthly Balance Changes (Giữ nguyên logic tính toán, trả về List<Map> thô) =====
+    private List<Map<String, Object>> calculateMonthlyBalanceChanges(List<Transaction> allTransactions, int year) {
+        List<Map<String, Object>> monthlyChanges = new ArrayList<>();
 
-        BigDecimal runningBalance = getOpeningBalance(LocalDate.of(year, 1, 1));
+        // Tính số dư đầu kỳ là số dư trước ngày 1/1 của năm đang xét
+        LocalDate startOfYear = LocalDate.of(year, 1, 1);
+        BigDecimal[] runningBalance = { getOpeningBalance(startOfYear) };
 
         for (int month = 1; month <= 12; month++) {
-            labels.add(String.format("%02d", month));
             final int currentMonth = month;
 
-            // TÍNH TOÁN TRONG JAVA
-            BigDecimal income = allTransactionsForYear.stream()
-                    .filter(t -> "income".equalsIgnoreCase(t.getType()) && t.getTransactionDate().getMonthValue() == currentMonth)
-                    .map(t -> t.getAmount() != null ? t.getAmount() : BigDecimal.ZERO)
+            BigDecimal income = allTransactions.stream()
+                    .filter(t -> "income".equalsIgnoreCase(t.getType())
+                            && t.getTransactionDate().getYear() == year
+                            && t.getTransactionDate().getMonthValue() == currentMonth)
+                    .map(t -> Optional.ofNullable(t.getAmount()).orElse(BigDecimal.ZERO))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            BigDecimal expense = allTransactionsForYear.stream()
-                    .filter(t -> "expense".equalsIgnoreCase(t.getType()) && t.getTransactionDate().getMonthValue() == currentMonth)
-                    .map(t -> t.getAmount() != null ? t.getAmount() : BigDecimal.ZERO)
+            BigDecimal expense = allTransactions.stream()
+                    .filter(t -> "expense".equalsIgnoreCase(t.getType())
+                            && t.getTransactionDate().getYear() == year
+                            && t.getTransactionDate().getMonthValue() == currentMonth)
+                    .map(t -> Optional.ofNullable(t.getAmount()).orElse(BigDecimal.ZERO))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            incomeList.add(income.divide(ONE_UNIT, 2, RoundingMode.HALF_UP));
-            expenseList.add(expense.divide(ONE_UNIT, 2, RoundingMode.HALF_UP));
-            runningBalance = runningBalance.add(income).subtract(expense);
-            balanceList.add(runningBalance.divide(ONE_UNIT, 2, RoundingMode.HALF_UP).max(BigDecimal.ZERO));
+            runningBalance[0] = runningBalance[0].add(income).subtract(expense);
+
+            monthlyChanges.add(Map.of(
+                    "month", currentMonth,
+                    "income", income,
+                    "expense", expense,
+                    "balance", runningBalance[0]
+            ));
         }
 
-        data.put("balanceChanges", Map.of(
-                "labels", labels, "income", incomeList, "expense", expenseList, "runningBalance", balanceList
-        ));
-        data.put("categories", getCategoriesPieDataFromList(allTransactionsForYear));
+        return monthlyChanges;
     }
 
-    // =========================================
-    // 2️⃣ Lấy số dư
-    // =========================================
-
+    // ===== 3️⃣ Get Balances (Giữ nguyên) =====
     private BigDecimal getCurrentBalance() {
         BigDecimal totalBalance = accountDAO.getTotalBalanceByUser(CURRENT_USER_ID);
         return totalBalance.setScale(2, RoundingMode.HALF_UP);
@@ -211,19 +241,14 @@ public class DashboardService {
     private BigDecimal getOpeningBalance(LocalDate date) {
         LocalDateTime startOfAllTime = LocalDateTime.of(1970, 1, 1, 0, 0);
         LocalDateTime endOfPreviousDay = date.atStartOfDay().minusSeconds(1);
-
         List<Transaction> pastTransactions = transactionDAO.getAllTransactionsByMonthAndYear(CURRENT_USER_ID, startOfAllTime, endOfPreviousDay);
 
         BigDecimal totalIncome = getSumByTypeFromList(pastTransactions, "income");
         BigDecimal totalExpense = getSumByTypeFromList(pastTransactions, "expense");
-
         return totalIncome.subtract(totalExpense);
     }
 
-    // =========================================
-    // 3️⃣ Biểu đồ & Thống kê
-    // =========================================
-
+    // ===== 4️⃣ Summary (Giữ nguyên) =====
     private Map<String, Object> getMonthlySummary() {
         LocalDate today = LocalDate.now();
         LocalDate currentStart = today.with(TemporalAdjusters.firstDayOfMonth());
@@ -239,31 +264,32 @@ public class DashboardService {
         BigDecimal prevExpense = getSumByTypeFromList(prevMonthTrans, "expense");
 
         return Map.of(
-                "currentMonth", Map.of("income", currentIncome.divide(ONE_UNIT, 2, RoundingMode.HALF_UP), "expense", currentExpense.divide(ONE_UNIT, 2, RoundingMode.HALF_UP)),
-                "previousMonth", Map.of("income", prevIncome.divide(ONE_UNIT, 2, RoundingMode.HALF_UP), "expense", prevExpense.divide(ONE_UNIT, 2, RoundingMode.HALF_UP))
+                "currentMonth", Map.of("income", currentIncome, "expense", currentExpense),
+                "previousMonth", Map.of("income", prevIncome, "expense", prevExpense)
         );
     }
+
     private Map<String, Object> getCategoriesPieDataFromList(List<Transaction> allTransactions) {
         List<Transaction> expenseTransactions = allTransactions.stream()
                 .filter(t -> "expense".equalsIgnoreCase(t.getType()))
                 .collect(Collectors.toList());
 
+        // Giả định hàm này trả về List<Map> với key là "categoryName" và "total"
         List<Map<String, Object>> groupedData = transactionDAO.groupTransactionsByCategory(expenseTransactions, 10);
 
         List<String> labels = new ArrayList<>();
         List<BigDecimal> values = new ArrayList<>();
         for (Map<String, Object> item : groupedData) {
             labels.add((String) item.get("categoryName"));
-            BigDecimal amount = BigDecimal.valueOf((Double) item.get("total"));
-            values.add(amount.divide(ONE_UNIT, 2, RoundingMode.HALF_UP));
+            Object totalObj = item.get("total");
+            // Xử lý trường hợp total là Double hoặc BigDecimal
+            BigDecimal amount = totalObj instanceof Double ? BigDecimal.valueOf((Double) totalObj) : (BigDecimal) totalObj;
+            values.add(amount.setScale(2, RoundingMode.HALF_UP));
         }
         return Map.of("labels", labels, "data", values);
     }
 
-    // =========================================
-    // 4️⃣ & 5️⃣: Nhóm chi tiêu & Tiện ích (Không thay đổi)
-    // =========================================
-
+    // ===== 5️⃣ Group & Utility (Giữ nguyên) =====
     private Map<String, Object> getGroupExpenses() {
         List<Object[]> groups = groupDAO.findGroupsByUserId(CURRENT_USER_ID);
         List<Map<String, Object>> groupDetails = new ArrayList<>();
@@ -272,7 +298,7 @@ public class DashboardService {
         for (Object[] g : groups) {
             UUID groupId = (UUID) g[0];
             BigDecimal raw = groupDAO.sumExpensesByGroupId(groupId);
-            BigDecimal sum = (raw != null) ? raw.divide(ONE_UNIT, 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+            BigDecimal sum = raw != null ? raw : BigDecimal.ZERO;
             total = total.add(sum);
 
             Map<String, Object> groupMap = new LinkedHashMap<>();
@@ -282,9 +308,13 @@ public class DashboardService {
             groupMap.put("totalAmount", sum);
             groupMap.put("isCurrentUserOwner", CURRENT_USER_ID.equals((UUID) g[3]));
 
-            List<Map<String, String>> members = groupDAO.findMembersByGroupId(groupId).stream()
-                    .map(m -> Map.of("id", ((UUID) m[0]).toString(), "name", (String) m[1]))
-                    .collect(Collectors.toList());
+            List<Map<String, Object>> members = groupDAO.findMembersByGroupId(groupId).stream()
+                    .map(m -> {
+                        Map<String, Object> mem = new HashMap<>();
+                        mem.put("id", ((UUID) m[0]).toString());
+                        mem.put("name", m[1]);
+                        return mem;
+                    }).collect(Collectors.toList());
             groupMap.put("members", members);
 
             groupDetails.add(groupMap);
@@ -355,21 +385,21 @@ public class DashboardService {
         groupDAO.deleteMember(groupId, userId);
     }
 
-    public List<Map<String, String>> searchUsersByName(String name) {
+    public List<Map<String, Object>> searchUsersByName(String name) {
         return userDAO.searchByName(name, CURRENT_USER_ID).stream()
-                .map(u -> Map.of("id", u.getId().toString(), "name", u.getFullName()))
+                .map(u -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("id", u.getId().toString());
+                    m.put("name", u.getFullName());
+                    return m;
+                })
                 .collect(Collectors.toList());
     }
-
-
-    // =========================================
-    // 6️⃣ Utility Helpers
-    // =========================================
 
     private BigDecimal getSumByTypeFromList(List<Transaction> transactions, String type) {
         return transactions.stream()
                 .filter(t -> type.equalsIgnoreCase(t.getType()))
-                .map(t -> t.getAmount() != null ? t.getAmount() : BigDecimal.ZERO)
+                .map(t -> Optional.ofNullable(t.getAmount()).orElse(BigDecimal.ZERO))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -384,11 +414,11 @@ public class DashboardService {
 
     private List<Map<String, Object>> getRecentTransactionsFromList(List<Transaction> allTransactions) {
         return allTransactions.stream()
-                .limit(6) // Danh sách đã được DAO sắp xếp sẵn
+                .limit(6)
                 .map(t -> {
                     Map<String, Object> map = new LinkedHashMap<>();
                     map.put("date", t.getTransactionDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-                    map.put("category", (t.getCategory() != null) ? t.getCategory().getName() : "Chưa phân loại");
+                    map.put("category", t.getCategory() != null ? t.getCategory().getName() : "Chưa phân loại");
                     map.put("amount", t.getAmount());
                     return map;
                 })
