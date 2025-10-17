@@ -17,13 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
             this.style.pointerEvents = 'none';
         });
     });
-
-
     // Khởi tạo Flatpickr cho 2 cái Add/Edit Form
     function initFlatpickr(formElement) {
         const dateInputs = formElement.querySelectorAll('.select_new_date');
         const timeInputs = formElement.querySelectorAll('.select_new_time');
-
         dateInputs.forEach(input => {
             flatpickr(input, {
                 dateFormat: "Y-m-d",
@@ -31,7 +28,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 defaultDate: new Date()
             });
         });
-
         timeInputs.forEach(input => {
             flatpickr(input, {
                 enableTime: true,
@@ -42,8 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     }
-
-
     // Khởi tạo Flatpickr cho FilterPanel
     const filterPanel = document.querySelector('.filter-panel');
     if (filterPanel) {
@@ -72,14 +66,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Function reset form về default
     function resetForm(formContainer) {
-        // Reset icon về default
         const categoryIcon = formContainer.querySelector('.category-icon');
         if (categoryIcon) {
             categoryIcon.src = `${window.location.origin}/assets/images/categories/salary.png`;
             categoryIcon.alt = 'Icon';
         }
-
-        // Reset các field khác
         formContainer.querySelector('.select_new_category').value = '';
         formContainer.querySelector('.hidden_new_category').value = '';
         formContainer.querySelector('.type_value').value = '';
@@ -95,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
             formContainer.querySelector('.addForm-header h2').textContent = 'New Expense';
         }
 
-        // Remove id input nếu có
+        // Remove id input
         const idInput = formContainer.querySelector('input[name="id"]');
         if (idInput) {
             idInput.remove();
@@ -103,10 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    // ========================================================================
-    // LOGIC MỚI: 2-LEVEL CATEGORY SELECTION
-    // ========================================================================
-
+    //Chọn category con
     let currentParentCategory = null; // Lưu category cha đang được chọn
 
     // Mở Category Modal
@@ -137,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Hiển thị category cha (parent_id = null)
+    // Hiển thị category cha
     function showParentCategories(type) {
         const buttons = document.querySelectorAll('#categoryList button');
 
@@ -164,7 +152,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const btnParent = btn.getAttribute('data-parent');
             const btnType = btn.getAttribute('data-type');
 
-            // Hiển thị các category có parent_id = parentId
             if (btnParent === parentId && (type === 'all' || btnType === type)) {
                 btn.parentElement.style.display = '';
             } else {
@@ -173,7 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Cập nhật header của modal (hiển thị breadcrumb)
+    // Cập nhật header của modal
     function updateModalHeader() {
         const modalTitle = categoryModal.querySelector('h2');
         if (currentParentCategory) {
@@ -228,8 +215,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const categoryIconImg = button.querySelector('img');
         const categoryIcon = categoryIconImg ? categoryIconImg.src : button.getAttribute('data-icon');
         const parentId = button.getAttribute('data-parent');
-
-        // Nếu đây là category cha (parent_id = null)
         if (parentId === 'null' || parentId === '' || !parentId) {
             // Lưu category cha và hiển thị các category con
             currentParentCategory = {
@@ -241,7 +226,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const type = getActiveFormType();
             showChildCategories(categoryId, type);
         }
-        // Nếu đây là category con (có parent_id)
         else {
             // Gán category vào form
             if (categoryModal.dataset.isFilter === 'true') {
@@ -262,8 +246,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
             }
-
-            // Đóng modal và reset
             categoryModal.classList.remove('active');
             currentParentCategory = null;
         }
@@ -291,8 +273,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Set category
         formContainer.querySelector('.hidden_new_category').value = t.categoryId;
         formContainer.querySelector('.select_new_category').value = t.categoryName;
-
-        // Tìm icon từ categoryList
+        // Tìm icon
         const categoryButton = document.querySelector(`#categoryList button[data-category="${t.categoryId}"]`);
         if (categoryButton) {
             const iconImg = categoryButton.querySelector('img');
@@ -303,22 +284,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 categoryIconImg.alt = t.categoryName;
             }
         }
-
         // Set other fields
         formContainer.querySelector('.type_value').value = t.value;
         formContainer.querySelector('.select_new_account').value = t.accountId;
         formContainer.querySelector('.select_new_date').value = t.date;
         formContainer.querySelector('.select_new_time').value = t.time;
         formContainer.querySelector('.type_new_notes').value = t.notes;
-
         // Set header
         const header = formContainer.querySelector('.addForm-header h2');
         if (header) header.textContent = "Edit " + t.type;
-
         //Set action
         const actionInput = formContainer.querySelector('input[name="action"]');
         actionInput.value = t.type.toLowerCase() === "income" ? "update_income" : "update_expense";
-
         const typeInput = formContainer.querySelector('input[name="type"]');
         if (typeInput) {
             typeInput.value = t.type.toLowerCase();
@@ -363,18 +340,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.warn("Không tìm thấy dropdown-menu");
                 return;
             }
-
-            // Đóng menu khác
             document.querySelectorAll(".dropdown-menu.active").forEach(m => {
                 if (m !== menu) m.classList.remove("active");
             });
-
-            // Toggle menu hiện tại
             menu.classList.toggle("active");
             return;
         }
-
-        // Click ra ngoài thì đóng menu
         if (!dropdownMenu) {
             document.querySelectorAll(".dropdown-menu.active").forEach(m => m.classList.remove("active"));
         }
@@ -393,11 +364,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 'this transaction';
 
             if (confirm(`Are you sure you want to delete "${categoryName}"?`)) {
-                // Submit form nếu user confirm
                 this.submit();
             }
-
-            // Đóng dropdown sau khi xử lý
             const dropdown = this.closest('.dropdown-menu');
             if (dropdown) {
                 dropdown.classList.remove('active');

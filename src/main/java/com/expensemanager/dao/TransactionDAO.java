@@ -29,9 +29,7 @@ public class TransactionDAO {
         em = em();
         try {
             String jpql = "SELECT a FROM Account a WHERE a.user.id = :userId";
-            return em.createQuery(jpql, Account.class)
-                    .setParameter("userId", userId)
-                    .getResultList();
+            return em.createQuery(jpql, Account.class).setParameter("userId", userId).getResultList();
         } finally {
             em.close();
         }
@@ -146,7 +144,8 @@ public class TransactionDAO {
 
             if (fromDate != null && !fromDate.isEmpty())
                 jpql.append(" AND t.transactionDate >= :fromDate");
-            if (toDate != null && !toDate.isEmpty()) jpql.append(" AND t.transactionDate < :toDate");
+            if (toDate != null && !toDate.isEmpty())
+                jpql.append(" AND t.transactionDate < :toDate");
             if (notes != null && !notes.isEmpty()) jpql.append(" AND LOWER(t.note) LIKE LOWER(:notes)");
             if (types != null && types.length > 0) jpql.append(" AND LOWER(t.type) IN :types");
             if (categoryId != null && !categoryId.isEmpty()) jpql.append(" AND t.category.id = :categoryId");
@@ -189,11 +188,8 @@ public class TransactionDAO {
                 AND t.transactionDate >= :fromDate
                 AND t.transactionDate < :toDate
             """;
-            return em.createQuery(jpql, Transaction.class)
-                    .setParameter("categoryId", categoryId)
-                    .setParameter("fromDate", fromDate.atStartOfDay())
-                    .setParameter("toDate", toDate.plusDays(1).atStartOfDay())
-                    .getResultList();
+            return em.createQuery(jpql, Transaction.class).setParameter("categoryId", categoryId).setParameter("fromDate", fromDate.atStartOfDay())
+                    .setParameter("toDate", toDate.plusDays(1).atStartOfDay()).getResultList();
         } finally {
             em.close();
         }
@@ -213,13 +209,9 @@ public class TransactionDAO {
                 AND a.user.id = :userId
             """;
             return (boolean) em.createQuery(jpql)
-                    .setParameter("categoryId", categoryId)
-                    .setParameter("amount", amount)
-                    .setParameter("type", type)
-                    .setParameter("start", start)
-                    .setParameter("end", end)
-                    .setParameter("userId", userId)
-                    .getSingleResult();
+                    .setParameter("categoryId", categoryId).setParameter("amount", amount)
+                    .setParameter("type", type).setParameter("start", start)
+                    .setParameter("end", end).setParameter("userId", userId).getSingleResult();
         } finally {
             em.close();
         }

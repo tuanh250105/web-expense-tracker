@@ -39,12 +39,6 @@ public class ReportController extends HttpServlet {
         String senderEmail = request.getParameter("senderEmail");
         String subject = request.getParameter("subject");
         String message = request.getParameter("message");
-        if (senderName == null || senderEmail == null || subject == null || message == null || senderName.trim().isEmpty() || senderEmail.trim().isEmpty() ||
-                subject.trim().isEmpty() || message.trim().length() < 10) {
-            request.setAttribute("error", "Vui lòng điền đầy đủ thông tin hợp lệ");
-            request.getRequestDispatcher("/views/report.jsp").forward(request, response);
-            return;
-        }
         HttpSession session = request.getSession();
         User user  = (User) session.getAttribute("user");
         UUID userId = user.getId();
@@ -70,7 +64,8 @@ public class ReportController extends HttpServlet {
             props.put("mail.smtp.ssl.protocols", "TLSv1.2");
             Session session = Session.getInstance(props, new Authenticator() {
                 @Override
-                protected PasswordAuthentication getPasswordAuthentication() {return new PasswordAuthentication(sender_email, sender_pass);}
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(sender_email, sender_pass);}
             });
 
             Message mimeMessage = new MimeMessage(session);

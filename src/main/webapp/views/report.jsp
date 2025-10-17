@@ -1,10 +1,3 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: khodo
-  Date: 13/10/25
-  Time: 21:32
-  To change this template use File | Settings | File Templates.
---%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%--
   Created by IntelliJ IDEA.
@@ -134,7 +127,10 @@
     </div>
 
     <div class="report-form">
-        <div class="error-message" id="errorMessage"></div>
+        <c:if test="${not empty error}">
+            <div class="error-message show">${error}</div>
+        </c:if>
+
 
         <form action="${pageContext.request.contextPath}/report" method="POST" id="reportForm">
             <div class="form-group">

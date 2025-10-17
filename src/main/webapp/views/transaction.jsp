@@ -54,28 +54,21 @@
         <!-- Transaction List -->
         <section class="transaction-list">
             <div class="transaction-header">
-                <!-- Previous Month Button -->
-                <a href="${pageContext.request.contextPath}/transaction?navigate=prev"
-                   class="nav-btn back-btn" title="Previous month">
-                    &lt;
-                </a>
+                <!-- Prev btn -->
+                <a href="${pageContext.request.contextPath}/transaction?navigate=prev" class="nav-btn back-btn" title="Previous month"> &lt; </a>
 
-                <!-- Current Month Display -->
+                <!-- Current month -->
                 <div class="month-display">
                     <h2>${dateRangeLabel}</h2>
                     <c:if test="${!isCurrentMonth and !isFiltered}">
-                        <a href="${pageContext.request.contextPath}/transaction"
-                           class="today-link">(Go to current month)</a>
+                        <a href="${pageContext.request.contextPath}/transaction" class="today-link">(Go to current month)</a>
                     </c:if>
                 </div>
 
-                <!-- Next Month Button -->
-                <a href="${pageContext.request.contextPath}/transaction?navigate=next"
-                   class="nav-btn forward-btn" title="Next month">
-                    &gt;
-                </a>
+                <!-- Next btn -->
+                <a href="${pageContext.request.contextPath}/transaction?navigate=next" class="nav-btn forward-btn" title="Next month"> &gt; </a>
 
-                <!-- Total Display -->
+                <!-- Total  -->
                 <span class="total">
                     Total:
                     <c:choose>
@@ -229,7 +222,7 @@
             </form>
         </div>
 
-        <!-- Form Expense (tương tự Income) -->
+        <!-- Form Expense -->
         <div class="container-addForm" id="expenseForm">
             <form class="addForm modal-addForm" action="${pageContext.request.contextPath}/transaction" method="POST">
                 <input type="hidden" name="action" value="add_expense">
